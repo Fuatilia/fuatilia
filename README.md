@@ -1,5 +1,6 @@
 **Fuatilia**
 
+```
 repo structure
 |--app
     |--models
@@ -11,6 +12,7 @@ repo structure
     |--main.py
 |--Dockerfile
 |--requirements.txt
+```
 
 To run locally
 `python -m venv venv`
