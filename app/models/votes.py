@@ -17,9 +17,9 @@ from db import Base
 class VoteCreationBody ( BaseModel):
     bill_id : str = Field(example = 'some ID')
     representative_id : str = Field(example = 'some ID')
-    house: str = Field(example='national' , description = 'national/senate')
+    house: str = Field(example='NATIONAL' , description = 'NATIONAL/SENATE')
     vote : str = Field(example='YES', description = 'YES/NO')
-    vote_type : str = Field(example='Individual', description = 'Confidential/Concensus/Individual')
+    vote_type : str = Field(example='INDIVIDUAL', description = 'CONFIDENTIAL/CONCENSUS/INDIVIDUAL')
     vote_summary: Optional[str] = Field(
         example="{'Ayes':100, 'Noes':10, 'Absent':2}" ,
         description = 'A summary of how the voting happened. To use for Condidential/Concensus voting')

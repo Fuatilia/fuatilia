@@ -4,6 +4,7 @@ from fastapi import FastAPI
 import uvicorn
 from routes.users import user_router
 from routes.votes import vote_router
+from routes.representatives import represenatives_router
 
 dotenv.load_dotenv()
 
@@ -32,6 +33,7 @@ app = FastAPI(
 
 app.include_router(user_router)
 app.include_router(vote_router)
+app.include_router(represenatives_router)
 
 if __name__ == "__main__":
     is_dev = os.environ.get('ENVIRONMENT')=='dev'
