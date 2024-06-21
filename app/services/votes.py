@@ -1,3 +1,4 @@
+import json
 import os
 import io
 from pypdf import PdfReader
@@ -47,12 +48,14 @@ class Vote_Processor():
     def  __init__(self, file:PdfReader) -> None:
         self.file_reader = file
         self.pages = self.file_reader.get_num_pages()
+        self.bill_title = None
 
     '''
     page_limit -- Incase you need to set a page limit for the search 
     '''
     def get_individual_page_to_begin(self, bill_title:str , page_to_start: int = 0 , page_limit:int = None):
         # Incase the roll call and bill title are in seperate pages
+        self.bill_title = bill_title
         has_bill_title = False
         has_roll_call = False
         bill_title_page: None|int = None
@@ -68,15 +71,13 @@ class Vote_Processor():
             print('---------- Initiating bill vote lookup ---- ',page_num)
             list_of_lines = page_text.split('\n')
             for line in list_of_lines:
-                if line.find(bill_title)!=-1:
+                if line.find(self.bill_title)!=-1:
                     has_bill_title = True
                     bill_title_page = page_num
                 if line.find('Results of the Roll Call Vote')!=-1:
                     has_roll_call = True
                     roll_call_page = page_num
 
-            
-            print(has_bill_title , has_roll_call , bill_title_page , roll_call_page)
             if has_bill_title and has_roll_call and bill_title_page and roll_call_page:
                 return bill_title_page, roll_call_page
 
@@ -86,6 +87,7 @@ class Vote_Processor():
     '''
     def extract_individual_votes(self , page_to_begin_extraction:int = 0):
         # Flag for preventing reversal of vote_to_check on intial loop
+
         ayes_check_initiated = False 
         noes_check_initiated = False 
         vote_to_check = None
@@ -99,6 +101,8 @@ class Vote_Processor():
         for page_num in range(page_to_begin_extraction, self.pages):
             page = self.file_reader.pages[page_num]
             page_text = page.extract_text(extraction_mode='layout')
+
+            # print(page_text)
 
             print('---------- Initiating vote extraction for page ---- ',page_num)
             list_of_lines = page_text.split('\n')
@@ -146,8 +150,10 @@ class Vote_Processor():
                             
 
                             summary_dict [representative] = {
-                                'area' : rep_area,
-                                'vote' : vote_to_check
+                                f'{self.bill_title}':{
+                                    'area' : rep_area,
+                                    'vote' : vote_to_check
+                                }
                             }
                         else:
                             print(f"Failed to process data for rep {representative} and area {rep_area}")
@@ -155,7 +161,13 @@ class Vote_Processor():
         return summary_dict
         
 
-r = PDF_Reader('Downloads/Tuesday, February 20 ,2024 At 2.30pm (2).pdf')
-reader = r.read_from_local()
-title_page, vote_page = Vote_Processor(reader).get_page_to_begin('AFFORDABLE HOUSING', 3, 4)
-print(Vote_Processor(reader).extract_individual_votes(title_page))
+# r = PDF_Reader('Downloads/Tuesday, February 20 ,2024 At 2.30pm (2).pdf')
+# reader = r.read_from_local()
+# v_p = Vote_Processor(reader) 
+
+# title_page, vote_page = v_p.get_individual_page_to_begin('AFFORDABLE HOUSING', 3, 4)
+# aff_housing_json = v_p.extract_individual_votes(title_page)
+
+# # Convert and write JSON object to file
+# with open("aff_housing_votes.json", "w") as outfile: 
+#     json.dump(aff_housing_json, outfile, indent=4)
