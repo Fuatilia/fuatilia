@@ -10,9 +10,6 @@ from sqlalchemy.sql import func
 from db import Base
 
 
-
-
-
 # Pydantic model for update payload
 class VoteCreationBody ( BaseModel):
     bill_id : str = Field(example = 'some ID')
@@ -30,7 +27,6 @@ class VoteCreationBody ( BaseModel):
 
 
 # Actual user Model
-
 class Vote(Base):   
     __tablename__ ='votes' 
 
