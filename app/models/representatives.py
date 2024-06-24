@@ -1,4 +1,5 @@
-from typing import Optional
+from enum import Enum
+from typing import Dict, Optional
 import uuid
 from pydantic import BaseModel, Field
 from sqlalchemy import (
@@ -10,6 +11,7 @@ from sqlalchemy.sql import func
 from db import Base
 
 
+
 # Pydantic model for user creation Body
 class RepresentativeCreationBody(BaseModel):
     full_name : str = Field(example = 'John')
@@ -18,50 +20,31 @@ class RepresentativeCreationBody(BaseModel):
     house : str = Field(example="NATIONAL", description = 'NATIONAL/SENATOR')
     area_represented : str= Field(example = "Nairobi", description="The area described under IEBC/Parliament as being represented by them")
     phone_number : Optional[str] = Field(example = '254711111111')
-    image_url : Optional[str] = Field(example = 's3//....', descrption = 'The S3 url for the image')
+    image_source : Optional[str] = Field(example = 'https://www.parliament...') # Add to S3 metadata
+    image_data_type: Optional[str] = Field(example = 'URL', descrption = 'BASE64_ENCODING/URL')
+    image_data : Optional[str] = Field(example = 's3//....', descrption = 'It could be a url string or base_64 encoded string depending on the datatype specifed above')
     gender: Optional[str] = Field( example = 'M', description ='The gender of the respensantive(M/F/OTHER)')
-    representation_summary: Optional[dict] = Field('''
+    representation_summary: Optional[Dict[str, Dict[str, str]]] = Field(
                                          {
-                                            0:{"duration":"2017-2022", seat:"SENATOR", area_represented:"NAIROBI"},
-                                            1:{"duration":"2022-NOW", seat:"GOVERNOR", area_represented:"NAIROBI"},
+                                            "0":{"duration":"2017/01-2022/01", "seat":"SENATOR", "area_represented":"NAIROBI"},
+                                            "1":{"duration":"2022/02-NOW", "seat":"GOVERNOR", "area_represented":"NAIROBI"},
                                          }
-                                         ''', 
-                                         description = 'Indexed progression of a respresenatative , incase they change seats')
-    
-    class Config:
-        from_attributes = True
-
-
-# Pydantic model for update payload
-class RepresentativeUpdateBody (BaseModel):
-    id : str = Field(example = 'some uuid')
-    full_name : Optional[str] = Field(example = 'Johnte')
-    position : Optional[str] = Field(example='MP', description = 'MP/SENATOR/WOMEN REP/MCA' )
-    position_type: Optional[str] = Field(example='ELECTED ', description = 'ELECTED/nominated')
-    house : Optional[str]= Field(example="NATIONAL", description = 'NATIONAL/SENATOR')
-    area_represented :Optional[str]= Field(example = "Nairobi", description="The area described under IEBC/Parliament as being represented by them")
-    phone_number : Optional[str] = Field(example = '254711111111')
-    image_url : Optional[str] = Field(example = 's3//....', descrption = 'The S3 url for the image')
-    gender: Optional[str] = Field( example = 'M', description ='The gender of the respensantive(M/F/OTHER)')
-    representation_summary: Optional[dict] = Field('''
-                                         {
-                                            0:{"duration":"2017-2022", seat:"SENATOR", area_represented:"NAIROBI"},
-                                            1:{"duration":"2022-NOW", seat:"GOVERNOR", area_represented:"NAIROBI"},
-                                         }
-                                         ''', 
+                                         , 
                                          description = 'Indexed progression of a respresentative , incase they change seats')
     
     class Config:
         from_attributes = True
 
 
-class RepresenativeImageUpdate(BaseModel):
-    id : str = Field(example = 'some uuid', description='uuid of the representative')
-    image_type : str = Field(example = 'TWITTER_PROFILE', description = "TWITTER_PROFILE/GOK_ASSIGNED")
-    image_source : str = Field(example = 'http// .. some site ..')
-    source_type : Optional[str] = Field(example = 'UPLOAD', description = 'UPLOAD/WEBSITE/TWITTER/S3  , will determina how auto scarping will be done')
-    base64encoded : Optional[str] = Field(example = 'someBase 64 encoded string', description = 'base64 encoding of the image' )
-
+# Pydantic model for update payload
+class RepresentativeUpdateBody (RepresentativeCreationBody):
+    id : str = Field(example = 'some uuid')
+    full_name : Optional[str] = Field(example = 'Johnte')
+    position : Optional[str] = Field(example='MP', description = 'MP/SENATOR/WOMEN REP/MCA' )
+    position_type: Optional[str] = Field(example='ELECTED ', description = 'ELECTED/nominated')
+    house : Optional[str]= Field(example="NATIONAL", description = 'NATIONAL/SENATOR')
+    area_represented :Optional[str]= Field(example = "Nairobi", description="The area described under IEBC/Parliament as being represented by them")
+    
     class Config:
         from_attributes = True
 
