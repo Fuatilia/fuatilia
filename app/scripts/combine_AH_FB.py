@@ -1,11 +1,10 @@
-import os
 import json
 from fuzzywuzzy import fuzz
 
 f_finance_bill = open('app/scripts/finance_bill_2nd_reading_votes.json')
 f_affordable_housing = open('app/scripts/affordable_housing_votes.json')
 
-threshold = 90
+threshold = 90 # for fuzzyWuzzy
 
 names_without_descrepancies = []
 
