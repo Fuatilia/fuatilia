@@ -15,8 +15,9 @@ async def createUser(createBody: UserCreationBody ):
     return await create_user(createBody)
 
 @user_router.post("/login")
-async def createUser(createBody: UserCreationBody ):
-    return await create_user(createBody)
+async def loginUser(createBody: UserCreationBody ):
+    # return await login_user(createBody)
+    return NotImplementedError
 
 @user_router.patch("/update")
 async def updateUser(updateBody: UserUpdateBody ):

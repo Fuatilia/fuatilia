@@ -1,7 +1,8 @@
 import os
+import traceback
 import dotenv
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -26,15 +27,19 @@ def run_db_transactions(directive:str, data:any, model:any):
             final_resp = {
                 'status':202,
                 'message':f'Succesfully created',
-                'data': dict(data.__str__())
             }
 
         elif directive == 'update':
-            session.add(data)
+            instance_id = data["id"]
+            del data['id']
+
+            print(f'Updating database object for {model} --- > {instance_id}')
+            session.execute(update(model).where(model.id == instance_id).values(**data))
+            data = session.query(model).filter(model.id == instance_id).first()
+            
             final_resp = {
                 'status':200,
                 'message':f'Succesfully updated',
-                'data': dict(data.__str__())
             }
             
         elif directive == 'delete':
@@ -54,8 +59,11 @@ def run_db_transactions(directive:str, data:any, model:any):
 
         session.commit()
 
-        if directive in ['create', 'update'] and data.id:
-            final_resp['data']['id'] = data.id
+        if directive in ['create', 'update']:
+            print(type(data))
+            session.refresh(data)
+            final_resp['data'] = data.__dict__
+            del final_resp['data']['_sa_instance_state']
         
         return final_resp
          
@@ -69,9 +77,11 @@ def run_db_transactions(directive:str, data:any, model:any):
             # Fix this to update columns 
             Base.metadata.create_all(bind=engine)
 
-        print("This is the error =====>>\n", e, "\n======>")
-        # raise e
-        return e.args
+        traceback.print_exc()
+        return {
+            'error' : e
+        }
+
     finally:
         session.close()
 

@@ -1,3 +1,4 @@
+from services.representatives import create_representative, update_representative
 from models.representatives import (
     RepresentativeCreationBody, 
     RepresentativeUpdateBody )
@@ -10,13 +11,13 @@ represenatives_router = APIRouter(
 )
 
 @represenatives_router.post("/create")
-async def create_representative(createBody: RepresentativeCreationBody ):
-    print(createBody)
-    raise NotImplementedError
+async def createRepresentative(createBody: RepresentativeCreationBody ):
+    return await create_representative(createBody)
 
 @represenatives_router.patch("/update")
-async def update_representative(updateBody: RepresentativeUpdateBody ):
-    return NotImplementedError
+async def updateRepresentative(updateBody: RepresentativeUpdateBody ):
+    return await update_representative(updateBody)
+
 
 @represenatives_router.get("/{id}")
 async def filter_representatives(id: str|None = None):

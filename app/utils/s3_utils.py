@@ -32,7 +32,12 @@ class ProgressPercentage(object):
 class S3Processor():
     def __init__(self):
         self.region = os.environ.get('S3_BUCKET_REGION')
-        self.s3_client = boto3.client('s3', region_name=self.region)
+        self.s3_client = boto3.client(
+                's3', 
+                aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY'),
+                region_name=self.region
+            )
                  
 
     def create_bucket(self, bucket_name, region=None):
@@ -50,15 +55,15 @@ class S3Processor():
         # Create bucket
         try:
             if region is None:
-                self.s3_client.create_bucket(Bucket=bucket_name)
+                response = self.s3_client.create_bucket(Bucket=bucket_name)
             else:
                 location = {'LocationConstraint': region}
-                self.s3_client.create_bucket(Bucket=bucket_name,
+                response  = self.s3_client.create_bucket(Bucket=bucket_name,
                                         CreateBucketConfiguration=location)
         except ClientError as e:
             logging.error(e)
-            return False
-        return True
+            return e
+        return response
 
 
     def upload_file(
@@ -66,6 +71,7 @@ class S3Processor():
             base64encoding_of_the_the_file, 
             bucket, file_name=None, 
             object_name=None, 
+            metadata = None,
             monitor_progress:bool=False):
         '''
         Upload a file to an S3 bucket
@@ -76,17 +82,67 @@ class S3Processor():
         :return: True if file was uploaded, else False
         '''
 
+        extra_args = {}
+
         try:
+            print(f'Initating file upload for :: {file_name} to {bucket}')
             if monitor_progress:
                 callback_func = ProgressPercentage(file_name or 'file')
             else:
                 callback_func = None
-            response = self.s3_client.upload_file(
-                base64encoding_of_the_the_file, 
-                bucket, 
-                object_name,
-                Callback = callback_func
-                )
+
+
+            if metadata is not None:
+                extra_args['Metadata'] = metadata
+            
+            # response = self.s3_client.upload_fileobj(
+            #     base64encoding_of_the_the_file, 
+            #     bucket, 
+            #     file_name,
+            #     Callback = callback_func,
+            #     ExtraArgs = extra_args
+            #     )
+
+
+            response = self.s3_client.put_object(
+                # ACL='private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
+                Body= base64encoding_of_the_the_file ,
+                Bucket=bucket,
+                # CacheControl='string',
+                # ContentDisposition='string',
+                # ContentEncoding='string',
+                # ContentLanguage='string',
+                # ContentLength=123,
+                # ContentMD5='string',
+                # ContentType='string',
+                # ChecksumAlgorithm='CRC32'|'CRC32C'|'SHA1'|'SHA256',
+                # ChecksumCRC32='string',
+                # ChecksumCRC32C='string',
+                # ChecksumSHA1='string',
+                # ChecksumSHA256='string',
+                # Expires=datetime(2015, 1, 1),
+                # GrantFullControl='string',
+                # GrantRead='string',
+                # GrantReadACP='string',
+                # GrantWriteACP='string',
+                Key= file_name,
+                Metadata= metadata,
+                # ServerSideEncryption='AES256'|'aws:kms'|'aws:kms:dsse',
+                # StorageClass='STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'|'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
+                # WebsiteRedirectLocation='string',
+                # SSECustomerAlgorithm='string',
+                # SSECustomerKey='string',
+                # SSEKMSKeyId='string',
+                # SSEKMSEncryptionContext='string',
+                # BucketKeyEnabled=True|False,
+                # RequestPayer='requester',
+                # Tagging='string',
+                # ObjectLockMode='GOVERNANCE'|'COMPLIANCE',
+                # ObjectLockRetainUntilDate=datetime(2015, 1, 1),
+                # ObjectLockLegalHoldStatus='ON'|'OFF',
+                # ExpectedBucketOwner='string'
+            )
+
             return response
         except ClientError as e:
             logging.error(e)
