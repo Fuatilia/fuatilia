@@ -1,10 +1,12 @@
 import logging
+import re
 import boto3
 import os
 import sys
 import threading
 import dotenv
 from botocore.exceptions import ClientError
+from models.representatives import FileType
 
 dotenv.load_dotenv()
 
@@ -39,6 +41,27 @@ class S3Processor():
                 region_name=self.region
             )
                  
+    
+    def compute_s3_file_directory(self, file_type:FileType, 
+                              file_name:str|None = None, 
+                              id:str|None = None, 
+                              house:str|None = None):
+        match file_type:
+            case FileType.ALL:
+                return f'{id}/'
+            case FileType.PROFILE_IMAGE:
+                return f'{id}/images/' + file_name
+            case FileType.CASE:
+                return f'{id}/cases/' + file_name
+            case FileType.MANIFESTO:
+                return f'{id}/manifestos/' + file_name
+            case FileType.BILL:
+                return f'bills/{house}/' + file_name
+            case FileType.PROCEEDING:
+                return f'proceedings/{house}/' + file_name
+            case FileType.VOTE:
+                return f'votes/{house}/' + file_name
+
 
     def create_bucket(self, bucket_name, region=None):
         '''
@@ -69,8 +92,7 @@ class S3Processor():
     def upload_file(
             self, 
             base64encoding_of_the_the_file, 
-            bucket, file_name=None, 
-            object_name=None, 
+            bucket, file_name=None,
             metadata = None,
             monitor_progress:bool=False):
         '''
@@ -92,17 +114,8 @@ class S3Processor():
                 callback_func = None
 
 
-            if metadata is not None:
-                extra_args['Metadata'] = metadata
-            
-            # response = self.s3_client.upload_fileobj(
-            #     base64encoding_of_the_the_file, 
-            #     bucket, 
-            #     file_name,
-            #     Callback = callback_func,
-            #     ExtraArgs = extra_args
-            #     )
-
+            if metadata is None:
+                metadata = {}
 
             response = self.s3_client.put_object(
                 # ACL='private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
@@ -143,6 +156,25 @@ class S3Processor():
                 # ExpectedBucketOwner='string'
             )
 
+            print(f'File upload for {file_name} ---> {response}')
+        
+            if response.get('response'):
+                if (response['response']['ResponseMetadata']['HTTPStatusCode'] == 404 and
+                    response['response']['Error']['Code'] == 'NoSuchBucket'):
+                    bucket_creation_response = self.create_bucket(bucket)
+
+            
+                if bucket_creation_response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                    response = self.upload_file(
+                        base64encoding_of_the_the_file, 
+                        bucket, 
+                        file_name= file_name, 
+                        metadata = metadata
+                    )
+                else:
+                    return bucket_creation_response
+                
+
             return response
         except ClientError as e:
             logging.error(e)
@@ -157,31 +189,43 @@ class S3Processor():
         return NotImplemented
 
 
-    def get_file(self, bucket_name, obj_name):
-        response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name)
+    def get_file(self, bucket_name, obj_name, range:str|None = None):
+        if range:
+            # For streaming
+            response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name, Range=range)
+        else:
+            response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name)
         return response
     
-    def get_bucket_contents(self, bucket_name):
-        objects_list = self.s3_client.list_objects_v2(Bucket=bucket_name).get("Contents")
+
+    def get_bucket_file_list(self, bucket_name, directory :str|None =None):
+        objects_list = self.s3_client.list_objects_v2(Bucket=bucket_name,Prefix = directory).get("Contents")
+        res  = []
+        # Iterate over every object in bucket
+        if objects_list:
+            for obj in objects_list:
+                res.append(re.search('(?<=\\/).*$', obj["Key"]).group(0))
+        
+        return res
+    
+
+    def get_bucket_contents(self, bucket_name, directory :str|None =None):        
+        objects_list = self.s3_client.list_objects_v2(Bucket=bucket_name,Prefix = directory).get("Contents")
 
         res  = []
 
         # Iterate over every object in bucket
         for obj in objects_list:
-            #  Store object name
-            obj_name = obj["Key"]
             # Read an object from the bucket
-            response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name)
-            # Read the object’s content as text
-            # object_content = response["Body"].read().decode("utf-8")
-            res.append[response]
+            response = self.s3_client.get_object(Bucket=bucket_name, Key=obj["Key"])
+            res.append({
+                'file': obj["Key"],
+                'metadata' : response['Metadata'],
+                'body': response['Body']
+            })
         
         return res
 
     
     def download_file(self, bucket_name, object_name, file_name):
         return self.s3_client.download_file(bucket_name, object_name, file_name)
-
-
-
-

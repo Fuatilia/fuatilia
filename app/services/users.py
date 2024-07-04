@@ -19,12 +19,8 @@ async def create_user(user_creation_body: UserCreationBody):
     return response
 
 
-async def update_user(user_id:str, user_update_body: UserUpdateBody):
-
-    data  = User(**dict(user_update_body))
+async def update_user(user_update_body: UserUpdateBody):
     response = run_db_transactions('update',user_update_body.model_dump(exclude_none=True),User)
-    print(response)
-
     return response
 
 

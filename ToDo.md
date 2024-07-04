@@ -1,5 +1,7 @@
 Add logger
-Implement S3 reads
+
+Add signed url option for uploads
+Add lIMITs for count in get functions
 
 S3 FILE formart for resp 
 rep_id

@@ -82,3 +82,14 @@ class Representative(Base):
 
     def __repr__(self):
         return self.__dict__
+
+
+
+class FileType(Enum):
+    PROFILE_IMAGE = 'profile_image'
+    MANIFESTO = 'manifesto'
+    BILL = 'bill'
+    PROCEEDING = 'proceeding'
+    CASE = 'case'
+    ALL='all'
+    VOTE='vote'
