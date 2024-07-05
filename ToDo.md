@@ -1,5 +1,5 @@
 Add logger
-
+Fix filters for 'get' to allow pagination from page param
 Add signed url option for uploads
 Add lIMITs for count in get functions
 
@@ -10,6 +10,8 @@ rep_id
     | -cases
     | -any other file types
 
-
+Notifications (Email, SMS, Push)
 Send image upload and processing to a queue?
 Add content type to metadata  ?
+
+implement monitor_progress --- > for file upload /download

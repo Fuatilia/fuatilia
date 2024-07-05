@@ -2,7 +2,8 @@ from models.files import FileUploadBody
 from services.representatives import (
     create_representative, delete_representative, 
     filter_representatives, get_file_data, 
-    get_representative_files_list, stream_file_data, update_representative, upload_representative_files
+    get_representative_files_list, stream_file_data, 
+    update_representative, upload_representative_files
     )
 from models.representatives import (
     FileType,
@@ -74,21 +75,28 @@ async def deleteRepresentative(id: str = None):
     return await delete_representative(id)
 
 @represenatives_router.get('/files/list/{id}')
-async def getRepresentativeFiles(id, file_type:FileType):
+async def getRepresentativeFilesList(id, file_type:FileType):
     return await get_representative_files_list(id, file_type)
 
 @represenatives_router.get('/{id}/file')
 async def getRepresentativeFiles(id, file_name:str):
     return await get_file_data(f'{id}/{file_name}')
 
-
 @represenatives_router.get('/files/{id}/playback')
-async def getRepresentativeFiles(id, start_byte, stop_byte, file_name:str ):
-    return  StreamingResponse(await stream_file_data(f'{id}/{file_name}', start_byte, stop_byte))
-
+async def streamRepresentativeFiles(id, 
+                                    start_KB:int, 
+                                    stop_KB:int, 
+                                    file_name:str ):
+    return  StreamingResponse(await stream_file_data(f'{id}/{file_name}', 
+                                                     start_KB, 
+                                                     stop_KB
+                                                     )
+                                                )
 
 @represenatives_router.post('/{id}/upload/{file_type}')
-async def uploadRepresentatveFiles(id:str, file_type: FileType, fileUploadBody:FileUploadBody):
+async def uploadRepresentatveFiles(id:str, 
+                                   file_type: FileType, 
+                                   fileUploadBody:FileUploadBody ):
     return await upload_representative_files(id, 
                                              file_type, 
                                              fileUploadBody.file_name, 

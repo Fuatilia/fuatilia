@@ -46,6 +46,32 @@ class S3Processor():
                               file_name:str|None = None, 
                               id:str|None = None, 
                               house:str|None = None):
+        """
+        Based on the params passed it will compute the directory/filepath 
+        to get file(s) or add file(s)
+
+        Parameters
+        ----------
+        file_type : str
+            String of <class FileType> do determine where the file goes
+
+        file_name [Optional]: 
+                Name of the file. Will determine which file to save or get.
+                If set to ALL during fetch with an ID specified, it will 
+                fetch all files in the directory
+
+        id [Optional]:str
+            Id of the the item (Mostly models)
+
+        house [Optional]: str
+            If passed will be paired with file type to get/put a file 
+
+        Returns
+        --------
+        string of the s3 file/directory path
+
+        """
+
         match file_type:
             case FileType.ALL:
                 return f'{id}/'
@@ -64,16 +90,24 @@ class S3Processor():
 
 
     def create_bucket(self, bucket_name, region=None):
-        '''
-        Create an S3 bucket in a specified region
+        """
+        Create an S3 bucket
+    
+        If a region is specified it will follow the s3 contrainsts as per S3 documentation
 
-        If a region is not specified, the bucket is created in the S3 default
-        region (us-east-1).
-
-        :param bucket_name: Bucket to create
-        :param region: String region to create bucket in, e.g., 'us-west-2'
-        :return: True if bucket created, else False
-        '''
+        Parameters
+        ----------
+        bucket_name: str
+            Name of the bucket to create
+        region [Optional]: str
+            region to create bucket in, e.g., 'us-west-2'
+        
+        
+        Returns
+        -------
+        S3 bucket creation response/error 
+        
+        """
 
         # Create bucket
         try:
@@ -95,16 +129,24 @@ class S3Processor():
             bucket, file_name=None,
             metadata = None,
             monitor_progress:bool=False):
-        '''
+        """
         Upload a file to an S3 bucket
 
-        :param file_name: File to upload
-        :param bucket: Bucket to upload to
-        :param object_name: S3 object name. If not specified then file_name is used
-        :return: True if file was uploaded, else False
-        '''
-
-        extra_args = {}
+        Parameters
+        ----------
+        base64encoding_of_the_the_file: str
+            Base64 encoding of the file
+        bucket:str
+            Bucket to upload to
+        file_name:str
+            File name to assign on upload
+        metadata: dict
+            All metadata you need to add to the file. 
+            Ideally anything that allows referencing e.g. file sources etc.
+           
+        Return:
+            S3 upload resposne or ClientError
+        """
 
         try:
             print(f'Initating file upload for :: {file_name} to {bucket}')
@@ -190,6 +232,25 @@ class S3Processor():
 
 
     def get_file(self, bucket_name, obj_name, range:str|None = None):
+        """
+        Get a stream response of the requested file 
+
+        Parameters
+        ----------
+        bucket_name: str
+            Bucket to read from
+        obj_name:str
+            Full file path of the file to read
+        range [Optional]: str
+            Contains the range of bytes to get
+            If not specified will, default retreaving the entire file at one go.
+
+
+        Returns
+        -------
+        S3 stream or file object 
+            
+        """
         if range:
             # For streaming
             response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name, Range=range)
@@ -199,7 +260,34 @@ class S3Processor():
     
 
     def get_bucket_file_list(self, bucket_name, directory :str|None =None):
-        objects_list = self.s3_client.list_objects_v2(Bucket=bucket_name,Prefix = directory).get("Contents")
+        """
+        Parameters
+        ----------
+        bucket_name : str
+            Bucket to search
+        file_type : str
+            Allows you to select which files about the rep you want to retrive
+            Will determine which directories will be searched
+            If set to ALL, for a path containing images/, manifestos/, cases/; All files
+            in all directories will be returned with the respective directories prefixed
+            e.g
+            [
+                "images/test.jpg",
+                ...
+                "cases/DPP_2022_Fetilizer.pdf",
+                ...        
+            ]
+
+
+        Returns
+        -------
+        files : List[str]
+            List of files as per specifed paths
+        """
+        objects_list = self.s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix = directory
+            ).get("Contents")
         res  = []
         # Iterate over every object in bucket
         if objects_list:
@@ -210,7 +298,10 @@ class S3Processor():
     
 
     def get_bucket_contents(self, bucket_name, directory :str|None =None):        
-        objects_list = self.s3_client.list_objects_v2(Bucket=bucket_name,Prefix = directory).get("Contents")
+        objects_list = self.s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix = directory
+            ).get("Contents")
 
         res  = []
 
