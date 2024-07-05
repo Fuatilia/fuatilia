@@ -90,6 +90,16 @@ async def filter_representatives(representatives_filter_body: any,
 
 
 async def delete_representative(id: str):
+    """
+    Parameters
+    ----------
+    id : str
+        Id of the representative
+
+    Returns
+    -------
+    204 on successful deletion
+    """
     print(">>> Initiating delete for user ", id)
     data  = {'id':id}
     response = run_db_transactions('delete',data, Representative)
@@ -98,11 +108,29 @@ async def delete_representative(id: str):
 
 
 async def get_representative_files_list(id, file_type:FileType):
-    '''
-    id :  Id of the representative
-    file_type : Allows you to select which files about the rep you want to retrive
-            - Will determine which directories will be searched
-    '''
+    """
+    Parameters
+    ----------
+    id : str  Id of the representative
+    file_type : str
+        Allows you to select which files about the rep you want to retrive
+        Will determine which directories will be searched
+        If set to ALL, for a path containing images/, manifestos/, cases/; All files
+        in all directories will be returned with the respective directories prefixed
+        e.g
+        [
+            "images/test.jpg",
+            ...
+            "cases/DPP_2022_Fetilizer.pdf",
+            ...        
+        ]
+
+
+    Returns
+    -------
+    files : List[str]
+        List of files as per specifed paths
+    """
    
     bucket_name = os.environ.get('REPS_DATA_BUCKET_NAME')
     dir = representative_s3_processor.compute_s3_file_directory(file_type, '', id)
@@ -117,16 +145,46 @@ async def get_representative_files_list(id, file_type:FileType):
 
 
 async def get_file_data(file_name):
-    response = representative_s3_processor.get_file(os.environ.get('REPS_DATA_BUCKET_NAME'), file_name)
+    response = representative_s3_processor.get_file(os.environ.get('REPS_DATA_BUCKET_NAME'), 
+                                                    file_name)
     print(response)
     return response['Body'].read()
 
-async def stream_file_data(file_name, start_byte, stop_byte):
+
+async def stream_file_data(file_name, start_KB, stop_KB):
+    """
+    Get a stream response of the requested file 
+
+    Parameters
+    ----------
+    file_name: str
+        Full file path of the file to read
+    start_KB: int
+        Kilobyte(s) from where to start, To start at the begining , pass 0. 
+        Will be converted to bytes
+    stop_KB: int
+        Kilobyte(s) from where to stop. Will be converted to bytes
+
+
+    Returns
+    -------
+    S3 stream object 
+        
+    """
     response = representative_s3_processor.get_file(os.environ.get('REPS_DATA_BUCKET_NAME'), 
-                                                file_name, range = 'bytes={}-{}'.format(start_byte, stop_byte) )
+                                                file_name, 
+                                                range = 'bytes={}-{}'.format(
+                                                    start_KB*1000, 
+                                                    stop_KB*1000
+                                                    ) 
+                                                )
     return response['Body']
 
 
-async def upload_representative_files(id:str, file_type:FileType, file_name:str, base64encoding:str):
+async def upload_representative_files(id:str, 
+                                      file_type:FileType, 
+                                      file_name:str, 
+                                      base64encoding:str):
+    
     bucket_name = os.environ.get('REPS_DATA_BUCKET_NAME')
     return await file_upload(bucket_name, file_type, file_name, base64encoding, id=id)
