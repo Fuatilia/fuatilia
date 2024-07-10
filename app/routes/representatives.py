@@ -6,9 +6,9 @@ from services.representatives import (
     update_representative, upload_representative_files
     )
 from models.representatives import (
-    FileType,
     RepresentativeCreationBody, 
     RepresentativeUpdateBody )
+from utils.enum_utils import FileType
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
@@ -82,7 +82,7 @@ async def getRepresentativeFilesList(id, file_type:FileType):
 async def getRepresentativeFiles(id, file_name:str):
     return await get_file_data(f'{id}/{file_name}')
 
-@represenatives_router.get('/files/{id}/playback')
+@represenatives_router.get('/file/{id}/playback')
 async def streamRepresentativeFiles(id, 
                                     start_KB:int, 
                                     stop_KB:int, 

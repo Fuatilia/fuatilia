@@ -1,5 +1,6 @@
 import os
 import traceback
+from utils.logger import logger
 import dotenv
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import create_engine, update
@@ -33,7 +34,7 @@ def run_db_transactions(directive:str, data:any, model:any):
             instance_id = data["id"]
             del data['id']
 
-            print(f'Updating database object for {model} --- > {instance_id}')
+            logger.info(f'Updating database object for {model} --- > {instance_id}')
             session.execute(update(model).where(model.id == instance_id).values(**data))
             data = session.query(model).filter(model.id == instance_id).first()
             
@@ -79,6 +80,7 @@ def run_db_transactions(directive:str, data:any, model:any):
 
         traceback.print_exc()
         return {
+            'status':500,
             'error' : e
         }
 

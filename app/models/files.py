@@ -1,8 +1,6 @@
 from typing import Dict
 from pydantic import BaseModel, Field
 
-from models.representatives import FileType
-
 
 class FileUploadBody(BaseModel):
     file_name: str = Field(example='user image.jpeg')

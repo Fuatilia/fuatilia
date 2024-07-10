@@ -9,7 +9,7 @@ representative_s3_processor = S3Processor()
 
 async def get_house_file_objects(file_type:FileType, house:str, file_name:str|None = None):
     file_name = file_name or ''
-    bucket_name = os.environ.get('HOUSE_DATA_BUCKET_NAME')
+    bucket_name = os.environ.get('HOUSES_DATA_BUCKET_NAME')
 
     dir  = representative_s3_processor.compute_s3_file_directory(file_type, file_name, None, house)
 
