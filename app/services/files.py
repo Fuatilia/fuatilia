@@ -1,7 +1,8 @@
 import os
 import traceback
 from utils.s3_utils import S3Processor
-from models.representatives import FileType
+from utils.enum_utils import FileType
+
 # Initiate S3 processor
 representative_s3_processor = S3Processor()
 

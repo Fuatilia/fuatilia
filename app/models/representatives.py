@@ -45,12 +45,7 @@ class RepresentativeUpdateBody (RepresentativeCreationBody):
     position_type: Optional[str] = None # Field(example='ELECTED ', description = 'ELECTED/nominated')
     house : Optional[str] = None # Field(example="NATIONAL", description = 'NATIONAL/SENATOR')
     area_represented :Optional[str] = None # Field(example = "Nairobi", description="The area described under IEBC/Parliament as being represented by them")
-    image_url :Optional[str] = None  
-    full_name: Optional[str] = None 
-    position: Optional[str] = None 
-    position_type: Optional[str] = None 
-    house: Optional[str] = None 
-    area_represented: Optional[str] = None 
+    image_url :Optional[str] = None
     phone_number : Optional[str] = None
     image_source : Optional[str] = None
     image_data_type: Optional[str] = None
@@ -82,14 +77,3 @@ class Representative(Base):
 
     def __repr__(self):
         return self.__dict__
-
-
-
-class FileType(Enum):
-    PROFILE_IMAGE = 'profile_image'
-    MANIFESTO = 'manifesto'
-    BILL = 'bill'
-    PROCEEDING = 'proceeding'
-    CASE = 'case'
-    ALL='all'
-    VOTE='vote'

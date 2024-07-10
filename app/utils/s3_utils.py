@@ -1,12 +1,14 @@
 import logging
 import re
+import traceback
 import boto3
 import os
 import sys
 import threading
 import dotenv
+from utils.logger import logger
 from botocore.exceptions import ClientError
-from models.representatives import FileType
+from utils.enum_utils import FileType
 
 dotenv.load_dotenv()
 
@@ -71,22 +73,27 @@ class S3Processor():
         string of the s3 file/directory path
 
         """
-
-        match file_type:
-            case FileType.ALL:
-                return f'{id}/'
-            case FileType.PROFILE_IMAGE:
-                return f'{id}/images/' + file_name
-            case FileType.CASE:
-                return f'{id}/cases/' + file_name
-            case FileType.MANIFESTO:
-                return f'{id}/manifestos/' + file_name
-            case FileType.BILL:
-                return f'bills/{house}/' + file_name
-            case FileType.PROCEEDING:
-                return f'proceedings/{house}/' + file_name
-            case FileType.VOTE:
-                return f'votes/{house}/' + file_name
+    
+        if FileType.ALL:
+            return f'{id}/'
+        elif FileType.PROFILE_IMAGE:
+            return f'{id}/images/' + file_name
+        elif FileType.CASE:
+            return f'{id}/cases/' + file_name
+        elif FileType.MANIFESTO:
+            return f'{id}/manifestos/' + file_name
+        elif FileType.BILL and house:
+            return f'bills/{house}/' + file_name
+        elif FileType.PROCEEDING and house:
+            return f'proceedings/{house}/' + file_name
+        elif FileType.VOTE and house:
+            return f'votes/{house}/' + file_name
+        elif FileType.BILL:
+            return 'bills/'
+        elif FileType.PROCEEDING:
+            return 'proceedings/'
+        elif FileType.VOTE:
+            return 'votes/'
 
 
     def create_bucket(self, bucket_name, region=None):
@@ -112,7 +119,8 @@ class S3Processor():
         # Create bucket
         try:
             if region is None:
-                response = self.s3_client.create_bucket(Bucket=bucket_name)
+                response = self.s3_client.create_bucket(
+                    Bucket=bucket_name)
             else:
                 location = {'LocationConstraint': region}
                 response  = self.s3_client.create_bucket(Bucket=bucket_name,
@@ -197,30 +205,28 @@ class S3Processor():
                 # ObjectLockLegalHoldStatus='ON'|'OFF',
                 # ExpectedBucketOwner='string'
             )
-
-            print(f'File upload for {file_name} ---> {response}')
-        
-            if response.get('response'):
-                if (response['response']['ResponseMetadata']['HTTPStatusCode'] == 404 and
-                    response['response']['Error']['Code'] == 'NoSuchBucket'):
-                    bucket_creation_response = self.create_bucket(bucket)
-
             
-                if bucket_creation_response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                    response = self.upload_file(
+            logger.info(f'----- File upload for {file_name} to ---> {response} --------')
+
+            return response
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(e)
+            resp = e
+            if 'bucket does not exist' in e.__str__():
+                resp = self.create_bucket(bucket)
+                logger.info(resp)
+                if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+                    resp = self.upload_file(
                         base64encoding_of_the_the_file, 
                         bucket, 
                         file_name= file_name, 
                         metadata = metadata
                     )
                 else:
-                    return bucket_creation_response
-                
+                    return resp
 
-            return response
-        except ClientError as e:
-            logging.error(e)
-            return e
+            return resp
         
 
     def update_file():
@@ -297,7 +303,7 @@ class S3Processor():
         return res
     
 
-    def get_bucket_contents(self, bucket_name, directory :str|None =None):        
+    def get_bucket_contents(self, bucket_name, directory :str|None =None):  
         objects_list = self.s3_client.list_objects_v2(
                 Bucket=bucket_name,
                 Prefix = directory
@@ -318,5 +324,5 @@ class S3Processor():
         return res
 
     
-    def download_file(self, bucket_name, object_name, file_name):
+    def download_file(self, bucket_name, object_name, file_name):  
         return self.s3_client.download_file(bucket_name, object_name, file_name)

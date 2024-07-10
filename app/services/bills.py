@@ -1,67 +1,74 @@
 import os
 import traceback
+from utils.logger import logger
 from services.files import file_upload
 from db import run_db_transactions
-from models.representatives import (
-    Representative, RepresentativeCreationBody, 
-    RepresentativeUpdateBody)
+from models.bills import Bill, BillCreationBody, BillUpdateBody
 from utils.enum_utils import FileType
 from utils.s3_utils import S3Processor
 
+bill_s3_processor = S3Processor()
 
-# Initiate S3 processor
-representative_s3_processor = S3Processor()
 
-async def create_representative(create_body: RepresentativeCreationBody):
-    data_to_initialize_represenatative  = {
-        'full_name' : create_body.full_name ,
-        'position' : create_body.position ,
-        'position_type' : create_body.position_type ,
-        'house' : create_body.house ,
-        'area_represented' : create_body.area_represented ,
-        'phone_number' : create_body.phone_number ,
-        'gender' : create_body.gender ,
-        'representation_summary' : create_body.representation_summary ,
+
+async def create_bill(create_body: BillCreationBody):
+    data_to_initialize_bill  = {
+        'title': create_body.title,
+        'status': create_body.status,
+        'brought_forth_by': create_body.brought_forth_by,
+        'supported_by': create_body.supported_by ,
+        'house': create_body.house,
+        'summary': create_body.summary,
+        'summary_created_by': create_body.summary_created_by,
+        'summary_upvoted_by': create_body.summary_upvoted_by,
+        'summary_downvoted_by': create_body.summary_downvoted_by,
+        'final_date_voted': create_body.final_date_voted,
+        'topics_in_the_bill': create_body.topics_in_the_bill,
     }
 
     try:
-        print(f'Representative creation with details :: ', data_to_initialize_represenatative)
-        data  = Representative(**data_to_initialize_represenatative)
+        logger.info(f'Bill creation with details ::  {data_to_initialize_bill}')
+        data  = Bill(**data_to_initialize_bill)
+        
+        response = run_db_transactions('create', data, Bill)
 
-        response = run_db_transactions('create',data, Representative)
+        logger.info(response)
+        if response['status'] == 500:
+            return response
 
         str_id = str(response['data']['id'])
         metadata = {
             'rep_id': str_id,
             'creation_date': response['data']['created_at'].strftime("%d/%m/%Y %H:%M:%S"),
-            'source': create_body.image_source,
-            'image_type': create_body.image_data_type,
-            'use': 'For representative image/thumbnail',
-            'representative_name': response['data']['full_name'],
+            'source': create_body.file_source,
+            'file_type': create_body.file_data_type,
+            'use': 'For bill file',
+            'representative_name': response['data']['title'],
             # 'content_type':
         }
         if response['status'] in [202, 200]:
-            reps_data_bucket_name = os.environ.get('REPS_DATA_BUCKET_NAME')
-            file_name = 'profile_image.jpeg'
+            bills_data_bucket_name = f'{os.environ.get('BILLS_DATA_BUCKET_NAME')}'
+            file_name = f'{response['data']['title']}.pdf'
 
-            print('Initiating file upload --- > to S3' )
-            if create_body.image_data_type == 'BASE64_ENCODING':
-                # File path should allow for replacement of images
+            logger.info(f'Initiating file upload --- > to S3 {bills_data_bucket_name}' )
+            if create_body.file_data_type == 'BASE64_ENCODING':
+                # File path should allow for replacement of files'
                 s3_upload_response = await file_upload( 
-                    reps_data_bucket_name, 
-                    FileType.PROFILE_IMAGE,
+                    bills_data_bucket_name, 
+                    FileType.BILL,
                     file_name,
-                    create_body.image_data,
+                    create_body.file_data,
                     id=response['data']['id'],
+                    house=response['data']['house'].value,
                     metadata = metadata
                 )
 
                 if s3_upload_response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                    image_url = f's3://{reps_data_bucket_name}/{response["data"]["id"]}/images/{file_name}'
+                    file_url = f's3://{bills_data_bucket_name}/bill/{file_name}'
                     response = run_db_transactions('update', 
                                                    {   'id' : response['data']['id'],
-                                                       'image_url': image_url},
-                                                    Representative)
+                                                       'file_url': file_url},
+                                                    Bill)
 
             return response
         
@@ -72,48 +79,45 @@ async def create_representative(create_body: RepresentativeCreationBody):
         }
 
 
-
-async def update_representative(update_body:RepresentativeUpdateBody):
+async def update_bill(update_body:BillUpdateBody):
     
     response = run_db_transactions('update', 
                                     update_body.model_dump(exclude_none=True),
-                                    Representative)
+                                    Bill)
     
     return response
 
 
-async def filter_representatives(representatives_filter_body: any, 
+async def filter_bills(Bills_filter_body: any, 
                                  page:int=1, items_per_page:int=5):
-    print('Filter representataives ------------>')
-    representatives_filter_body['limit'] = items_per_page
-    response = run_db_transactions('get',representatives_filter_body, Representative)
+    logger.info('Filter bills ------------>')
+    Bills_filter_body['limit'] = items_per_page
+    response = run_db_transactions('get',Bills_filter_body, Bill)
 
     return response
 
 
-async def delete_representative(id: str):
+async def delete_bill(id: str):
     """
     Parameters
     ----------
     id : str
-        Id of the representative
+        Id of the Bill
 
     Returns
     -------
     204 on successful deletion
     """
-    print(">>> Initiating delete for user ", id)
+    logger.info(">>> Initiating delete for user ", id)
     data  = {'id':id}
-    response = run_db_transactions('delete',data, Representative)
+    response = run_db_transactions('delete',data, Bill)
     return response
 
 
-
-async def get_representative_files_list(id, file_type:FileType):
+async def get_bills_files_list(file_type:FileType, house:str=None):
     """
     Parameters
     ----------
-    id : str  Id of the representative
     file_type : str
         Allows you to select which files about the rep you want to retrive
         Will determine which directories will be searched
@@ -126,7 +130,8 @@ async def get_representative_files_list(id, file_type:FileType):
             "cases/DPP_2022_Fetilizer.pdf",
             ...        
         ]
-
+    house : str
+        national/senate. If left blank will return all files under the specified file type
 
     Returns
     -------
@@ -134,11 +139,11 @@ async def get_representative_files_list(id, file_type:FileType):
         List of files as per specifed paths
     """
    
-    bucket_name = os.environ.get('REPS_DATA_BUCKET_NAME')
-    dir = representative_s3_processor.compute_s3_file_directory(file_type, '', id)
+    bucket_name = os.environ.get('BILLS_DATA_BUCKET_NAME')
+    dir = bill_s3_processor.compute_s3_file_directory(file_type, '',house=house)
     
     try:
-        files =  representative_s3_processor.get_bucket_file_list( bucket_name, dir)
+        files =  bill_s3_processor.get_bucket_file_list( bucket_name, dir)
         return files
     except Exception as e:
         return {
@@ -147,9 +152,9 @@ async def get_representative_files_list(id, file_type:FileType):
 
 
 async def get_file_data(file_name):
-    response = representative_s3_processor.get_file(os.environ.get('REPS_DATA_BUCKET_NAME'), 
+    response = bill_s3_processor.get_file(os.environ.get('BILLS_DATA_BUCKET_NAME'), 
                                                     file_name)
-    print(response)
+    logger.info(response)
     return response['Body'].read()
 
 
@@ -173,7 +178,7 @@ async def stream_file_data(file_name, start_KB, stop_KB):
     S3 stream object 
         
     """
-    response = representative_s3_processor.get_file(os.environ.get('REPS_DATA_BUCKET_NAME'), 
+    response = bill_s3_processor.get_file(os.environ.get('BILLS_DATA_BUCKET_NAME'), 
                                                 file_name, 
                                                 range = 'bytes={}-{}'.format(
                                                     start_KB*1000, 
@@ -183,10 +188,9 @@ async def stream_file_data(file_name, start_KB, stop_KB):
     return response['Body']
 
 
-async def upload_representative_files(id:str, 
-                                      file_type:FileType, 
+async def upload_bill_files( file_type:FileType, 
                                       file_name:str, 
                                       base64encoding:str):
     
-    bucket_name = os.environ.get('REPS_DATA_BUCKET_NAME')
-    return await file_upload(bucket_name, file_type, file_name, base64encoding, id=id)
+    bucket_name = os.environ.get('BILLS_DATA_BUCKET_NAME')
+    return await file_upload(bucket_name, file_type, file_name, base64encoding)
