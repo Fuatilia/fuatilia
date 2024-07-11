@@ -4,3 +4,4 @@
 *.lock
 /logs
 .ruff_cache
+.pytest_cache
