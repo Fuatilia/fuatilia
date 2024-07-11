@@ -23,7 +23,7 @@ async def loginUser(createBody: UserCreationBody ):
 async def updateUser(updateBody: UserUpdateBody ):
     return await update_user(updateBody)
 
-@user_router.get("/")
+@user_router.get("")
 async def filterUsers(id : str | None = None,
                     first_name : str | None = None,
                     age_start : int | None = None,
