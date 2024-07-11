@@ -12,8 +12,8 @@ from utils.enum_utils import FileType
 
 dotenv.load_dotenv()
 
-class ProgressPercentage(object):
 
+class ProgressPercentage(object):
     def __init__(self, filename):
         self._filename = filename
         self._size = float(os.path.getsize(filename))
@@ -26,30 +26,31 @@ class ProgressPercentage(object):
             self._seen_so_far += bytes_amount
             percentage = (self._seen_so_far / self._size) * 100
             sys.stdout.write(
-                "\r%s  %s / %s  (%.2f%%)" % (
-                    self._filename, self._seen_so_far, self._size,
-                    percentage))
+                "\r%s  %s / %s  (%.2f%%)"
+                % (self._filename, self._seen_so_far, self._size, percentage)
+            )
             sys.stdout.flush()
 
 
-
-class S3Processor():
+class S3Processor:
     def __init__(self):
-        self.region = os.environ.get('S3_BUCKET_REGION')
+        self.region = os.environ.get("S3_BUCKET_REGION")
         self.s3_client = boto3.client(
-                's3', 
-                aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY'),
-                region_name=self.region
-            )
-                 
-    
-    def compute_s3_file_directory(self, file_type:FileType, 
-                              file_name:str|None = None, 
-                              id:str|None = None, 
-                              house:str|None = None):
+            "s3",
+            aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            region_name=self.region,
+        )
+
+    def compute_s3_file_directory(
+        self,
+        file_type: FileType,
+        file_name: str | None = None,
+        id: str | None = None,
+        house: str | None = None,
+    ):
         """
-        Based on the params passed it will compute the directory/filepath 
+        Based on the params passed it will compute the directory/filepath
         to get file(s) or add file(s)
 
         Parameters
@@ -57,49 +58,48 @@ class S3Processor():
         file_type : str
             String of <class FileType> do determine where the file goes
 
-        file_name [Optional]: 
+        file_name [Optional]:
                 Name of the file. Will determine which file to save or get.
-                If set to ALL during fetch with an ID specified, it will 
+                If set to ALL during fetch with an ID specified, it will
                 fetch all files in the directory
 
         id [Optional]:str
             Id of the the item (Mostly models)
 
         house [Optional]: str
-            If passed will be paired with file type to get/put a file 
+            If passed will be paired with file type to get/put a file
 
         Returns
         --------
         string of the s3 file/directory path
 
         """
-    
-        if FileType.ALL:
-            return f'{id}/'
-        elif FileType.PROFILE_IMAGE:
-            return f'{id}/images/' + file_name
-        elif FileType.CASE:
-            return f'{id}/cases/' + file_name
-        elif FileType.MANIFESTO:
-            return f'{id}/manifestos/' + file_name
-        elif FileType.BILL and house:
-            return f'bills/{house}/' + file_name
-        elif FileType.PROCEEDING and house:
-            return f'proceedings/{house}/' + file_name
-        elif FileType.VOTE and house:
-            return f'votes/{house}/' + file_name
-        elif FileType.BILL:
-            return 'bills/'
-        elif FileType.PROCEEDING:
-            return 'proceedings/'
-        elif FileType.VOTE:
-            return 'votes/'
 
+        if FileType.ALL:
+            return f"{id}/"
+        elif FileType.PROFILE_IMAGE:
+            return f"{id}/images/" + file_name
+        elif FileType.CASE:
+            return f"{id}/cases/" + file_name
+        elif FileType.MANIFESTO:
+            return f"{id}/manifestos/" + file_name
+        elif FileType.BILL and house:
+            return f"bills/{house}/" + file_name
+        elif FileType.PROCEEDING and house:
+            return f"proceedings/{house}/" + file_name
+        elif FileType.VOTE and house:
+            return f"votes/{house}/" + file_name
+        elif FileType.BILL:
+            return "bills/"
+        elif FileType.PROCEEDING:
+            return "proceedings/"
+        elif FileType.VOTE:
+            return "votes/"
 
     def create_bucket(self, bucket_name, region=None):
         """
         Create an S3 bucket
-    
+
         If a region is specified it will follow the s3 contrainsts as per S3 documentation
 
         Parameters
@@ -108,35 +108,31 @@ class S3Processor():
             Name of the bucket to create
         region [Optional]: str
             region to create bucket in, e.g., 'us-west-2'
-        
-        
+
+
         Returns
         -------
-        S3 bucket creation response/error 
-        
+        S3 bucket creation response/error
+
         """
 
         # Create bucket
         try:
             if region is None:
-                response = self.s3_client.create_bucket(
-                    Bucket=bucket_name)
+                response = self.s3_client.create_bucket(Bucket=bucket_name)
             else:
-                location = {'LocationConstraint': region}
-                response  = self.s3_client.create_bucket(Bucket=bucket_name,
-                                        CreateBucketConfiguration=location)
+                location = {"LocationConstraint": region}
+                response = self.s3_client.create_bucket(
+                    Bucket=bucket_name, CreateBucketConfiguration=location
+                )
         except ClientError as e:
             logging.error(e)
             return e
         return response
 
-
     def upload_file(
-            self, 
-            base64encoding_of_the_the_file, 
-            bucket, file_name=None,
-            metadata = None,
-            monitor_progress:bool=False):
+        self, base64encoding_of_the_the_file, bucket, file_name=None, metadata=None
+    ):
         """
         Upload a file to an S3 bucket
 
@@ -149,27 +145,21 @@ class S3Processor():
         file_name:str
             File name to assign on upload
         metadata: dict
-            All metadata you need to add to the file. 
+            All metadata you need to add to the file.
             Ideally anything that allows referencing e.g. file sources etc.
-           
+
         Return:
             S3 upload resposne or ClientError
         """
 
         try:
-            print(f'Initating file upload for :: {file_name} to {bucket}')
-            if monitor_progress:
-                callback_func = ProgressPercentage(file_name or 'file')
-            else:
-                callback_func = None
-
-
+            print(f"Initating file upload for :: {file_name} to {bucket}")
             if metadata is None:
                 metadata = {}
 
             response = self.s3_client.put_object(
                 # ACL='private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
-                Body= base64encoding_of_the_the_file ,
+                Body=base64encoding_of_the_the_file,
                 Bucket=bucket,
                 # CacheControl='string',
                 # ContentDisposition='string',
@@ -188,8 +178,8 @@ class S3Processor():
                 # GrantRead='string',
                 # GrantReadACP='string',
                 # GrantWriteACP='string',
-                Key= file_name,
-                Metadata= metadata,
+                Key=file_name,
+                Metadata=metadata,
                 # ServerSideEncryption='AES256'|'aws:kms'|'aws:kms:dsse',
                 # StorageClass='STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'|'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
                 # WebsiteRedirectLocation='string',
@@ -205,41 +195,40 @@ class S3Processor():
                 # ObjectLockLegalHoldStatus='ON'|'OFF',
                 # ExpectedBucketOwner='string'
             )
-            
-            logger.info(f'----- File upload for {file_name} to ---> {response} --------')
+
+            logger.info(
+                f"----- File upload for {file_name} to ---> {response} --------"
+            )
 
             return response
         except Exception as e:
             traceback.print_exc()
             logger.error(e)
             resp = e
-            if 'bucket does not exist' in e.__str__():
+            if "bucket does not exist" in e.__str__():
                 resp = self.create_bucket(bucket)
                 logger.info(resp)
-                if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+                if resp["ResponseMetadata"]["HTTPStatusCode"] == 200:
                     resp = self.upload_file(
-                        base64encoding_of_the_the_file, 
-                        bucket, 
-                        file_name= file_name, 
-                        metadata = metadata
+                        base64encoding_of_the_the_file,
+                        bucket,
+                        file_name=file_name,
+                        metadata=metadata,
                     )
                 else:
                     return resp
 
             return resp
-        
 
     def update_file():
         return NotImplemented
 
-
     def remove_file(self):
         return NotImplemented
 
-
-    def get_file(self, bucket_name, obj_name, range:str|None = None):
+    def get_file(self, bucket_name, obj_name, range: str | None = None):
         """
-        Get a stream response of the requested file 
+        Get a stream response of the requested file
 
         Parameters
         ----------
@@ -254,18 +243,19 @@ class S3Processor():
 
         Returns
         -------
-        S3 stream or file object 
-            
+        S3 stream or file object
+
         """
         if range:
             # For streaming
-            response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name, Range=range)
+            response = self.s3_client.get_object(
+                Bucket=bucket_name, Key=obj_name, Range=range
+            )
         else:
             response = self.s3_client.get_object(Bucket=bucket_name, Key=obj_name)
         return response
-    
 
-    def get_bucket_file_list(self, bucket_name, directory :str|None =None):
+    def get_bucket_file_list(self, bucket_name, directory: str | None = None):
         """
         Parameters
         ----------
@@ -281,7 +271,7 @@ class S3Processor():
                 "images/test.jpg",
                 ...
                 "cases/DPP_2022_Fetilizer.pdf",
-                ...        
+                ...
             ]
 
 
@@ -291,38 +281,45 @@ class S3Processor():
             List of files as per specifed paths
         """
         objects_list = self.s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix = directory
-            ).get("Contents")
-        res  = []
+            Bucket=bucket_name, Prefix=directory
+        ).get("Contents")
+        res = []
         # Iterate over every object in bucket
         if objects_list:
             for obj in objects_list:
-                res.append(re.search('(?<=\\/).*$', obj["Key"]).group(0))
-        
+                res.append(re.search("(?<=\\/).*$", obj["Key"]).group(0))
+
         return res
-    
 
-    def get_bucket_contents(self, bucket_name, directory :str|None =None):  
+    def get_bucket_contents(self, bucket_name, directory: str | None = None):
         objects_list = self.s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix = directory
-            ).get("Contents")
+            Bucket=bucket_name, Prefix=directory
+        ).get("Contents")
 
-        res  = []
+        res = []
 
         # Iterate over every object in bucket
         for obj in objects_list:
             # Read an object from the bucket
             response = self.s3_client.get_object(Bucket=bucket_name, Key=obj["Key"])
-            res.append({
-                'file': obj["Key"],
-                'metadata' : response['Metadata'],
-                'body': response['Body']
-            })
-        
+            res.append(
+                {
+                    "file": obj["Key"],
+                    "metadata": response["Metadata"],
+                    "body": response["Body"],
+                }
+            )
+
         return res
 
-    
-    def download_file(self, bucket_name, object_name, file_name):  
-        return self.s3_client.download_file(bucket_name, object_name, file_name)
+    def download_file(
+        self, bucket_name, object_name, file_name, monitor_progress: bool = True
+    ):
+        if monitor_progress:
+            callback_func = ProgressPercentage(file_name or "file")
+        else:
+            callback_func = None
+
+        return self.s3_client.download_file(
+            bucket_name, object_name, file_name, Callback=callback_func
+        )

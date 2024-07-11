@@ -11,32 +11,31 @@ async def create_user(user_creation_body: UserCreationBody):
 
     user_creation_data = {
         **dict(user_creation_data),
-        'pass_hash' : get_password_hash(password)
-        }
-    data  = User(**user_creation_data)
-    response = run_db_transactions('create',data, User)
+        "pass_hash": get_password_hash(password),
+    }
+    data = User(**user_creation_data)
+    response = run_db_transactions("create", data, User)
 
     return response
 
 
 async def update_user(user_update_body: UserUpdateBody):
-    response = run_db_transactions('update',user_update_body.model_dump(exclude_none=True),User)
+    response = run_db_transactions(
+        "update", user_update_body.model_dump(exclude_none=True), User
+    )
     return response
 
 
-async def filter_users(user_filter_body: any, page:int=1, items_per_page:int=5):
-    user_filter_body['limit'] = items_per_page
-    response = run_db_transactions('get',user_filter_body, User)
+async def filter_users(user_filter_body: any, page: int = 1, items_per_page: int = 5):
+    user_filter_body["limit"] = items_per_page
+    response = run_db_transactions("get", user_filter_body, User)
 
     return response
 
 
 async def delete_user(id: str):
-    data  = {"id":id}
-    response = run_db_transactions('delete',data, User)
+    data = {"id": id}
+    response = run_db_transactions("delete", data, User)
     print(response)
 
     return response
-
-
-

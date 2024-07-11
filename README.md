@@ -24,3 +24,7 @@ repo structure
 ***To run on docker*** <br>
 `docker build -t <_name_> .` <br>
 `docker run -it --net=host <_name_>` <br>
+
+
+***For pre commit checks to kick in*** <br>
+`pre-commit install`
