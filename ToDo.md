@@ -1,4 +1,4 @@
-Add logger
+Add CI/CD , linting etc
 Fix filters for 'get' to allow pagination from page param
 Add signed url option for uploads
 Add lIMITs for count in get functions

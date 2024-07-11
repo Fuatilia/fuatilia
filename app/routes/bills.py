@@ -1,11 +1,14 @@
+import os
+from services.files import (
+    file_upload, get_file_data, 
+    stream_file_data)
 from utils.enum_utils import FileType
 from models.bills import BillCreationBody, BillUpdateBody
 from models.files import FileUploadBody
 from services.bills import (
     create_bill, delete_bill, 
     filter_bills, get_bills_files_list, 
-    get_file_data, stream_file_data, 
-    update_bill, upload_bill_files
+    update_bill,
     )
 
 from fastapi import APIRouter
@@ -26,7 +29,7 @@ async def updateBill(updateBody: BillUpdateBody ):
     return await update_bill(updateBody)
 
 
-@bill_router.get("/")
+@bill_router.get("")
 async def filterBillsBy(
         title: str|None = None ,
         status: str|None = None ,
@@ -67,7 +70,6 @@ async def filterBillsBy(
 
     return await filter_bills(filter_params)
 
-
 @bill_router.get("/{id}")
 async def filterBillsById(id: str|None = None):
     return await filter_bills({"id":id})
@@ -78,7 +80,8 @@ async def deleteBill(id: str = None):
 
 @bill_router.get('/file/{id}')
 async def getBillFiles(id, file_name:str):
-    return await get_file_data(f'{id}/{file_name}')
+    return await get_file_data(os.environ.get('BILLS_DATA_BUCKET_NAME'),
+                               f'{id}/{file_name}')
 
 @bill_router.get('/files/list')
 async def getBillFilesList(fileType: FileType, house:str=None):
@@ -86,9 +89,10 @@ async def getBillFilesList(fileType: FileType, house:str=None):
 
 @bill_router.get('/file/{id}/playback')
 async def streamBillFiles(id, 
-                                    start_KB:int, 
-                                    stop_KB:int, 
-                                    file_name:str ):
+                            start_KB:int, 
+                            stop_KB:int, 
+                            file_name:str 
+                            ):
     return  StreamingResponse(await stream_file_data(f'{id}/{file_name}', 
                                                      start_KB, 
                                                      stop_KB
@@ -98,6 +102,7 @@ async def streamBillFiles(id,
 @bill_router.post('/upload')
 async def uploadBillFiles( file_type: FileType, 
                                    fileUploadBody:FileUploadBody ):
-    return await upload_bill_files( file_type, 
-                                             fileUploadBody.file_name, 
-                                             fileUploadBody.base64encoding)
+    return await file_upload(os.environ.get('BILLS_DATA_BUCKET_NAME'),
+                             file_type, 
+                             fileUploadBody.file_name, 
+                             fileUploadBody.base64encoding)

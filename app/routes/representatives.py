@@ -1,9 +1,13 @@
+import os
+from services.files import (
+    file_upload, get_file_data,
+    stream_file_data
+    )
 from models.files import FileUploadBody
 from services.representatives import (
     create_representative, delete_representative, 
-    filter_representatives, get_file_data, 
-    get_representative_files_list, stream_file_data, 
-    update_representative, upload_representative_files
+    filter_representatives, get_representative_files_list, 
+    update_representative, 
     )
 from models.representatives import (
     RepresentativeCreationBody, 
@@ -26,7 +30,7 @@ async def createRepresentative(createBody: RepresentativeCreationBody ):
 async def updateRepresentative(updateBody: RepresentativeUpdateBody ):
     return await update_representative(updateBody)
 
-@represenatives_router.get("/")
+@represenatives_router.get("")
 async def filterRepresentativesBy(
         full_name : str|None = None, 
         position : str|None = None, 
@@ -64,8 +68,6 @@ async def filterRepresentativesBy(
 
     return await filter_representatives(filter_params)
 
-
-
 @represenatives_router.get("/{id}")
 async def filterRepresentativesById(id: str|None = None):
     return await filter_representatives({"id":id})
@@ -80,14 +82,17 @@ async def getRepresentativeFilesList(id, file_type:FileType):
 
 @represenatives_router.get('/{id}/file')
 async def getRepresentativeFiles(id, file_name:str):
-    return await get_file_data(f'{id}/{file_name}')
+    return await get_file_data(os.environ.get('REPS_DATA_BUCKET_NAME'),
+                               f'{id}/{file_name}')
 
 @represenatives_router.get('/file/{id}/playback')
 async def streamRepresentativeFiles(id, 
                                     start_KB:int, 
                                     stop_KB:int, 
-                                    file_name:str ):
-    return  StreamingResponse(await stream_file_data(f'{id}/{file_name}', 
+                                    file_name:str 
+                                    ):
+    return  StreamingResponse(await stream_file_data(os.environ.get('REPS_DATA_BUCKET_NAME'),
+                                                     f'{id}/{file_name}', 
                                                      start_KB, 
                                                      stop_KB
                                                      )
@@ -96,8 +101,11 @@ async def streamRepresentativeFiles(id,
 @represenatives_router.post('/{id}/upload/{file_type}')
 async def uploadRepresentatveFiles(id:str, 
                                    file_type: FileType, 
-                                   fileUploadBody:FileUploadBody ):
-    return await upload_representative_files(id, 
-                                             file_type, 
-                                             fileUploadBody.file_name, 
-                                             fileUploadBody.base64encoding)
+                                   fileUploadBody:FileUploadBody 
+                                   ):
+    return await file_upload(os.environ.get('REPS_DATA_BUCKET_NAME'),
+                                file_type, 
+                                fileUploadBody.file_name, 
+                                fileUploadBody.base64encoding,
+                                id = id
+                                )

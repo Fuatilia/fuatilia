@@ -1,25 +1,15 @@
 import enum
 from typing import Optional
 import uuid
+from utils.enum_utils import BillStatus, Houses
 from pydantic import Field, BaseModel
 from sqlalchemy import (
     Boolean, Column, 
     Integer, String, DateTime, JSON,
-    UUID, Text, Enum
+    UUID, Enum
     )
 from sqlalchemy.sql import func
 from db import Base
-
-class BillStatus(enum.Enum):
-    FIRST_READING = 'first_reading' 
-    PASSED = 'passed' 
-    FAILED = 'failed' 
-    IN_PROGRESS = 'in_progress'
-    ASCENTED = 'ascented'
-
-class Houses(enum.Enum):
-    NATIONAL= 'national'
-    SENATE= 'senate'
 
 
 class BillCreationBody (BaseModel):
