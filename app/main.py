@@ -8,6 +8,8 @@ from routes.users import user_router
 from routes.votes import vote_router
 from routes.representatives import represenatives_router
 from routes.bills import bill_router
+from routes.roles import role_router
+from routes.custom_permissions import permission_router
 
 dotenv.load_dotenv()
 
@@ -26,10 +28,12 @@ app = FastAPI(
     root_path="/api/" + os.environ.get("PATH_VERSION"),
 )
 
+app.include_router(bill_router)
+app.include_router(permission_router)
+app.include_router(represenatives_router)
+app.include_router(role_router)
 app.include_router(user_router)
 app.include_router(vote_router)
-app.include_router(represenatives_router)
-app.include_router(bill_router)
 
 if __name__ == "__main__":
     is_dev = os.environ.get("ENVIRONMENT") == "dev"

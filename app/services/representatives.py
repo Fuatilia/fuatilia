@@ -1,5 +1,5 @@
 import os
-import traceback
+from utils.logger import logger
 from services.files import file_upload
 from db import run_db_transactions
 from models.representatives import (
@@ -75,7 +75,7 @@ async def create_representative(create_body: RepresentativeCreationBody):
             return response
 
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         return {"error": e.__repr__()}
 
 
@@ -92,6 +92,7 @@ async def filter_representatives(
 ):
     print("Filter representataives ------------>")
     representatives_filter_body["limit"] = items_per_page
+    representatives_filter_body["page"] = page
     response = run_db_transactions("get", representatives_filter_body, Representative)
 
     return response

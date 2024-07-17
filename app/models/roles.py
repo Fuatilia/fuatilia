@@ -7,36 +7,14 @@ from db import Base
 
 
 class RoleCreationBody(BaseModel):
-    permissions = Optional[List[Dict[str, str]]] = Field(
+    permissions: Optional[List[Dict[str, str]]] = Field(
         [
-            {
-                "entity": "User",
-                "scope": "Data",
-                "permission": "Read",
-                "effect": "Allow",
-            },
-            {
-                "entity": "User",
-                "scope": "List",
-                "permission": "Read",
-                "effect": "Allow",
-            },
-            {
-                "entity": "User",
-                "scope": "Data",
-                "permission": "Update.Create",
-                "effect": "Allow",
-            },
-            {
-                "entity": "User",
-                "scope": "List",
-                "permission": "Update.Approve",
-                "effect": "Allow",
-            },
+            "123urhchewd9283sio",
+            "c3yiuoi27dh8ijoxqsx",
         ],
-        description="Array containing dictionary with user permissions",
+        description="Array containing ids of permissions",
     )
-    role = Field(String, example="Admin")
+    role: str = Field(String, example="Admin")
 
     class Config:
         from_attributes = True
@@ -49,13 +27,14 @@ class RoleUpdateBody(BaseModel):
     """
 
     id: str = Field(String, example="some uuid")
-    permissions = Optional[List[Dict[str, str]]] = None
+    permissions: Optional[List[Dict[str, str]]] = None
 
 
 class Role(Base):
+    __tablename__ = "roles"
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
     role = Column(String, unique=True)
-    permission = Column(JSON, nullable=True)
+    permissions = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=True)
 

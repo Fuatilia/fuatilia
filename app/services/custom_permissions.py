@@ -1,4 +1,3 @@
-import traceback
 from utils.logger import logger
 from db import run_db_transactions
 from models.custom_permissions import (
@@ -31,7 +30,7 @@ async def create_permission(create_body: PermissionCreationBody):
         return response
 
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         return {"error": e.__repr__()}
 
 
@@ -48,6 +47,7 @@ async def filter_permissions(
 ):
     logger.info("Filter permissions ------------>")
     permissions_filter_body["limit"] = items_per_page
+    permissions_filter_body["page"] = page
     response = run_db_transactions("get", permissions_filter_body, Permission)
 
     return response

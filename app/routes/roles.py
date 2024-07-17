@@ -1,33 +1,40 @@
-from app.models.roles import RoleCreationBody, RoleUpdateBody
-from app.services.roles import create_role, delete_role, filter_roles, update_role
+from models.roles import RoleCreationBody, RoleUpdateBody
+from services.roles import create_role, delete_role, filter_roles, update_role
 from fastapi import APIRouter
 
-roles_router = APIRouter(
+role_router = APIRouter(
     prefix="/roles",
     tags=["roles"],
 )
 
 
-@roles_router.post("/v1/role/create")
-async def createRole():
-    return await create_role(RoleCreationBody)
+@role_router.post("/v1/role/create")
+async def createRole(create_body: RoleCreationBody):
+    return await create_role(create_body)
 
 
-@roles_router.get("/v1/role/list")
-async def filterRoles(filter_params):
-    return await filter_roles(filter_params)
+@role_router.get("/v1/role/list")
+async def filterRoles(
+    name: str | None = None,
+    page: int = 1,
+    items_per_page: int = 10,
+):
+    filter_params = {
+        "name": name,
+    }
+    return await filter_roles(filter_params, page, items_per_page)
 
 
-@roles_router.get("/v1/role/{id}")
+@role_router.get("/v1/role/{id}")
 async def filterRolesById(id: str):
     return await filter_roles({"id": id})
 
 
-@roles_router.patch("/v1/role")
+@role_router.patch("/v1/role")
 async def updateRole():
     return await update_role(RoleUpdateBody)
 
 
-@roles_router.delete("/v1/role/{id}")
+@role_router.delete("/v1/role/{id}")
 async def deleteRole(id: str):
     return delete_role({"id": id})

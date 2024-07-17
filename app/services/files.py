@@ -1,4 +1,4 @@
-import traceback
+from utils.logger import logger
 from utils.s3_utils import S3Processor
 from utils.enum_utils import FileType
 
@@ -33,7 +33,7 @@ async def file_upload(
         print(response)
         return response
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         return {"error": e.__repr__()}
 
 

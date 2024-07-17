@@ -1,17 +1,36 @@
-import traceback
+import re
+from models.custom_permissions import Permission
 from utils.logger import logger
 from db import run_db_transactions
 from models.roles import Role, RoleCreationBody, RoleUpdateBody
 
 
 async def create_role(create_body: RoleCreationBody):
-    data_to_initialize_role = {
-        "entity": create_body.entity,
-        "role": create_body.role,
-        "is_active": create_body.is_active,
-    }
-
     try:
+        permissions = []
+
+        for permission_id in create_body.permissions:
+            permission_data = run_db_transactions.get(
+                "get", Permission, {"id": permission_id}
+            )
+
+            permissions.append(
+                {
+                    "entity": permission_data.entity,
+                    "scope": re.search("^[^.]*", permission_data["permission"]).group(
+                        0
+                    ),
+                    "permission": re.search(
+                        "(?<=\\/).*$", permission_data["permission"]
+                    ).group(0),
+                    "effect": "Allow",
+                }
+            )
+
+        data_to_initialize_role = {
+            "permissions": permissions,
+            "role": create_body.role,
+        }
         logger.info(f"Role creation with details ::  {data_to_initialize_role}")
         data = Role(**data_to_initialize_role)
 
@@ -22,7 +41,7 @@ async def create_role(create_body: RoleCreationBody):
         return response
 
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         return {"error": e.__repr__()}
 
 
@@ -37,6 +56,7 @@ async def update_role(update_body: RoleUpdateBody):
 async def filter_roles(roles_filter_body: any, page: int = 1, items_per_page: int = 5):
     logger.info("Filter roles ------------>")
     roles_filter_body["limit"] = items_per_page
+    roles_filter_body["page"] = page
     response = run_db_transactions("get", roles_filter_body, Role)
 
     return response

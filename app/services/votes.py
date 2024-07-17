@@ -1,5 +1,4 @@
 import os
-import traceback
 from utils.logger import logger
 from db import run_db_transactions
 from models.votes import Vote, VoteCreationBody, VoteUpdateBody
@@ -30,7 +29,7 @@ async def create_vote(create_body: VoteCreationBody):
         return response
 
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         return {"error": e.__repr__()}
 
 
@@ -45,6 +44,7 @@ async def update_vote(update_body: VoteUpdateBody):
 async def filter_votes(votes_filter_body: any, page: int = 1, items_per_page: int = 5):
     logger.info("Filter bills ------------>")
     votes_filter_body["limit"] = items_per_page
+    votes_filter_body["page"] = page
     response = run_db_transactions("get", votes_filter_body, Vote)
 
     return response

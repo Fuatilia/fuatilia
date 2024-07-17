@@ -24,7 +24,6 @@ async def updateUser(updateBody: UserUpdateBody):
 
 @user_router.get("")
 async def filterUsers(
-    id: str | None = None,
     first_name: str | None = None,
     age_start: int | None = None,
     age_end: int | None = None,
@@ -43,7 +42,6 @@ async def filterUsers(
 ):
     # Covert QS to dict
     filter_params = {
-        "id": id,
         "first_name": first_name,
         "age_start": age_start,
         "age_end": age_end,
