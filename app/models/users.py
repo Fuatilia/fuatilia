@@ -43,8 +43,6 @@ class UserUpdateBody(BaseModel):
 
 
 # Actual user Model
-
-
 class User(Base):
     __tablename__ = "users"
 
