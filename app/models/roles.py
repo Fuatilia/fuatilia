@@ -1,16 +1,16 @@
 from typing import Dict, List, Optional
 import uuid
+from db import Base
 from pydantic import BaseModel, Field
 from sqlalchemy import Column, String, DateTime, UUID, JSON
 from sqlalchemy.sql import func
-from db import Base
 
 
 class RoleCreationBody(BaseModel):
-    permissions: Optional[List[Dict[str, str]]] = Field(
+    permissions: Optional[List[str]] = Field(
         [
-            "123urhchewd9283sio",
-            "c3yiuoi27dh8ijoxqsx",
+            "c39064d7-73de-4c76-97a4-fd0818e32dee",
+            "d036effc-cc7d-4291-8fa4-1159fa1ac1a1",
         ],
         description="Array containing ids of permissions",
     )

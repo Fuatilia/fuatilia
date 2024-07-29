@@ -54,15 +54,23 @@ def run_db_transactions(directive: str, data: any, model: any):
             }
 
         elif directive == "get":
-            # ToDo FIIIXXX THISSS (Not Working)
-            limit = data["limit"]
-            offset = (data["page"] - 1) * limit
-            del data["limit"]
-            del data["page"]
+            if data.get("id"):
+                final_resp = jsonable_encoder(
+                    session.query(model).filter_by(**data).first()
+                )
+            else:
+                limit = data["limit"]
+                offset = (data["page"] - 1) * limit
+                del data["limit"]
+                del data["page"]
 
-            final_resp = jsonable_encoder(
-                session.query(model).filter_by(data).limit(limit).offset(offset).all()
-            )
+                final_resp = jsonable_encoder(
+                    session.query(model)
+                    .filter_by(**data)
+                    .limit(limit)
+                    .offset(offset)
+                    .all()
+                )
 
         session.commit()
 

@@ -25,15 +25,17 @@ app = FastAPI(
     ],
     docs_url="/docs/dev",
     redoc_url="/docs/api",
-    root_path="/api/" + os.environ.get("PATH_VERSION"),
+    root_path="/api",
 )
 
-app.include_router(bill_router)
-app.include_router(permission_router)
-app.include_router(represenatives_router)
-app.include_router(role_router)
-app.include_router(user_router)
-app.include_router(vote_router)
+
+default_path_version = os.environ.get("DEFAULT_PATH_VERSION")
+app.include_router(bill_router, prefix=default_path_version)
+app.include_router(permission_router, prefix=default_path_version)
+app.include_router(represenatives_router, prefix=default_path_version)
+app.include_router(role_router, prefix=default_path_version)
+app.include_router(user_router, prefix=default_path_version)
+app.include_router(vote_router, prefix=default_path_version)
 
 if __name__ == "__main__":
     is_dev = os.environ.get("ENVIRONMENT") == "dev"

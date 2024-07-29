@@ -61,6 +61,10 @@ async def filterRepresentativesBy(
         "items_per_page": items_per_page,
     }
 
+    for key in filter_params.copy():
+        if not filter_params[key]:
+            filter_params.pop(key)
+
     return await filter_representatives(filter_params)
 
 

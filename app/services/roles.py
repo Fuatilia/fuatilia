@@ -10,18 +10,18 @@ async def create_role(create_body: RoleCreationBody):
         permissions = []
 
         for permission_id in create_body.permissions:
-            permission_data = run_db_transactions.get(
-                "get", Permission, {"id": permission_id}
+            permission_data = run_db_transactions(
+                "get", {"id": permission_id}, Permission
             )
 
             permissions.append(
                 {
-                    "entity": permission_data.entity,
+                    "entity": permission_data["entity"],
                     "scope": re.search("^[^.]*", permission_data["permission"]).group(
                         0
                     ),
                     "permission": re.search(
-                        "(?<=\\/).*$", permission_data["permission"]
+                        "(?<=\\.).*$", permission_data["permission"]
                     ).group(0),
                     "effect": "Allow",
                 }
