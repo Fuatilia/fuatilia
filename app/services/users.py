@@ -28,6 +28,7 @@ async def update_user(user_update_body: UserUpdateBody):
 
 async def filter_users(user_filter_body: any, page: int = 1, items_per_page: int = 5):
     user_filter_body["limit"] = items_per_page
+    user_filter_body["page"] = page
     response = run_db_transactions("get", user_filter_body, User)
 
     return response

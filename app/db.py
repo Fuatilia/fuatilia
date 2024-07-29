@@ -1,5 +1,4 @@
 import os
-import traceback
 from utils.logger import logger
 import dotenv
 from fastapi.encoders import jsonable_encoder
@@ -55,7 +54,23 @@ def run_db_transactions(directive: str, data: any, model: any):
             }
 
         elif directive == "get":
-            final_resp = jsonable_encoder(session.query(model).filter(data).all())
+            if data.get("id"):
+                final_resp = jsonable_encoder(
+                    session.query(model).filter_by(**data).first()
+                )
+            else:
+                limit = data["limit"]
+                offset = (data["page"] - 1) * limit
+                del data["limit"]
+                del data["page"]
+
+                final_resp = jsonable_encoder(
+                    session.query(model)
+                    .filter_by(**data)
+                    .limit(limit)
+                    .offset(offset)
+                    .all()
+                )
 
         session.commit()
 
@@ -77,8 +92,9 @@ def run_db_transactions(directive: str, data: any, model: any):
             # Fix this to update columns
             Base.metadata.create_all(bind=engine)
 
-        traceback.print_exc()
-        return {"status": 500, "error": e}
+        logger.exception(e)
+
+        return {"status": 500, "error": e.__str__()}
 
     finally:
         session.close()

@@ -1,6 +1,5 @@
 import logging
 import re
-import traceback
 import boto3
 import os
 import sys
@@ -202,7 +201,7 @@ class S3Processor:
 
             return response
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             logger.error(e)
             resp = e
             if "bucket does not exist" in e.__str__():
