@@ -1,4 +1,6 @@
 import os
+from utils.auth import user_has_permissions
+from fastapi import Security
 from services.files import file_upload, get_file_data, stream_file_data
 from utils.enum_utils import FileType
 from models.bills import BillCreationBody, BillUpdateBody
@@ -19,20 +21,36 @@ bill_router = APIRouter(tags=["Bills"], prefix="/bills")
 
 
 @bill_router.post("/create")
-async def createBill(createBody: BillCreationBody):
-    return await create_bill(createBody)
+async def createBill(
+    createBody: BillCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["bill_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_bill(createBody)
+    else:
+        return permission_check_passed
 
 
 @bill_router.patch("/update")
-async def updateBill(updateBody: BillUpdateBody):
-    return await update_bill(updateBody)
+async def updateBill(
+    updateBody: BillUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["bill_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_bill(updateBody)
+    else:
+        return permission_check_passed
 
 
 @bill_router.get("")
 async def filterBillsBy(
     title: str | None = None,
     status: str | None = None,
-    brought_forth_by: str | None = None,
+    sponsored_by: str | None = None,
     supported_by: str | None = None,
     summary: str | None = None,
     summary_created_by: str | None = None,
@@ -48,8 +66,8 @@ async def filterBillsBy(
 ):
     filter_params = {
         "title": title,
-        "status": status,
-        "brought_forth_by": brought_forth_by,
+        "status_code": status,
+        "sponsored_by": sponsored_by,
         "supported_by ": supported_by,
         "summary": summary,
         "summary_created_by": summary_created_by,
@@ -73,8 +91,16 @@ async def filterBillsById(id: str | None = None):
 
 
 @bill_router.delete("/{id}")
-async def deleteBill(id: str = None):
-    return await delete_bill(id)
+async def deleteBill(
+    id: str = None,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["bill_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await delete_bill(id)
+    else:
+        return permission_check_passed
 
 
 @bill_router.get("/file/{id}")
@@ -97,10 +123,20 @@ async def streamBillFiles(id, start_KB: int, stop_KB: int, file_name: str):
 
 
 @bill_router.post("/upload")
-async def uploadBillFiles(file_type: FileType, fileUploadBody: FileUploadBody):
-    return await file_upload(
-        os.environ.get("BILLS_DATA_BUCKET_NAME"),
-        file_type,
-        fileUploadBody.file_name,
-        fileUploadBody.base64encoding,
-    )
+async def uploadBillFiles(
+    file_type: FileType,
+    fileUploadBody: FileUploadBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["bill_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await file_upload(
+            os.environ.get("BILLS_DATA_BUCKET_NAME"),
+            file_type,
+            fileUploadBody.file_name,
+            fileUploadBody.base64encoding,
+        )
+
+    else:
+        return permission_check_passed

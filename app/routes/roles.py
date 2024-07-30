@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 role_router = APIRouter(
     prefix="/roles",
-    tags=["roles"],
+    tags=["Roles"],
 )
 
 

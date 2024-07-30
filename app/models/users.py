@@ -18,6 +18,7 @@ class UserCreationBody(BaseModel):
     )
     phone_number: str = Field(example="254711111111")
     is_active: bool = Field(default=True, example=True)
+    role: str | None  # Will be passed from roles available
 
     class Config:
         from_attributes = True
@@ -37,6 +38,18 @@ class UserUpdateBody(BaseModel):
     )
     phone_number: Optional[str] = Field(example="254722222222")
     is_active: Optional[bool] = Field(example=True)
+    role: str | None = Field(
+        example="254722222222"
+    )  # Will be passed from roles available
+
+    class Config:
+        from_attributes = True
+
+
+# Login Body for users
+class UserLoginBody(BaseModel):
+    email: str = Field(example="user@gmail.com")
+    password: str = Field(example="password1")
 
     class Config:
         from_attributes = True
@@ -47,8 +60,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
+    first_name = Column(String(20))
+    last_name = Column(String(20))
+    email = Column(String(50))
     phone_number = Column(String(13))
     user_type = Column(String(12))
     pass_hash = Column(String)

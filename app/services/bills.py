@@ -13,7 +13,7 @@ async def create_bill(create_body: BillCreationBody):
     data_to_initialize_bill = {
         "title": create_body.title,
         "status": create_body.status,
-        "brought_forth_by": create_body.brought_forth_by,
+        "sponsored_by": create_body.sponsored_by,
         "supported_by": create_body.supported_by,
         "house": create_body.house,
         "summary": create_body.summary,
@@ -31,7 +31,7 @@ async def create_bill(create_body: BillCreationBody):
         response = run_db_transactions("create", data, Bill)
 
         logger.info(response)
-        if response["status"] == 500:
+        if response["status_code"] == 500:
             return response
 
         str_id = str(response["data"]["id"])
