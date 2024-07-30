@@ -10,7 +10,7 @@ from db import Base
 class BillCreationBody(BaseModel):
     title: str = Field(description="The title of the bill e.g. Finance bill 2024")
     status: BillStatus
-    brought_forth_by: str = Field(example="6879ygv787gyv87")  # rep name/ID
+    sponsored_by: str = Field(example="6879ygv787gyv87")  # rep name/ID
     supported_by: str = Field(
         example="6879ygv787gyv87", nullable=True
     )  # (Not sure if this happens in kenya when bringing a bill forward, but will confirm)
@@ -44,7 +44,7 @@ class BillUpdateBody(BaseModel):
     id: str = Field(example="some uuid")
     title: Optional[str] = None
     status: Optional[BillStatus] = None
-    brought_forth_by: Optional[str] = None
+    sponsored_by: Optional[str] = None
     supported_by: Optional[str] = None
     house: Optional[str] = None
     file_source: Optional[str] = None
@@ -68,7 +68,7 @@ class Bill(Base):
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     title = Column(String)
     status = Column(Enum(BillStatus))
-    brought_forth_by = Column(
+    sponsored_by = Column(
         String,
     )  # rep name/ID
     supported_by = Column(

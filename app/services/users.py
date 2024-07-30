@@ -1,6 +1,11 @@
-from utils.auth import get_password_hash
+from utils.auth import (
+    create_access_token,
+    generate_user_dict_to_encode,
+    get_password_hash,
+    verify_password,
+)
 from db import run_db_transactions
-from models.users import User, UserCreationBody, UserUpdateBody
+from models.users import User, UserCreationBody, UserUpdateBody, UserLoginBody
 
 
 async def create_user(user_creation_body: UserCreationBody):
@@ -40,3 +45,37 @@ async def delete_user(id: str):
     print(response)
 
     return response
+
+
+async def login_user(login_body: UserLoginBody):
+    user_list = await filter_users(
+        {"email": login_body.email}
+    )  # Should return an array
+
+    if len(user_list) < 1:
+        return {
+            "status_code": 404,
+            "message": "Invalid email/username or password",
+            "error": "Missing details",
+        }
+    if len(user_list) > 1:
+        return {
+            "status_code": 404,
+            "message": "Invalid email/username or password",
+            "error": f"Invalid response count > 1 : {user_list}",
+        }
+
+    if not verify_password(login_body.password, user_list[0]["pass_hash"]):
+        return {
+            "status_code": 401,
+            "message": "Invalid email/username or password",
+            "error": "Missing details",
+        }
+
+    user_data = generate_user_dict_to_encode(user_list[0])
+    if type(user_data) is not type([]) and user_data.get("status") in [500, 400]:
+        return user_data
+
+    jwt = create_access_token(user_data)
+
+    return {"access_token": jwt, "token_type": "bearer"}

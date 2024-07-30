@@ -1,7 +1,13 @@
 from fastapi import APIRouter
 
-from services.users import create_user, update_user, delete_user, filter_users
-from models.users import UserCreationBody, UserUpdateBody
+from services.users import (
+    create_user,
+    login_user,
+    update_user,
+    delete_user,
+    filter_users,
+)
+from models.users import UserLoginBody, UserCreationBody, UserUpdateBody
 
 user_router = APIRouter(tags=["User"], prefix="/users")
 
@@ -12,9 +18,8 @@ async def createUser(createBody: UserCreationBody):
 
 
 @user_router.post("/login")
-async def loginUser(createBody: UserCreationBody):
-    # return await login_user(createBody)
-    return NotImplementedError
+async def UserLoginBody(loginBody: UserLoginBody):
+    return await login_user(loginBody)
 
 
 @user_router.patch("/update")

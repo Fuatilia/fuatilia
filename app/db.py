@@ -26,7 +26,7 @@ def run_db_transactions(directive: str, data: any, model: any):
         if directive == "create":
             session.add(data)
             final_resp = {
-                "status": 202,
+                "status_code": 202,
                 "message": "Succesfully created",
             }
 
@@ -39,7 +39,7 @@ def run_db_transactions(directive: str, data: any, model: any):
             data = session.query(model).filter(model.id == instance_id).first()
 
             final_resp = {
-                "status": 200,
+                "status_code": 200,
                 "message": "Succesfully updated",
             }
 
@@ -49,7 +49,7 @@ def run_db_transactions(directive: str, data: any, model: any):
             )
             session.delete(object_to_delete)
             final_resp = {
-                "status": 204,
+                "status_code": 204,
                 "message": f'Successfully deleted {data['id']}',
             }
 
@@ -59,10 +59,11 @@ def run_db_transactions(directive: str, data: any, model: any):
                     session.query(model).filter_by(**data).first()
                 )
             else:
-                limit = data["limit"]
-                offset = (data["page"] - 1) * limit
-                del data["limit"]
-                del data["page"]
+                limit = data.get("limit") or 1
+                page = data.get("page") or 1
+                offset = (page - 1) * limit
+                data.pop("limit", None)
+                data.pop("page", None)
 
                 final_resp = jsonable_encoder(
                     session.query(model)
@@ -75,7 +76,6 @@ def run_db_transactions(directive: str, data: any, model: any):
         session.commit()
 
         if directive in ["create", "update"]:
-            print(type(data))
             session.refresh(data)
             final_resp["data"] = data.__dict__
             del final_resp["data"]["_sa_instance_state"]
@@ -94,7 +94,7 @@ def run_db_transactions(directive: str, data: any, model: any):
 
         logger.exception(e)
 
-        return {"status": 500, "error": e.__str__()}
+        return {"status_code": 500, "error": e.__str__()}
 
     finally:
         session.close()

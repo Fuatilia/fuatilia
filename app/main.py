@@ -3,13 +3,16 @@ from utils.logger import logger
 import dotenv
 from fastapi import FastAPI
 import uvicorn
-
 from routes.users import user_router
 from routes.votes import vote_router
 from routes.representatives import represenatives_router
 from routes.bills import bill_router
 from routes.roles import role_router
 from routes.custom_permissions import permission_router
+from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.trustedhost import TrustedHostMiddleware
+# from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
 
 dotenv.load_dotenv()
 
@@ -18,16 +21,27 @@ app = FastAPI(
     title="Fuatilia",
     summary="Fuatilia API endpoints",
     version=os.environ.get("VERSION"),
-    openapi_url="/fuatilia postman collection.json",
     servers=[
-        {"url": os.environ.get("BASE_URL") + "/dev", "description": "Dev"},
-        {"url": os.environ.get("BASE_URL") + "/sandbox", "description": "Sandbox"},
+        {"url": os.environ.get("DEV_BASE_URL") + "/api", "description": "Dev"},
+        {"url": os.environ.get("SANDBOX_BASE_URL") + "/api", "description": "Sandbox"},
     ],
     docs_url="/docs/dev",
     redoc_url="/docs/api",
+    openapi_url="/docs/fuatilia postman collection.json",
     root_path="/api",
 )
 
+# app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(
+#     TrustedHostMiddleware, allowed_hosts=['*.fuatilia.africa']
+# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["....myfrontend...."],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 default_path_version = os.environ.get("DEFAULT_PATH_VERSION")
 app.include_router(bill_router, prefix=default_path_version)
