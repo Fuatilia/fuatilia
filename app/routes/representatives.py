@@ -10,7 +10,8 @@ from services.representatives import (
 )
 from models.representatives import RepresentativeCreationBody, RepresentativeUpdateBody
 from utils.enum_utils import FileType
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
+from utils.auth import user_has_permissions
 from fastapi.responses import StreamingResponse
 
 
@@ -18,13 +19,29 @@ represenatives_router = APIRouter(tags=["Representatives"], prefix="/representat
 
 
 @represenatives_router.post("/create")
-async def createRepresentative(createBody: RepresentativeCreationBody):
-    return await create_representative(createBody)
+async def createRepresentative(
+    createBody: RepresentativeCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["representative_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_representative(createBody)
+    else:
+        return permission_check_passed
 
 
 @represenatives_router.patch("/update")
-async def updateRepresentative(updateBody: RepresentativeUpdateBody):
-    return await update_representative(updateBody)
+async def updateRepresentative(
+    updateBody: RepresentativeUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["representative_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_representative(updateBody)
+    else:
+        return permission_check_passed
 
 
 @represenatives_router.get("")
@@ -74,8 +91,16 @@ async def filterRepresentativesById(id: str | None = None):
 
 
 @represenatives_router.delete("/{id}")
-async def deleteRepresentative(id: str = None):
-    return await delete_representative(id)
+async def deleteRepresentative(
+    id: str = None,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["representative_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await delete_representative(id)
+    else:
+        return permission_check_passed
 
 
 @represenatives_router.get("/files/list/{id}")
@@ -104,12 +129,22 @@ async def streamRepresentativeFiles(id, start_KB: int, stop_KB: int, file_name: 
 
 @represenatives_router.post("/{id}/upload/{file_type}")
 async def uploadRepresentatveFiles(
-    id: str, file_type: FileType, fileUploadBody: FileUploadBody
+    id: str,
+    file_type: FileType,
+    fileUploadBody: FileUploadBody,
+    permission_check_passed=Security(
+        user_has_permissions,
+        scopes=["representative_filedata_s3.upload"],
+        use_cache=True,
+    ),
 ):
-    return await file_upload(
-        os.environ.get("REPS_DATA_BUCKET_NAME"),
-        file_type,
-        fileUploadBody.file_name,
-        fileUploadBody.base64encoding,
-        id=id,
-    )
+    if permission_check_passed is True:
+        return await file_upload(
+            os.environ.get("REPS_DATA_BUCKET_NAME"),
+            file_type,
+            fileUploadBody.file_name,
+            fileUploadBody.base64encoding,
+            id=id,
+        )
+    else:
+        return permission_check_passed

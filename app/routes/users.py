@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, Security
+from utils.auth import user_has_permissions
 from services.users import (
     create_user,
     login_user,
@@ -13,8 +13,16 @@ user_router = APIRouter(tags=["User"], prefix="/users")
 
 
 @user_router.post("/create")
-async def createUser(createBody: UserCreationBody):
-    return await create_user(createBody)
+async def createUser(
+    createBody: UserCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["user_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_user(createBody)
+    else:
+        return permission_check_passed
 
 
 @user_router.post("/login")
@@ -23,8 +31,16 @@ async def UserLoginBody(loginBody: UserLoginBody):
 
 
 @user_router.patch("/update")
-async def updateUser(updateBody: UserUpdateBody):
-    return await update_user(updateBody)
+async def updateUser(
+    updateBody: UserUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["user_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_user(updateBody)
+    else:
+        return permission_check_passed
 
 
 @user_router.get("")
@@ -44,36 +60,56 @@ async def filterUsers(
     cart: str | None = None,
     page: int = 1,
     items_per_page: int = 10,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["user_list_read"], use_cache=True
+    ),
 ):
-    # Covert QS to dict
-    filter_params = {
-        "first_name": first_name,
-        "age_start": age_start,
-        "age_end": age_end,
-        "user_type": user_type,
-        "last_name": last_name,
-        "phone_number": phone_number,
-        "parent_organization": parent_organization,
-        "created_at_start": created_at_start,
-        "created_at_end": created_at_end,
-        "updated_at_start": updated_at_start,
-        "updated_at_end": updated_at_end,
-        "is_active": is_active,
-        "cart": cart,
-    }
+    if permission_check_passed is True:
+        # Covert QS to dict
+        filter_params = {
+            "first_name": first_name,
+            "age_start": age_start,
+            "age_end": age_end,
+            "user_type": user_type,
+            "last_name": last_name,
+            "phone_number": phone_number,
+            "parent_organization": parent_organization,
+            "created_at_start": created_at_start,
+            "created_at_end": created_at_end,
+            "updated_at_start": updated_at_start,
+            "updated_at_end": updated_at_end,
+            "is_active": is_active,
+            "cart": cart,
+        }
 
-    for key in filter_params.copy():
-        if not filter_params[key]:
-            filter_params.pop(key)
+        for key in filter_params.copy():
+            if not filter_params[key]:
+                filter_params.pop(key)
 
-    return await filter_users(filter_params, page, items_per_page)
+        return await filter_users(filter_params, page, items_per_page)
 
 
 @user_router.get("/{id}")
-async def getUserById(id: str | None = None):
-    return await filter_users({"id": id})
+async def getUserById(
+    id: str | None = None,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["user_data_read"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await filter_users({"id": id})
+    else:
+        return permission_check_passed
 
 
 @user_router.delete("/{id}")
-async def deleteUser(id: str = None):
-    return await delete_user(id)
+async def deleteUser(
+    id: str = None,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["user_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await delete_user(id)
+    else:
+        return permission_check_passed

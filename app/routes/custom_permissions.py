@@ -5,7 +5,9 @@ from services.custom_permissions import (
     filter_permissions,
     update_permission,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
+from utils.auth import user_has_permissions
+
 
 permission_router = APIRouter(
     prefix="/permission",
@@ -14,8 +16,16 @@ permission_router = APIRouter(
 
 
 @permission_router.post("/v1/create")
-async def createPermission(create_body: PermissionCreationBody):
-    return await create_permission(create_body)
+async def createPermission(
+    create_body: PermissionCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["permission_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_permission(create_body)
+    else:
+        return permission_check_passed
 
 
 @permission_router.get("/v1/list")
@@ -41,10 +51,26 @@ async def filterPermissionsById(id: str):
 
 
 @permission_router.patch("/v1")
-async def updatePermission(update_body: PermissionUpdateBody):
-    return await update_permission(update_body)
+async def updatePermission(
+    update_body: PermissionUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["permission_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_permission(update_body)
+    else:
+        return permission_check_passed
 
 
 @permission_router.delete("/v1/{id}")
-async def deletePermission(id: str):
-    return delete_permission({"id": id})
+async def deletePermission(
+    id: str,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["permission_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return delete_permission({"id": id})
+    else:
+        return permission_check_passed
