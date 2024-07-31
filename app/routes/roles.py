@@ -1,6 +1,7 @@
 from models.roles import RoleCreationBody, RoleUpdateBody
 from services.roles import create_role, delete_role, filter_roles, update_role
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
+from utils.auth import user_has_permissions
 
 role_router = APIRouter(
     prefix="/roles",
@@ -9,8 +10,16 @@ role_router = APIRouter(
 
 
 @role_router.post("/create")
-async def createRole(create_body: RoleCreationBody):
-    return await create_role(create_body)
+async def createRole(
+    create_body: RoleCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["role_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_role(create_body)
+    else:
+        return permission_check_passed
 
 
 @role_router.get("")
@@ -36,10 +45,26 @@ async def filterRolesById(id: str):
 
 
 @role_router.patch("/update")
-async def updateRole():
-    return await update_role(RoleUpdateBody)
+async def updateRole(
+    roleUpdateBody: RoleUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["role_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_role(roleUpdateBody)
+    else:
+        permission_check_passed
 
 
 @role_router.delete("/{id}")
-async def deleteRole(id: str):
-    return delete_role({"id": id})
+async def deleteRole(
+    id: str,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["role_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return delete_role({"id": id})
+    else:
+        permission_check_passed

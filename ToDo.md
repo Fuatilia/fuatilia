@@ -1,7 +1,4 @@
-Add CI/CD , linting etc
-Fix filters for 'get' to allow pagination from page param
 Add signed url option for uploads
-Add lIMITs for count in get functions
 
 S3 FILE formart for resp
 rep_id
@@ -16,31 +13,6 @@ Add content type to metadata  ?
 
 implement monitor_progress --- > for file upload /download
 
-
-Permissins Format
-[
-    {
-        "entity": "User",
-        "scope": "Data",
-        "permission": "Read",
-        "effect": "Allow",
-    },
-    {
-        "entity": "User",
-        "scope": "List",
-        "permission": "Read",
-        "effect": "Allow",
-    },
-    {
-        "entity": "User",
-        "scope": "Data",
-        "permission": "Update.Create",
-        "effect": "Allow",
-    },
-    {
-        "entity": "User",
-        "scope": "List",
-        "permission": "Update.Approve",
-        "effect": "Allow",
-    },
-]
+Implement adding permmisons to roles as a seperate endpoint
+Adding filters for __gte , __lte etc
+Add logging

@@ -9,7 +9,8 @@ from services.votes import (
     get_votes_files_list,
     update_vote,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
+from utils.auth import user_has_permissions
 from fastapi.responses import StreamingResponse
 
 from models.votes import VoteCreationBody, VoteUpdateBody
@@ -18,13 +19,29 @@ vote_router = APIRouter(tags=["Vote"], prefix="/votes")
 
 
 @vote_router.post("/create")
-async def createVote(createBody: VoteCreationBody):
-    return await create_vote(createBody)
+async def createVote(
+    createBody: VoteCreationBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["vote_data_create"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await create_vote(createBody)
+    else:
+        return permission_check_passed
 
 
 @vote_router.patch("/update")
-async def updateVote(updateBody: VoteUpdateBody):
-    return await update_vote(updateBody)
+async def updateVote(
+    updateBody: VoteUpdateBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["vote_data_update"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await update_vote(updateBody)
+    else:
+        return permission_check_passed
 
 
 @vote_router.get("")
@@ -58,8 +75,16 @@ async def filterVotesById(id: str | None = None):
 
 
 @vote_router.delete("/{id}")
-async def deleteVote(id: str = None):
-    return await delete_vote(id)
+async def deleteVote(
+    id: str = None,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["vote_data_delete"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await delete_vote(id)
+    else:
+        return permission_check_passed
 
 
 @vote_router.get("/files/list")
@@ -82,10 +107,19 @@ async def streamVoteFiles(id, start_KB: int, stop_KB: int, file_name: str):
 
 
 @vote_router.post("/upload")
-async def uploadVoteFiles(file_type: FileType, fileUploadBody: FileUploadBody):
-    return await file_upload(
-        os.environ.get("VOTES_DATA_BUCKET_NAME"),
-        file_type,
-        fileUploadBody.file_name,
-        fileUploadBody.base64encoding,
-    )
+async def uploadVoteFiles(
+    file_type: FileType,
+    fileUploadBody: FileUploadBody,
+    permission_check_passed=Security(
+        user_has_permissions, scopes=["vote_filedata_s3.upload"], use_cache=True
+    ),
+):
+    if permission_check_passed is True:
+        return await file_upload(
+            os.environ.get("VOTES_DATA_BUCKET_NAME"),
+            file_type,
+            fileUploadBody.file_name,
+            fileUploadBody.base64encoding,
+        )
+    else:
+        return permission_check_passed

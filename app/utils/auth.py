@@ -83,7 +83,7 @@ async def user_has_permissions(security_scopes: SecurityScopes, request: Request
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not authenticate values",
+        detail="Could not authenticate user. Missing values or token in 'Authorization'",
         headers={"Authorization": authenticate_value},
     )
 
@@ -110,7 +110,7 @@ async def user_has_permissions(security_scopes: SecurityScopes, request: Request
         if scope not in token_scopes:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not enough permissions",
+                detail=f"User {user_email} missing permission --> {scope}",
                 headers={"Authorization": authenticate_value},
             )
 
