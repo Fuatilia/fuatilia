@@ -3,13 +3,14 @@ Fuatilia
 ```
 repo structure
 |--app
-    |--models
-    |--routes
-    |--services (modularized functions specifically tied to model implemetation)
+    |--apps
+        |---(Each app with their models, urls, ....)
+    |--settings.py
     |--utils (generic functions/classes)
     |-- __init_.py
-    |--db.py
-    |--main.py
+    |--asgi.py
+    |--wsgi.py
+    |--manage.py
 |--.dockerignore
 |--.gitignore
 |--Dockerfile
@@ -24,7 +25,3 @@ repo structure
 ***To run on docker*** <br>
 `docker build -t <_name_> .` <br>
 `docker run -it --net=host <_name_>` <br>
-
-
-***For pre commit checks to kick in*** <br>
-`pre-commit install`
