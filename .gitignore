@@ -3,5 +3,6 @@
 **/__pycache__/
 *.lock
 /logs
+*.sqlite3
 .ruff_cache
 .pytest_cache

@@ -1,0 +1,49 @@
+import uuid
+from django.db import models
+
+
+class PositionType(models.TextChoices):
+    ELECTED = "ELECTED"
+    NOMINATED = "NOMINATED"
+
+
+class Position(models.TextChoices):
+    MP = "MP"
+    SENATOR = "SENATOR"
+    WOMEN_REP = "WOMEN_REP"
+    MCA = "MCA"
+
+
+class House(models.TextChoices):
+    NATIONAL = "NATIONAL"
+    SENATE = "SENATE"
+
+
+class GENDER(models.TextChoices):
+    FEMALE = "F"
+    MALE = "M"
+
+
+# Actual representative Model
+class Representative(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    full_name = models.CharField(max_length=100)
+    position = models.CharField(max_length=10, choices=Position)
+    position_type = models.CharField(max_length=10, choices=PositionType)
+    house = models.CharField(max_length=10, choices=House)
+    area_represented = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, null=True)
+    image_url = models.CharField(max_length=100, null=True)
+    gender = models.CharField(max_length=2)
+    representation_summary = models.JSONField(null=True)
+    pending_update_json = models.JSONField(null=True)
+    updated_by = models.CharField(max_length=30, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __repr__(self):
+        return self.__dict__
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "representative"

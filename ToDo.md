@@ -1,4 +1,6 @@
-Add signed url option for uploads
+Fix auth  for user
+
+Add fuzzy searching ?
 
 S3 FILE formart for resp
 rep_id
@@ -12,7 +14,3 @@ Send image upload and processing to a queue?
 Add content type to metadata  ?
 
 implement monitor_progress --- > for file upload /download
-
-Implement adding permmisons to roles as a seperate endpoint
-Adding filters for __gte , __lte etc
-Add logging
