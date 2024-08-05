@@ -10,8 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import dotenv
 from pathlib import Path
 from datetime import datetime
+
+dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -166,9 +169,10 @@ LOGGING = {
         },
         "file": {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')} {datetime.now().hour//3}.log",
+            "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')}.log",
+            "maxBytes": 1,  # os.environ.get('MAX_LOGFILE_BYTES')
         },
         "mail_admins": {
             "level": "ERROR",
@@ -176,7 +180,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["console", "file", "mail_admins"], "level": "INFO"},
+        "app_logger": {"handlers": ["console", "file", "mail_admins"], "level": "INFO"},
         "dev": {"handlers": ["console", "file"], "level": "DEBUG"},
     },
 }

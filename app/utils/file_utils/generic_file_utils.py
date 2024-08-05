@@ -1,12 +1,12 @@
-from app.utils.enum_utils import FileType
-from s3_utils import S3Processor
+from utils.enum_utils import FileType
+from utils.file_utils.s3_utils import S3Processor
 import logging
 
 # Initiate S3 processor
 representative_s3_processor = S3Processor()
 
 
-async def file_upload(
+def file_upload(
     bucket_name: str, file_type: FileType, file_name, base64encoding, **kwargs
 ):
     """

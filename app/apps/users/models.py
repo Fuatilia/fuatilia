@@ -53,3 +53,4 @@ class User(AbstractUser):
             "user_type",
         ]  # Allow people to use their emails for their apps
         db_table = "users"
+        verbose_name_plural = "users"

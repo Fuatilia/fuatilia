@@ -1,3 +1,4 @@
+import logging
 from apps.users import serializers
 from apps.users.models import User, UserRole
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -5,9 +6,12 @@ from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from drf_spectacular.utils import extend_schema
 
+logger = logging.getLogger("app_logger")
+
 
 class CreateUser(CreateAPIView):
     @extend_schema(
+        tags=["Users"],
         request=serializers.UserCreationSerializer,
         responses={201: serializers.UserFetchSerializer},
     )
@@ -18,6 +22,7 @@ class CreateUser(CreateAPIView):
 
 class CreateApp(CreateAPIView):
     @extend_schema(
+        tags=["Users"],
         request=serializers.AppCreationSerializer,
         responses={201: serializers.UserFetchSerializer},
     )
@@ -37,7 +42,7 @@ class ListUsers(GenericAPIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(parameters=[serializers.UserFilterSerializer])
+    @extend_schema(tags=["Users"], parameters=[serializers.UserFilterSerializer])
     def get(self, request):
         return self.get_queryset()
 
@@ -100,12 +105,14 @@ class ListUsers(GenericAPIView):
 
 class GetOrDeleteUser(GenericAPIView):
     @extend_schema(
+        tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
     )
     def get(self, request, id):
         return User.objects.filter(user__pk=id)
 
     @extend_schema(
+        tags=["Users"],
         responses={204: {"message": "User succesfully deleted"}},
     )
     def delete(self, request, id):

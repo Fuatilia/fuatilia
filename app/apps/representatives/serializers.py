@@ -2,19 +2,19 @@ from apps.representatives.models import Representative
 from rest_framework import serializers
 
 
-class FullFetchRepresenatativeSerializer(serializers):
+class FullFetchRepresentativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representative
         fields = "__all__"
 
 
-class UserFetchRepresenatativeSerializer(serializers):
+class UserFetchRepresentativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representative
         exclude = ("created_at", "updated_at", "updated_by", "pending_update_json")
 
 
-class RepresentativeCreationSerializer(serializers):
+class RepresentativeCreationSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     position = serializers.CharField()
     position_type = serializers.CharField()
@@ -30,7 +30,7 @@ class RepresentativeCreationSerializer(serializers):
         return representative
 
 
-class RepresentativeUpdateSerializer(serializers):
+class RepresentativeUpdateSerializer(serializers.Serializer):
     full_name = serializers.CharField(required=False)
     position = serializers.CharField(required=False)
     position_type = serializers.CharField(required=False)
@@ -41,3 +41,21 @@ class RepresentativeUpdateSerializer(serializers):
     gender = serializers.CharField(required=False)
     updated_by = serializers.CharField(max_length=30)
     representation_summary = serializers.JSONField(required=False)
+
+
+class RepresentativeFilterSerilizer(serializers.Serializer):
+    full_name = serializers.CharField(required=False)
+    position = serializers.CharField(required=False)
+    position_type = serializers.CharField(required=False)
+    house = serializers.CharField(required=False)
+    area_represented = serializers.CharField(required=False)
+    phone_number = serializers.CharField(required=False)
+    gender = serializers.CharField(required=False)
+    updated_by = serializers.CharField(required=False)
+    # representation_summary = serializers.CharField(required=False)
+    created_at__gte = serializers.CharField(required=False)
+    created_at__lte = serializers.CharField(required=False)
+    updated_at__gte = serializers.CharField(required=False)
+    updated_at__lte = serializers.CharField(required=False)
+    page = serializers.IntegerField(default=1)
+    items_per_page = serializers.IntegerField(default=10)

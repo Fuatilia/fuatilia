@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError
 from utils.enum_utils import FileType
 
 dotenv.load_dotenv()
+logger = logging.getLogger("app_logger")
 
 
 class ProgressPercentage(object):

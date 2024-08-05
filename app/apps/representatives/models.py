@@ -20,8 +20,9 @@ class House(models.TextChoices):
 
 
 class GENDER(models.TextChoices):
-    FEMALE = "F"
-    MALE = "M"
+    FEMALE = "FEMALE"
+    MALE = "MALE"
+    OTHER = "OTHER"
 
 
 # Actual representative Model
@@ -45,5 +46,6 @@ class Representative(models.Model):
         return self.__dict__
 
     class Meta:
+        db_table = "representatives"
         ordering = ["-created_at"]
-        verbose_name = "representative"
+        verbose_name_plural = "representatives"
