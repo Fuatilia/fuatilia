@@ -74,10 +74,13 @@ class S3Processor:
 
         """
 
+        logger.info(
+            f"Computing file dir for type:{file_type}, name:{file_name} : id {id}, house : {house}"
+        )
         match file_type:
             case FileType.ALL:
                 return f"{id}/"
-            case FileType.PROFILE_IMAGE:
+            case FileType.IMAGE:
                 return f"{id}/images/" + file_name
             case FileType.CASE:
                 return f"{id}/cases/" + file_name
@@ -152,7 +155,7 @@ class S3Processor:
         """
 
         try:
-            print(f"Initating file upload for :: {file_name} to {bucket}")
+            logger.info(f"Initating file upload for :: {file_name} to {bucket}")
             if metadata is None:
                 metadata = {}
 
@@ -195,7 +198,7 @@ class S3Processor:
                 # ExpectedBucketOwner='string'
             )
 
-            print(f"File upload for {file_name} ---> {response}")
+            logger.info(f"File upload for {file_name} ---> {response}")
 
             if response.get("response"):
                 if (
@@ -219,8 +222,8 @@ class S3Processor:
 
             return response
         except ClientError as e:
-            logging.error(e)
-            return e
+            logging.exception(e)
+            return {"error": e.__repr__()}
 
     def update_file():
         return NotImplemented

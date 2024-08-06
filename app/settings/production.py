@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 import dotenv
 from pathlib import Path
 from datetime import datetime
@@ -172,7 +173,7 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
             "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')}.log",
-            "maxBytes": 1,  # os.environ.get('MAX_LOGFILE_BYTES')
+            "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES")),
         },
         "mail_admins": {
             "level": "ERROR",

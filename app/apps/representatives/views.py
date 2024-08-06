@@ -1,4 +1,7 @@
 import logging
+import os
+from utils.enum_utils import FileType
+from utils.file_utils.generic_file_utils import file_upload
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -48,41 +51,6 @@ class CreateRepresentative(CreateAPIView):
             )
 
             response = self.serializer_class(response_data).data
-
-            #  MOVE THIS TO A SEPERATE ENDPOINT
-            # if response_data.id:
-            #     reps_data_bucket_name = os.environ.get("REPS_DATA_BUCKET_NAME")
-            #     file_name = "profile_image.jpeg"
-
-            #     if create_body.get("image_data_type") == "BASE64_ENCODING":
-            #         logger.info(f"Initiating file upload --- > to S3 for {response_data.full_name}")
-            #         metadata = {
-            #             "rep_id": response_data.id,
-            #             "creation_date": response_data.created_at.strftime(
-            #                 "%d/%m/%Y %H:%M:%S"
-            #             ),
-            #             "source": create_body.get("image_source"),
-            #             "image_type": create_body.get("image_data_type"),
-            #             "use": "For representative image/thumbnail",
-            #             "representative_name": response_data.full_name,
-            #             # 'content_type':
-            #         }
-
-            #         # File path should allow for replacement of images
-            #         response = file_upload(
-            #             reps_data_bucket_name,
-            #             FileType.PROFILE_IMAGE,
-            #             file_name,
-            #             create_body.get("image_data"),
-            #             id=response_data.id,
-            #             metadata=metadata,
-            #         )
-
-            #         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-            #             image_url = f's3://{reps_data_bucket_name}/{response_data.id}/images/{file_name}'
-            #             response = Representative.objects.update(
-            #                 id= response_data.id, image_url= image_url
-            #             )
 
             return JsonResponse({"data": response})
 
@@ -198,4 +166,70 @@ class GetOrDeleteRepresentative(GenericAPIView):
             return JsonResponse(
                 {"status_code": status.HTTP_404_NOT_FOUND, "message": e.__str__()},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class AddRepresentativeFile(CreateAPIView):
+    @extend_schema(
+        tags=["Representatives"], request=serializers.RepresentativeFileUploadSerilizer
+    )
+    def post(self, request):
+        try:
+            response_data = Representative.objects.get(pk=request.data["id"])
+            if response_data.id:
+                reps_data_bucket_name = os.environ.get("REPS_DATA_BUCKET_NAME")
+                file_name = request.data.get("file_name")
+
+                logger.info(
+                    f"Initiating file upload --- > to S3 for {response_data.full_name}"
+                )
+                metadata = {
+                    "rep_id": str(response_data.id),
+                    "creation_date": response_data.created_at.strftime(
+                        "%d/%m/%Y %H:%M:%S"
+                    ),
+                    "source": request.data.get("image_source") or "",
+                    "version": request.data["version"],
+                    "representative_name": response_data.full_name,
+                    "content_type": request.data["file_extension"],
+                }
+
+                # # File path should allow for replacement of images
+                response = file_upload(
+                    reps_data_bucket_name,
+                    FileType[request.data.get("file_type")],
+                    file_name,
+                    request.data.get("base64_encoding"),
+                    id=str(response_data.id),
+                    metadata=metadata,
+                )
+
+                if (
+                    response.get("ResponseMetadata")
+                    and response["ResponseMetadata"]["HTTPStatusCode"] == 200
+                ):
+                    folder_name = request.data.get("file_type").lower() + "s"
+                    image_url = f"s3://{reps_data_bucket_name}/{response_data.id}/{folder_name}/{file_name}"
+                    response_data.image_url = image_url
+                    response_data.save()
+                    response = {
+                        "image_url": image_url,
+                    }
+
+                    final_status = status.HTTP_200_OK
+                else:
+                    final_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+            return JsonResponse(
+                {"status_code": final_status, "data": response}, status=final_status
+            )
+
+        except Exception as e:
+            logger.exception(e)
+            return JsonResponse(
+                {
+                    "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "data": e.__dict__ or e.__str__(),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

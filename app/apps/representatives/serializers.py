@@ -1,3 +1,4 @@
+from utils.file_utils.models import GenericFileUploadSerilizer
 from apps.representatives.models import Representative
 from rest_framework import serializers
 
@@ -59,3 +60,10 @@ class RepresentativeFilterSerilizer(serializers.Serializer):
     updated_at__lte = serializers.CharField(required=False)
     page = serializers.IntegerField(default=1)
     items_per_page = serializers.IntegerField(default=10)
+
+
+class RepresentativeFileUploadSerilizer(GenericFileUploadSerilizer):
+    id = serializers.CharField(
+        default="6134fc82-0faa-4bed-b7a2-edbcf541a3c9",
+        help_text="Id of the representative",
+    )

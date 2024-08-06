@@ -2,6 +2,8 @@ from utils.enum_utils import FileType
 from utils.file_utils.s3_utils import S3Processor
 import logging
 
+logger = logging.getLogger("app_logger")
+
 # Initiate S3 processor
 representative_s3_processor = S3Processor()
 
@@ -30,7 +32,7 @@ def file_upload(
         response = representative_s3_processor.upload_file(
             base64encoding, bucket_name, file_name=dir, metadata=metadata
         )
-        print(response)
+        logger.info(response)
         return response
     except Exception as e:
         logging.exception(e)

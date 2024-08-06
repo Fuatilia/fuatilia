@@ -1,11 +1,22 @@
 from enum import Enum
+from django.db import models
 
 
 class FileType(Enum):
-    PROFILE_IMAGE = "profile_image"
-    MANIFESTO = "manifesto"
-    BILL = "bill"
-    PROCEEDING = "proceeding"
-    CASE = "case"
-    ALL = "all"
-    VOTE = "vote"
+    IMAGE = "IMAGE"
+    MANIFESTO = "MANIFESTO"
+    BILL = "BILL"
+    PROCEEDING = "PROCEEDING"
+    CASE = "CASE"
+    ALL = "ALL"
+    VOTE = "VOTE"
+
+
+class FileTypeTextChoices(models.TextChoices):
+    IMAGE = "IMAGE"
+    MANIFESTO = "MANIFESTO"
+    BILL = "BILL"
+    PROCEEDING = "PROCEEDING"
+    CASE = "CASE"
+    ALL = "ALL"
+    VOTE = "VOTE"

@@ -46,7 +46,7 @@ class ListUsers(GenericAPIView):
     def get(self, request):
         return self.get_queryset()
 
-    def get_serializer(self, request):
+    def get_serializer_class(self, request):
         print(request.user)
         if request.user.is_authenticated and request.user.role == UserRole.ADMIN:
             return serializers.AdminUserFetchSerializer
@@ -97,7 +97,7 @@ class ListUsers(GenericAPIView):
         if is_active:
             filter_params["is_active"] = is_active
 
-        serializer = self.get_serializer(self.request)
+        serializer = self.get_serializer_class(self.request)
 
         queryset = User.objects.filter(**filter_params)
         return Response(serializer(queryset, many=True).data)
