@@ -22,7 +22,15 @@ class UserCreationSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False, default="+254111111111")
     password = serializers.CharField(min_length=10, default="password1234")
     role = serializers.ChoiceField(choices=UserRole.choices, default=UserRole.STAFF)
-    parent_organization = serializers.CharField(required=False, default="fuatilia")
+    parent_organization = serializers.CharField(
+        required=False,
+        default="fuatilia",
+        help_text="Organization the user belongs to e.g Kengen,LSK",
+    )
+
+    def create(self, validated_data):
+        user = User.objects.create(**validated_data)
+        return user
 
 
 # Serializer for update payload
@@ -54,10 +62,18 @@ class UserFilterSerializer(serializers.Serializer):
     email = serializers.CharField(required=False)
     phone_number = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
-    created_at_start = serializers.CharField(required=False)
-    created_at_end = serializers.CharField(required=False)
-    updated_at_start = serializers.CharField(required=False)
-    updated_at_end = serializers.CharField(required=False)
+    created_at_start = serializers.DateTimeField(
+        required=False, help_text="Start of date range filter for creation date"
+    )
+    created_at_end = serializers.DateTimeField(
+        required=False, help_text="End of date range filter for creation date"
+    )
+    updated_at_start = serializers.DateTimeField(
+        required=False, help_text="End of date range filter for update date"
+    )
+    updated_at_end = serializers.DateTimeField(
+        required=False, help_text="End of date range filter for update date"
+    )
     is_active = serializers.CharField(required=False)
     page = serializers.IntegerField(default=1)
     items_per_page = serializers.IntegerField(default=10)

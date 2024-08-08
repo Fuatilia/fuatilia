@@ -21,9 +21,7 @@ class Bill(models.Model):
         max_length=20, choices=BillStatus, default=BillStatus.IN_PROGRESS
     )
     sponsored_by = models.CharField(max_length=100)  # rep name/ID
-    supported_by = models.CharField(
-        max_length=100, null=True
-    )  # (Not sure if this happens in kenya when bringing a bill forward, but will confirm)
+    supported_by = models.CharField(max_length=100, null=True)
     house = models.CharField(max_length=20, choices=HouseChoices.choices)
     summary = models.CharField(max_length=100, null=True)
     summary_created_by = models.CharField(

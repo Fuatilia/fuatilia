@@ -21,36 +21,22 @@ class CreateRepresentative(CreateAPIView):
         responses={201: serializers.RepresentativeCreationSerializer},
     )
     def post(self, request):
-        create_body = request.data
-        data_to_initialize_represenatative = {
-            "full_name": create_body.get("full_name"),
-            "position": create_body.get("position"),
-            "position_type": create_body.get("position_type"),
-            "house": create_body.get("house"),
-            "area_represented": create_body.get("area_represented"),
-            "phone_number": create_body.get("phone_number"),
-            "gender": create_body.get("gender"),
-            "representation_summary": create_body.get("representation_summary"),
-        }
-
         try:
-            logger.info(
-                f"Representative creation with details :: {data_to_initialize_represenatative}"
-            )
+            logger.info(f"Representative creation with details :: {request.data}")
 
             rep_serializer = serializers.RepresentativeCreationSerializer(
-                data=data_to_initialize_represenatative
+                data=request.data
             )
             if not rep_serializer.is_valid():
                 return JsonResponse(rep_serializer.errors, status=400)
 
-            response_data = rep_serializer.save()
+            rep_serializer.save()
 
             logger.info(
-                f"==========================\n{response_data.__repr__()}\n=========================="
+                f"==========================\n{rep_serializer.data}\n=========================="
             )
 
-            response = self.serializer_class(response_data).data
+            response = self.serializer_class(rep_serializer).data
 
             return JsonResponse({"data": response})
 
