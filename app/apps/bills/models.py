@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from utils.enum_utils import HouseChoices
 
 # Create your models here.
 
@@ -13,17 +14,6 @@ class BillStatus(models.TextChoices):
     ASCENTED = "ASCENTED"
 
 
-class Houses(models.TextChoices):
-    NATIONAL = "NATIONAL"
-    SENATE = "SENATE"
-
-
-class VoteType(models.TextChoices):
-    CONFIDENTIAL = "CONFIDENTIAL"
-    CONCENSUS = "CONCENSUS"
-    INDIVIDUAL = "INDIVIDUAL"
-
-
 class Bill(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100)
@@ -34,7 +24,7 @@ class Bill(models.Model):
     supported_by = models.CharField(
         max_length=100, null=True
     )  # (Not sure if this happens in kenya when bringing a bill forward, but will confirm)
-    house = models.CharField(max_length=20, choices=Houses)
+    house = models.CharField(max_length=20, choices=HouseChoices.choices)
     summary = models.CharField(max_length=100, null=True)
     summary_created_by = models.CharField(
         max_length=100, null=True
@@ -49,10 +39,10 @@ class Bill(models.Model):
         max_length=100, null=True
     )  # (When the bill was passed or failed)
     topics_in_the_bill = models.CharField(
-        max_length=100, null=True
+        max_length=200, null=True
     )  # (Will help in searches)
     file_url = models.CharField(max_length=100, null=True)
-    updates_by = models.CharField(max_length=20, null=True)
+    updated_by = models.CharField(max_length=20, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

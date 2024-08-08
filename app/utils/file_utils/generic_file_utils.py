@@ -1,4 +1,4 @@
-from utils.enum_utils import FileType
+from utils.enum_utils import FileTypeEnum
 from utils.file_utils.s3_utils import S3Processor
 import logging
 
@@ -9,7 +9,7 @@ representative_s3_processor = S3Processor()
 
 
 def file_upload(
-    bucket_name: str, file_type: FileType, file_name, base64encoding, **kwargs
+    bucket_name: str, file_type: FileTypeEnum, file_name, base64encoding, **kwargs
 ):
     """
     id :  Id of the representative
@@ -22,10 +22,11 @@ def file_upload(
 
     id = kwargs.get("id")
     house = kwargs.get("house")
+    folder = kwargs.get("house")
     metadata = kwargs.get("metadata")
 
     dir = representative_s3_processor.compute_s3_file_directory(
-        file_type, file_name, id, house
+        file_type, file_name, id=id, house=house, folder=folder
     )
 
     try:

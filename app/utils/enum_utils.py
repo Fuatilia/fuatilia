@@ -2,7 +2,7 @@ from enum import Enum
 from django.db import models
 
 
-class FileType(Enum):
+class FileTypeEnum(Enum):
     IMAGE = "IMAGE"
     MANIFESTO = "MANIFESTO"
     BILL = "BILL"
@@ -20,3 +20,15 @@ class FileTypeTextChoices(models.TextChoices):
     CASE = "CASE"
     ALL = "ALL"
     VOTE = "VOTE"
+
+
+class HouseChoices(models.TextChoices):
+    NATIONAL = "NATIONAL"
+    SENATE = "SENATE"
+    ALL = "ALL"  # If it's the same bill in all houses
+
+
+class VoteTypeChoicesChoices(models.TextChoices):
+    CONFIDENTIAL = "CONFIDENTIAL"
+    CONCENSUS = "CONCENSUS"
+    INDIVIDUAL = "INDIVIDUAL"

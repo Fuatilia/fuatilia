@@ -31,7 +31,7 @@ class CreateApp(CreateAPIView):
         return serializer(request.data)
 
 
-class ListUsers(GenericAPIView):
+class FilterUsers(GenericAPIView):
     """
     Filter users in the system.
 
@@ -46,9 +46,12 @@ class ListUsers(GenericAPIView):
     def get(self, request):
         return self.get_queryset()
 
-    def get_serializer_class(self, request):
-        print(request.user)
-        if request.user.is_authenticated and request.user.role == UserRole.ADMIN:
+    def get_serializer_class(self):
+        print(self.request.user)
+        if (
+            self.request.user.is_authenticated
+            and self.request.user.role == UserRole.ADMIN
+        ):
             return serializers.AdminUserFetchSerializer
         return serializers.UserFetchSerializer
 

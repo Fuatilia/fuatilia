@@ -1,6 +1,6 @@
 import logging
 import os
-from utils.enum_utils import FileType
+from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload
 from apps.representatives.models import Representative
 from apps.representatives import serializers
@@ -59,7 +59,7 @@ class CreateRepresentative(CreateAPIView):
             return JsonResponse({"error": e.__repr__()}, status=500)
 
 
-class ListRepresentatives(GenericAPIView):
+class FilterRepresenatatives(GenericAPIView):
     serializer_class = serializers.FullFetchRepresentativeSerializer
 
     @extend_schema(
@@ -147,7 +147,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
 
     @extend_schema(
         tags=["Representatives"],
-        responses={204: {"message": "User succesfully deleted"}},
+        responses={204: {"message": "Representative succesfully deleted"}},
     )
     def delete(self, request, **kwargs):
         try:
@@ -169,9 +169,13 @@ class GetOrDeleteRepresentative(GenericAPIView):
             )
 
 
-class AddRepresentativeFile(CreateAPIView):
+class AddRepresentativeFile(GenericAPIView):
+    # Removes --> should either include a `serializer_class` attribute, or override the `get_serializer_class()` method.
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(
-        tags=["Representatives"], request=serializers.RepresentativeFileUploadSerilizer
+        tags=["Representatives"], request=serializers.RepresentativeFileUploadSerializer
     )
     def post(self, request):
         try:
@@ -197,7 +201,8 @@ class AddRepresentativeFile(CreateAPIView):
                 # # File path should allow for replacement of images
                 response = file_upload(
                     reps_data_bucket_name,
-                    FileType[request.data.get("file_type")],
+                    FileTypeEnum[request.data.get("file_type")],
+                    "representatives",
                     file_name,
                     request.data.get("base64_encoding"),
                     id=str(response_data.id),
@@ -209,7 +214,7 @@ class AddRepresentativeFile(CreateAPIView):
                     and response["ResponseMetadata"]["HTTPStatusCode"] == 200
                 ):
                     folder_name = request.data.get("file_type").lower() + "s"
-                    image_url = f"s3://{reps_data_bucket_name}/{response_data.id}/{folder_name}/{file_name}"
+                    image_url = f"s3://{reps_data_bucket_name}/representatives/{response_data.id}/{folder_name}/{file_name}"
                     response_data.image_url = image_url
                     response_data.save()
                     response = {

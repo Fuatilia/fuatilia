@@ -1,22 +1,18 @@
 import uuid
 from django.db import models
+from utils.enum_utils import HouseChoices
 
 
-class PositionType(models.TextChoices):
+class PositionTypeChoices(models.TextChoices):
     ELECTED = "ELECTED"
     NOMINATED = "NOMINATED"
 
 
-class Position(models.TextChoices):
+class PositionChoices(models.TextChoices):
     MP = "MP"
     SENATOR = "SENATOR"
     WOMEN_REP = "WOMEN_REP"
     MCA = "MCA"
-
-
-class House(models.TextChoices):
-    NATIONAL = "NATIONAL"
-    SENATE = "SENATE"
 
 
 class GENDER(models.TextChoices):
@@ -29,9 +25,9 @@ class GENDER(models.TextChoices):
 class Representative(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=100)
-    position = models.CharField(max_length=10, choices=Position)
-    position_type = models.CharField(max_length=10, choices=PositionType)
-    house = models.CharField(max_length=10, choices=House)
+    position = models.CharField(max_length=10, choices=PositionChoices.choices)
+    position_type = models.CharField(max_length=10, choices=PositionTypeChoices.choices)
+    house = models.CharField(max_length=10, choices=HouseChoices.choices)
     area_represented = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, null=True)
     image_url = models.CharField(max_length=100, null=True)

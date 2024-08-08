@@ -2,7 +2,7 @@ import uuid
 from django.db import models
 
 
-class VoteType(models.TextChoices):
+class VoteTypeChoices(models.TextChoices):
     CONFIDENTIAL = "CONFIDENTIAL"
     CONCENSUS = "CONCENSUS"
     INDIVIDUAL = "INDIVIDUAL"
@@ -17,7 +17,9 @@ class Vote(models.Model):
     # Pass 'ALL' for consensus/confidential votes
     representative_id = models.CharField(max_length=30)
     vote_type = models.CharField(
-        max_length=15, choices=VoteType, default=VoteType.INDIVIDUAL
+        max_length=15,
+        choices=VoteTypeChoices.choices,
+        default=VoteTypeChoices.INDIVIDUAL,
     )
     # Total counts etc --> Will help with the confidential ones
     # will be a json string of how voting panned out

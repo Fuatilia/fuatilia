@@ -1,5 +1,9 @@
 from utils.file_utils.models import GenericFileUploadSerilizer
-from apps.representatives.models import Representative
+from apps.representatives.models import (
+    PositionChoices,
+    PositionTypeChoices,
+    Representative,
+)
 from rest_framework import serializers
 
 
@@ -17,8 +21,8 @@ class UserFetchRepresentativeSerializer(serializers.ModelSerializer):
 
 class RepresentativeCreationSerializer(serializers.Serializer):
     full_name = serializers.CharField()
-    position = serializers.CharField()
-    position_type = serializers.CharField()
+    position = serializers.ChoiceField(choices=PositionChoices)
+    position_type = serializers.ChoiceField(choices=PositionTypeChoices)
     house = serializers.CharField()
     area_represented = serializers.CharField()
     image_url = serializers.CharField(required=False)
@@ -54,15 +58,15 @@ class RepresentativeFilterSerilizer(serializers.Serializer):
     gender = serializers.CharField(required=False)
     updated_by = serializers.CharField(required=False)
     # representation_summary = serializers.CharField(required=False)
-    created_at__gte = serializers.CharField(required=False)
-    created_at__lte = serializers.CharField(required=False)
-    updated_at__gte = serializers.CharField(required=False)
-    updated_at__lte = serializers.CharField(required=False)
+    created_at_start = serializers.CharField(required=False)
+    created_at_end = serializers.CharField(required=False)
+    updated_at_start = serializers.CharField(required=False)
+    updated_at_end = serializers.CharField(required=False)
     page = serializers.IntegerField(default=1)
     items_per_page = serializers.IntegerField(default=10)
 
 
-class RepresentativeFileUploadSerilizer(GenericFileUploadSerilizer):
+class RepresentativeFileUploadSerializer(GenericFileUploadSerilizer):
     id = serializers.CharField(
         default="6134fc82-0faa-4bed-b7a2-edbcf541a3c9",
         help_text="Id of the representative",
