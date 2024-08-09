@@ -10,8 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
+import dotenv
 from pathlib import Path
 from datetime import datetime
+
+dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -150,11 +154,11 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "format": "{asctime} {levelname} module:{module} tr:{thread:d} :: {message}",
             "style": "{",
         },
         "simple": {
-            "format": "{levelname} {module} {message}",
+            "format": "{asctime} {levelname} {message}",
             "style": "{",
         },
     },
@@ -166,9 +170,11 @@ LOGGING = {
         },
         "file": {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')} {datetime.now().hour//3}.log",
+            "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')}.log",
+            "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES")),
+            "backupCount": 10,
         },
         "mail_admins": {
             "level": "ERROR",
@@ -176,7 +182,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["console", "file", "mail_admins"], "level": "INFO"},
+        "app_logger": {"handlers": ["console", "file", "mail_admins"], "level": "INFO"},
         "dev": {"handlers": ["console", "file"], "level": "DEBUG"},
     },
 }

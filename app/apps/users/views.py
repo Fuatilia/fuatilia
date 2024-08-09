@@ -1,23 +1,37 @@
+import logging
+from django.http import JsonResponse
 from apps.users import serializers
 from apps.users.models import User, UserRole
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
-from rest_framework import authentication, permissions
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
+
+logger = logging.getLogger("app_logger")
 
 
 class CreateUser(CreateAPIView):
+    serializer_class = serializers.UserFetchSerializer
+
     @extend_schema(
+        tags=["Users"],
         request=serializers.UserCreationSerializer,
         responses={201: serializers.UserFetchSerializer},
     )
     def post(self, request):
-        serializer = serializers.UserCreationSerializer(request)
-        return serializer(request.data)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            resp = serializer.save().__dict__
+            del resp["_state"]
+            return JsonResponse({"data": resp}, status=status.HTTP_200_OK)
+        return JsonResponse(
+            {"error": serializer.errors}, status=status.HTTP_417_EXPECTATION_FAILED
+        )
 
 
 class CreateApp(CreateAPIView):
     @extend_schema(
+        tags=["Users"],
         request=serializers.AppCreationSerializer,
         responses={201: serializers.UserFetchSerializer},
     )
@@ -26,7 +40,7 @@ class CreateApp(CreateAPIView):
         return serializer(request.data)
 
 
-class ListUsers(GenericAPIView):
+class FilterUsers(GenericAPIView):
     """
     Filter users in the system.
 
@@ -34,16 +48,19 @@ class ListUsers(GenericAPIView):
     * Only admin users are able to access this view.
     """
 
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = [authentication.TokenAuthentication]
+    # permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(parameters=[serializers.UserFilterSerializer])
+    @extend_schema(tags=["Users"], parameters=[serializers.UserFilterSerializer])
     def get(self, request):
         return self.get_queryset()
 
-    def get_serializer(self, request):
-        print(request.user)
-        if request.user.is_authenticated and request.user.role == UserRole.ADMIN:
+    def get_serializer(self):
+        print(self.request.user)
+        if (
+            self.request.user.is_authenticated
+            and self.request.user.role == UserRole.ADMIN
+        ):
             return serializers.AdminUserFetchSerializer
         return serializers.UserFetchSerializer
 
@@ -92,7 +109,7 @@ class ListUsers(GenericAPIView):
         if is_active:
             filter_params["is_active"] = is_active
 
-        serializer = self.get_serializer(self.request)
+        serializer = self.get_serializer()
 
         queryset = User.objects.filter(**filter_params)
         return Response(serializer(queryset, many=True).data)
@@ -100,13 +117,55 @@ class ListUsers(GenericAPIView):
 
 class GetOrDeleteUser(GenericAPIView):
     @extend_schema(
+        tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
     )
-    def get(self, request, id):
-        return User.objects.filter(user__pk=id)
+    def get(self, request, **kwargs):
+        try:
+            logger.info(f'Getting user with ID {kwargs.get("id")}')
+            response_data = User.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(response_data).data
+
+            return JsonResponse(
+                {"data": response},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == User.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @extend_schema(
+        tags=["Users"],
         responses={204: {"message": "User succesfully deleted"}},
     )
-    def delete(self, request, id):
-        return {"id to delete": id}
+    def delete(self, request, **kwargs):
+        try:
+            logger.info(f'Deleting user with ID {kwargs.get("id")}')
+            rep = User.objects.get(pk=kwargs.get("id"))
+            if rep:
+                rep.delete()
+                return JsonResponse(
+                    {
+                        "message": "User succesfully deleted",
+                    },
+                    status=status.HTTP_204_NO_CONTENT,
+                )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == User.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

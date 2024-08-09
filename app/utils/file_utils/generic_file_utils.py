@@ -1,13 +1,15 @@
-from app.utils.enum_utils import FileType
-from s3_utils import S3Processor
+from utils.enum_utils import FileTypeEnum
+from utils.file_utils.s3_utils import S3Processor
 import logging
+
+logger = logging.getLogger("app_logger")
 
 # Initiate S3 processor
 representative_s3_processor = S3Processor()
 
 
-async def file_upload(
-    bucket_name: str, file_type: FileType, file_name, base64encoding, **kwargs
+def file_upload(
+    bucket_name: str, file_type: FileTypeEnum, file_name, base64encoding, **kwargs
 ):
     """
     id :  Id of the representative
@@ -20,17 +22,18 @@ async def file_upload(
 
     id = kwargs.get("id")
     house = kwargs.get("house")
+    folder = kwargs.get("house")
     metadata = kwargs.get("metadata")
 
     dir = representative_s3_processor.compute_s3_file_directory(
-        file_type, file_name, id, house
+        file_type, file_name, id=id, house=house, folder=folder
     )
 
     try:
         response = representative_s3_processor.upload_file(
             base64encoding, bucket_name, file_name=dir, metadata=metadata
         )
-        print(response)
+        logger.info(response)
         return response
     except Exception as e:
         logging.exception(e)

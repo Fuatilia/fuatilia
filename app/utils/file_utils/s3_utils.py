@@ -6,9 +6,10 @@ import sys
 import threading
 import dotenv
 from botocore.exceptions import ClientError
-from utils.enum_utils import FileType
+from utils.enum_utils import FileTypeEnum
 
 dotenv.load_dotenv()
+logger = logging.getLogger("app_logger")
 
 
 class ProgressPercentage(object):
@@ -42,7 +43,8 @@ class S3Processor:
 
     def compute_s3_file_directory(
         self,
-        file_type: FileType,
+        file_type: FileTypeEnum,
+        folder: str,
         file_name: str | None = None,
         id: str | None = None,
         house: str | None = None,
@@ -54,7 +56,7 @@ class S3Processor:
         Parameters
         ----------
         file_type : str
-            String of <class FileType> do determine where the file goes
+            String of <class FileTypeEnum> do determine where the file goes
 
         file_name [Optional]:
                 Name of the file. Will determine which file to save or get.
@@ -73,21 +75,24 @@ class S3Processor:
 
         """
 
+        logger.info(
+            f"Computing file dir for type:{file_type}, name:{file_name} : id {id}, house : {house}"
+        )
         match file_type:
-            case FileType.ALL:
-                return f"{id}/"
-            case FileType.PROFILE_IMAGE:
-                return f"{id}/images/" + file_name
-            case FileType.CASE:
-                return f"{id}/cases/" + file_name
-            case FileType.MANIFESTO:
-                return f"{id}/manifestos/" + file_name
-            case FileType.BILL:
-                return f"bills/{house}/" + file_name
-            case FileType.PROCEEDING:
-                return f"proceedings/{house}/" + file_name
-            case FileType.VOTE:
-                return f"votes/{house}/" + file_name
+            case FileTypeEnum.ALL:
+                return f"{folder}/{id}/"
+            case FileTypeEnum.IMAGE:
+                return f"{folder}/{id}/images/" + file_name
+            case FileTypeEnum.CASE:
+                return f"{folder}/{id}/cases/" + file_name
+            case FileTypeEnum.MANIFESTO:
+                return f"{folder}/{id}/manifestos/" + file_name
+            case FileTypeEnum.BILL:
+                return f"{folder}/bills/{house}/" + file_name
+            case FileTypeEnum.PROCEEDING:
+                return f"{folder}/proceedings/{house}/" + file_name
+            case FileTypeEnum.VOTE:
+                return f"{folder}/votes/{house}/" + file_name
 
     def create_bucket(self, bucket_name, region=None):
         """
@@ -151,7 +156,7 @@ class S3Processor:
         """
 
         try:
-            print(f"Initating file upload for :: {file_name} to {bucket}")
+            logger.info(f"Initating file upload for :: {file_name} to {bucket}")
             if metadata is None:
                 metadata = {}
 
@@ -194,7 +199,7 @@ class S3Processor:
                 # ExpectedBucketOwner='string'
             )
 
-            print(f"File upload for {file_name} ---> {response}")
+            logger.info(f"File upload for {file_name} ---> {response}")
 
             if response.get("response"):
                 if (
@@ -218,8 +223,8 @@ class S3Processor:
 
             return response
         except ClientError as e:
-            logging.error(e)
-            return e
+            logging.exception(e)
+            return {"error": e.__repr__()}
 
     def update_file():
         return NotImplemented
