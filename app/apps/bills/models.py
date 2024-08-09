@@ -46,4 +46,5 @@ class Bill(models.Model):
 
     class Meta:
         verbose_name = "bill"
+        ordering = ["-created_at"]
         indexes = [models.Index(fields=["summary", "topics_in_the_bill"])]

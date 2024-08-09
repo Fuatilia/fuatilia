@@ -23,7 +23,6 @@ class CreateVote(CreateAPIView):
             else:
                 return JsonResponse(
                     {
-                        "status_code": status.HTTP_417_EXPECTATION_FAILED,
                         "data": votes_data.__dict__,
                     },
                     status=status.HTTP_417_EXPECTATION_FAILED,
@@ -59,19 +58,21 @@ class FilterVotes(GenericAPIView):
         if self.request.GET.get("vote_type"):
             filter_params["vote_type"] = self.request.GET.get("vote_type")
         if self.request.GET.get("created_at_start"):
-            filter_params["created_at_sself.tart"] = self.request.GET.get(
+            filter_params["created_at_start__gte"] = self.request.GET.get(
                 "created_at_start"
             )
         if self.request.GET.get("created_at_end"):
-            filter_params["created_at_endself."] = self.request.GET.get(
+            filter_params["created_at_end__lte"] = self.request.GET.get(
                 "created_at_end"
             )
         if self.request.GET.get("updated_at_start"):
-            filter_params["updated_at_sself.tart"] = self.request.GET.get(
+            filter_params["updated_at_start__gte"] = self.request.GET.get(
                 "updated_at_start"
             )
-        if self.request.GET.get("updated_at_eself.nd"):
-            filter_params["updated_at_end"] = self.request.GET.get("updated_at_end")
+        if self.request.GET.get("updated_at_end"):
+            filter_params["updated_at_end__lte"] = self.request.GET.get(
+                "updated_at_end"
+            )
 
         page = int(self.request.GET.get("page"))
         items_per_page = int(self.request.GET.get("items_per_page"))
@@ -83,7 +84,6 @@ class FilterVotes(GenericAPIView):
 
         return JsonResponse(
             {
-                "status_code": status.HTTP_200_OK,
                 "data": self.serializer_class(queryset, many=True).data,
             },
             status=status.HTTP_200_OK,
@@ -99,13 +99,26 @@ class GetOrDeleteVote(GenericAPIView):
         responses={201: serializers.FullFetchVoteSerializer},
     )
     def get(self, request, **kwargs):
-        response_data = Vote.objects.get(pk=kwargs.get("id"))
-        response = self.serializer_class(response_data).data
+        try:
+            logger.info(f"Getting vote with ID {kwargs.get("id")}")
+            response_data = Vote.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(response_data).data
 
-        return JsonResponse(
-            {"status_code": status.HTTP_200_OK, "data": response},
-            status=status.HTTP_200_OK,
-        )
+            return JsonResponse(
+                {"data": response},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == Vote.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @extend_schema(
         tags=["Votes"],
@@ -113,19 +126,24 @@ class GetOrDeleteVote(GenericAPIView):
     )
     def delete(self, request, **kwargs):
         try:
+            logger.info(f"Deleting vote with ID {kwargs.get("id")}")
             rep = Vote.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
                 return JsonResponse(
                     {
-                        "status_code": status.HTTP_204_NO_CONTENT,
                         "message": "Vote succesfully deleted",
                     },
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_204_NO_CONTENT,
                 )
         except Exception as e:
             logger.exception(e)
+            if e.__class__ == Vote.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return JsonResponse(
-                {"status_code": status.HTTP_404_NOT_FOUND, "message": e.__str__()},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

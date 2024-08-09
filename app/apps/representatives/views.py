@@ -31,11 +31,6 @@ class CreateRepresentative(CreateAPIView):
                 return JsonResponse(rep_serializer.errors, status=400)
 
             rep_serializer.save()
-
-            logger.info(
-                f"==========================\n{rep_serializer.data}\n=========================="
-            )
-
             response = self.serializer_class(rep_serializer).data
 
             return JsonResponse({"data": response})
@@ -107,7 +102,6 @@ class FilterRepresenatatives(GenericAPIView):
 
         return JsonResponse(
             {
-                "status_code": status.HTTP_200_OK,
                 "data": self.serializer_class(queryset, many=True).data,
             },
             status=status.HTTP_200_OK,
@@ -123,13 +117,27 @@ class GetOrDeleteRepresentative(GenericAPIView):
         responses={201: serializers.FullFetchRepresentativeSerializer},
     )
     def get(self, request, **kwargs):
-        response_data = Representative.objects.get(pk=kwargs.get("id"))
-        response = self.serializer_class(response_data).data
+        try:
+            logger.info(f"Getting represenatative with ID {kwargs.get("id")}")
+            response_data = Representative.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(response_data).data
 
-        return JsonResponse(
-            {"status_code": status.HTTP_200_OK, "data": response},
-            status=status.HTTP_200_OK,
-        )
+            return JsonResponse(
+                {"data": response},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == Representative.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @extend_schema(
         tags=["Representatives"],
@@ -137,21 +145,27 @@ class GetOrDeleteRepresentative(GenericAPIView):
     )
     def delete(self, request, **kwargs):
         try:
+            logger.info(f"Deleting representative with ID {kwargs.get("id")}")
             rep = Representative.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
                 return JsonResponse(
                     {
-                        "status_code": status.HTTP_204_NO_CONTENT,
                         "message": "Representative succesfully deleted",
                     },
                     status=status.HTTP_200_OK,
                 )
+
         except Exception as e:
             logger.exception(e)
+            if e.__class__ == Representative.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return JsonResponse(
-                {"status_code": status.HTTP_404_NOT_FOUND, "message": e.__str__()},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -217,10 +231,12 @@ class AddRepresentativeFile(GenericAPIView):
 
         except Exception as e:
             logger.exception(e)
+            if e.__class__ == Representative.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return JsonResponse(
-                {
-                    "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "data": e.__dict__ or e.__str__(),
-                },
+                {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -120,12 +120,52 @@ class GetOrDeleteUser(GenericAPIView):
         tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
     )
-    def get(self, request, id):
-        return User.objects.filter(user__pk=id)
+    def get(self, request, **kwargs):
+        try:
+            logger.info(f'Getting user with ID {kwargs.get("id")}')
+            response_data = User.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(response_data).data
+
+            return JsonResponse(
+                {"data": response},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == User.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @extend_schema(
         tags=["Users"],
         responses={204: {"message": "User succesfully deleted"}},
     )
-    def delete(self, request, id):
-        return {"id to delete": id}
+    def delete(self, request, **kwargs):
+        try:
+            logger.info(f'Deleting user with ID {kwargs.get("id")}')
+            rep = User.objects.get(pk=kwargs.get("id"))
+            if rep:
+                rep.delete()
+                return JsonResponse(
+                    {
+                        "message": "User succesfully deleted",
+                    },
+                    status=status.HTTP_204_NO_CONTENT,
+                )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == User.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

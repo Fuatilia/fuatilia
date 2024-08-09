@@ -174,6 +174,7 @@ LOGGING = {
             "formatter": "verbose",
             "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')}.log",
             "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES")),
+            "backupCount": 10,
         },
         "mail_admins": {
             "level": "ERROR",

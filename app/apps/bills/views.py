@@ -23,6 +23,7 @@ class CreateBill(CreateAPIView):
             if serializer.is_valid():
                 resp = serializer.save().__dict__
                 del resp["_state"]
+                logger.info(f"Bill creation successfull : {resp}")
                 return JsonResponse({"data": resp}, status=status.HTTP_201_CREATED)
             else:
                 logger.error(serializer.errors)
@@ -121,16 +122,29 @@ class GetOrDeleteBill(GenericAPIView):
 
     @extend_schema(
         tags=["Bills"],
-        responses={201: serializers.FullFetchBillSerilizer},
+        responses={200: serializers.FullFetchBillSerilizer},
     )
     def get(self, request, **kwargs):
-        response_data = Bill.objects.get(pk=kwargs.get("id"))
-        response = self.serializer_class(response_data).data
+        try:
+            logger.info(f'Getting bill with ID {kwargs.get("id")}')
+            response_data = Bill.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(response_data).data
 
-        return JsonResponse(
-            {"data": response},
-            status=status.HTTP_200_OK,
-        )
+            return JsonResponse(
+                {"data": response},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.exception(e)
+            if e.__class__ == Bill.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return JsonResponse(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @extend_schema(
         tags=["Bills"],
@@ -138,6 +152,7 @@ class GetOrDeleteBill(GenericAPIView):
     )
     def delete(self, request, **kwargs):
         try:
+            logger.info(f'Deleting bill with ID {kwargs.get("id")}')
             rep = Bill.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
@@ -145,13 +160,18 @@ class GetOrDeleteBill(GenericAPIView):
                     {
                         "message": "Bill succesfully deleted",
                     },
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_204_NO_CONTENT,
                 )
         except Exception as e:
             logger.exception(e)
+            if e.__class__ == Bill.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return JsonResponse(
                 {"error": e.__str__()},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -213,9 +233,12 @@ class AddBillFile(CreateAPIView):
 
         except Exception as e:
             logger.exception(e)
+            if e.__class__ == Bill.DoesNotExist:
+                return JsonResponse(
+                    {"error": e.__str__()},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return JsonResponse(
-                {
-                    "error": e.__dict__ or e.__str__(),
-                },
+                {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
