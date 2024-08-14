@@ -5,8 +5,9 @@ from utils.file_utils.generic_file_utils import file_upload
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from django.http import JsonResponse
+
 from rest_framework import status
 
 logger = logging.getLogger("app_logger")
@@ -28,16 +29,20 @@ class CreateRepresentative(CreateAPIView):
                 data=request.data
             )
             if not rep_serializer.is_valid():
-                return JsonResponse(rep_serializer.errors, status=400)
+                return Response(
+                    rep_serializer.errors, status=status.HTTP_417_EXPECTATION_FAILED
+                )
 
             rep_serializer.save()
             response = self.serializer_class(rep_serializer).data
 
-            return JsonResponse({"data": response})
+            return Response({"data": response}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             logger.exception(e)
-            return JsonResponse({"error": e.__repr__()}, status=500)
+            return Response(
+                {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class FilterRepresenatatives(GenericAPIView):
@@ -100,7 +105,7 @@ class FilterRepresenatatives(GenericAPIView):
             offset : (offset + items_per_page)
         ]
 
-        return JsonResponse(
+        return Response(
             {
                 "data": self.serializer_class(queryset, many=True).data,
             },
@@ -122,7 +127,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
             response_data = Representative.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
-            return JsonResponse(
+            return Response(
                 {"data": response},
                 status=status.HTTP_200_OK,
             )
@@ -130,11 +135,11 @@ class GetOrDeleteRepresentative(GenericAPIView):
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Representative.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -149,7 +154,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
             rep = Representative.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
-                return JsonResponse(
+                return Response(
                     {
                         "message": "Representative succesfully deleted",
                     },
@@ -159,11 +164,11 @@ class GetOrDeleteRepresentative(GenericAPIView):
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Representative.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -225,18 +230,18 @@ class AddRepresentativeFile(GenericAPIView):
                 else:
                     final_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-            return JsonResponse(
+            return Response(
                 {"status_code": final_status, "data": response}, status=final_status
             )
 
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Representative.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

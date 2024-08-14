@@ -10,13 +10,19 @@ from rest_framework import serializers
 class FullFetchRepresentativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representative
-        fields = "__all__"
+        exclude = ("image_url",)
 
 
 class UserFetchRepresentativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representative
-        exclude = ("created_at", "updated_at", "updated_by", "pending_update_json")
+        exclude = (
+            "created_at",
+            "updated_at",
+            "updated_by",
+            "pending_update_json",
+            "image_url",
+        )
 
 
 class RepresentativeCreationSerializer(serializers.Serializer):

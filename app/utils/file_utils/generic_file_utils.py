@@ -42,7 +42,7 @@ def file_upload(
 
 async def get_file_data(bucket_name, file_name):
     response = representative_s3_processor.get_file(bucket_name, file_name)
-    print(response)
+    logger.info(response)
     return response["Body"].read()
 
 

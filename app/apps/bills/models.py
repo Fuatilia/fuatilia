@@ -2,8 +2,6 @@ import uuid
 from django.db import models
 from utils.enum_utils import HouseChoices
 
-# Create your models here.
-
 
 class BillStatus(models.TextChoices):
     FIRST_READING = "FIRST_READING"

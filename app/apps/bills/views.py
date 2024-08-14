@@ -1,5 +1,5 @@
 import os
-from django.http import JsonResponse
+
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
 from apps.bills.models import Bill
@@ -8,6 +8,7 @@ from utils.file_utils.generic_file_utils import file_upload
 from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
+from rest_framework.response import Response
 
 logger = logging.getLogger("app_logger")
 
@@ -21,13 +22,14 @@ class CreateBill(CreateAPIView):
             logger.info(f"Initiating bill creation for {request.data}")
             serializer = self.serializer_class(data=request.data)
             if serializer.is_valid():
-                resp = serializer.save().__dict__
-                del resp["_state"]
-                logger.info(f"Bill creation successfull : {resp}")
-                return JsonResponse({"data": resp}, status=status.HTTP_201_CREATED)
+                resp = serializer.save()
+
+                data = self.serializer_class(resp).data
+                logger.info(f"Bill creation successfull : {data}")
+                return Response({"data": data}, status=status.HTTP_201_CREATED)
             else:
                 logger.error(serializer.errors)
-                return JsonResponse(
+                return Response(
                     {
                         "error": serializer.errors,
                     },
@@ -36,7 +38,7 @@ class CreateBill(CreateAPIView):
 
         except Exception as e:
             logger.exception(e)
-            return JsonResponse(
+            return Response(
                 {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -108,7 +110,7 @@ class FilterBills(GenericAPIView):
             offset : (offset + items_per_page)
         ]
 
-        return JsonResponse(
+        return Response(
             {
                 "data": self.serializer_class(queryset, many=True).data,
             },
@@ -130,18 +132,18 @@ class GetOrDeleteBill(GenericAPIView):
             response_data = Bill.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
-            return JsonResponse(
+            return Response(
                 {"data": response},
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Bill.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -156,7 +158,7 @@ class GetOrDeleteBill(GenericAPIView):
             rep = Bill.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
-                return JsonResponse(
+                return Response(
                     {
                         "message": "Bill succesfully deleted",
                     },
@@ -165,11 +167,11 @@ class GetOrDeleteBill(GenericAPIView):
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Bill.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -229,16 +231,16 @@ class AddBillFile(CreateAPIView):
                 else:
                     final_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-            return JsonResponse({"data": response}, status=final_status)
+            return Response({"data": response}, status=final_status)
 
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Bill.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
