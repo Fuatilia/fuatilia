@@ -1,10 +1,10 @@
-from django.http import JsonResponse
+import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
 from apps.votes.models import Vote
 from apps.votes import serializers
 from drf_spectacular.utils import extend_schema
-import logging
+from rest_framework.response import Response
 
 logger = logging.getLogger("app_logger")
 
@@ -17,11 +17,11 @@ class CreateVote(CreateAPIView):
         try:
             if self.serializer_class.is_valid(request.data):
                 votes_data = self.serializer_class.create(request.data)
-                return JsonResponse(
+                return Response(
                     {"data": votes_data.__dict__}, status=status.HTTP_201_CREATED
                 )
             else:
-                return JsonResponse(
+                return Response(
                     {
                         "data": votes_data.__dict__,
                     },
@@ -30,7 +30,7 @@ class CreateVote(CreateAPIView):
 
         except Exception as e:
             logger.exception(e)
-            return JsonResponse(
+            return Response(
                 {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -82,7 +82,7 @@ class FilterVotes(GenericAPIView):
             offset : (offset + items_per_page)
         ]
 
-        return JsonResponse(
+        return Response(
             {
                 "data": self.serializer_class(queryset, many=True).data,
             },
@@ -104,18 +104,18 @@ class GetOrDeleteVote(GenericAPIView):
             response_data = Vote.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
-            return JsonResponse(
+            return Response(
                 {"data": response},
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Vote.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -130,7 +130,7 @@ class GetOrDeleteVote(GenericAPIView):
             rep = Vote.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
-                return JsonResponse(
+                return Response(
                     {
                         "message": "Vote succesfully deleted",
                     },
@@ -139,11 +139,11 @@ class GetOrDeleteVote(GenericAPIView):
         except Exception as e:
             logger.exception(e)
             if e.__class__ == Vote.DoesNotExist:
-                return JsonResponse(
+                return Response(
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            return JsonResponse(
+            return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

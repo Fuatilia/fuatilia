@@ -2,16 +2,22 @@ from apps.users.models import User, UserRole, UserType
 from rest_framework import serializers
 
 
-class AdminUserFetchSerializer(serializers.ModelSerializer):
+class FullUserFetchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ("password", "client_secret")
+        exclude = ("password", "client_id", "client_secret")
 
 
 class UserFetchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ("password", "client_secret", "pending_update_json", "role")
+        exclude = (
+            "updated_by",
+            "password",
+            "client_id",
+            "client_secret",
+            "pending_update_json",
+        )
 
 
 class UserCreationSerializer(serializers.Serializer):
@@ -47,11 +53,26 @@ class UserUpdateSerializer(serializers.Serializer):
 
 
 # For Api Apps
-class AppCreationSerializer(serializers.Serializer):
+class AppCreationPayloadSerializer(serializers.Serializer):
     email = serializers.CharField(min_length=3, default="janedoe@fuatilia.com")
     username = serializers.CharField(min_length=3, default="janedoe")
     phone_number = serializers.CharField(required=False, default="+254111111111")
     parent_organization = serializers.CharField(required=False, default="fuatilia")
+    user_type = serializers.CharField(default="APP")
+
+
+class AppCreationSerializer(serializers.Serializer):
+    email = serializers.CharField(min_length=3)
+    username = serializers.CharField(min_length=3)
+    phone_number = serializers.CharField()
+    parent_organization = serializers.CharField()
+    user_type = serializers.CharField()
+    client_id = serializers.CharField(min_length=20)
+    client_secret = serializers.CharField()
+
+    def create(self, validated_data):
+        user = User.objects.create(**validated_data)
+        return user
 
 
 class UserFilterSerializer(serializers.Serializer):
@@ -59,7 +80,7 @@ class UserFilterSerializer(serializers.Serializer):
     last_name = serializers.CharField(required=False)
     user_type = serializers.ChoiceField(required=False, choices=UserType)
     username = serializers.CharField(required=False)
-    email = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
     phone_number = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
     created_at_start = serializers.DateTimeField(
@@ -77,3 +98,15 @@ class UserFilterSerializer(serializers.Serializer):
     is_active = serializers.CharField(required=False)
     page = serializers.IntegerField(default=1)
     items_per_page = serializers.IntegerField(default=10)
+
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(default="user")
+    password = serializers.CharField(default="password")
+
+
+class AppLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(default="app username")
+    client_id = serializers.CharField(default="jak2**********cocn")
+    client_secret = serializers.CharField(default="MjG**********woHl")
+    grant_type = serializers.CharField(default="password")

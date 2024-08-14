@@ -1,6 +1,10 @@
+import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
+from argon2 import PasswordHasher
+
+logger = logging.getLogger("app_logger")
 
 
 class UserRole(models.TextChoices):
@@ -54,3 +58,18 @@ class User(AbstractUser):
         ]  # Allow people to use their emails for their apps
         db_table = "users"
         verbose_name_plural = "users"
+
+    # For some reason DRF doesn't automatically hash passwords for AbstractUses
+    # even with .set_password in the serializer
+    # This helps with that
+    def save(self, *args, **kwargs):
+        self.set_password(self.password)
+        super().save(*args, **kwargs)
+
+    def verify_app_credentials(self, data):
+        logger.info(f"Verifying app credentials for {self.id}")
+        if self.client_id == data["client_id"]:
+            if PasswordHasher().verify(self.client_secret, data["client_secret"]):
+                logger.info(f"Succesfully verified app credentials for {self.id}")
+                return True
+        return False

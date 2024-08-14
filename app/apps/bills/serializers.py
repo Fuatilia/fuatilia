@@ -15,6 +15,12 @@ class FullFetchBillSerilizer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserFetchBillSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = Bill
+        exclude = ("file_url", "topics_in_the_bill")
+
+
 class BillCreationSerializer(serializers.Serializer):
     title = serializers.CharField(default="Finance Bill 2024")
     status = serializers.ChoiceField(choices=BillStatus, default=BillStatus.IN_PROGRESS)
