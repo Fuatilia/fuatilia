@@ -5,12 +5,19 @@ from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from utils.auth import create_client_id_and_secret, get_tokens_for_user
+from rest_framework.permissions import IsAuthenticated
+from utils.auth import (
+    create_client_id_and_secret,
+    get_tokens_for_user,
+    CustomTokenAuthentication,
+)
 
 logger = logging.getLogger("app_logger")
 
 
 class CreateUser(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -41,6 +48,8 @@ class CreateUser(CreateAPIView):
 
 
 class CreateApp(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -86,6 +95,9 @@ class CreateApp(CreateAPIView):
 
 
 class FilterUsers(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     """
     Filter users in the system.
 
@@ -97,7 +109,7 @@ class FilterUsers(GenericAPIView):
     def get(self, request):
         return self.get_queryset()
 
-    def get_serializer(self):
+    def get_serializer(self, *args, **kwargs):
         if (
             self.request.user.is_authenticated
             and self.request.user.role == UserRole.ADMIN
@@ -144,11 +156,16 @@ class FilterUsers(GenericAPIView):
 
         serializer = self.get_serializer()
 
+        logger.info(f"Filtering Users with {filter_params}")
+
         queryset = User.objects.filter(**filter_params)
         return Response(serializer(queryset, many=True).data)
 
 
 class GetOrDeleteUser(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     @extend_schema(
         tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
@@ -205,6 +222,9 @@ class GetOrDeleteUser(GenericAPIView):
 
 
 class UserLogin(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+
     def get_serializer(self, *args, **kwargs):
         return
 

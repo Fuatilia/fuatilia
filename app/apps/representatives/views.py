@@ -1,5 +1,6 @@
 import logging
 import os
+from utils.auth import CustomTokenAuthentication
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload
 from apps.representatives.models import Representative
@@ -7,6 +8,7 @@ from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework import status
 
@@ -14,6 +16,8 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateRepresentative(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.RepresentativeCreationSerializer
 
     @extend_schema(
@@ -46,6 +50,8 @@ class CreateRepresentative(CreateAPIView):
 
 
 class FilterRepresenatatives(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchRepresentativeSerializer
 
     @extend_schema(
@@ -114,6 +120,8 @@ class FilterRepresenatatives(GenericAPIView):
 
 
 class GetOrDeleteRepresentative(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchRepresentativeSerializer
 
@@ -175,6 +183,9 @@ class GetOrDeleteRepresentative(GenericAPIView):
 
 
 class AddRepresentativeFile(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     # Removes --> should either include a `serializer_class` attribute, or override the `get_serializer_class()` method.
     def get_serializer(self, *args, **kwargs):
         return

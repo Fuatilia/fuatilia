@@ -2,6 +2,7 @@ import os
 
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import CustomTokenAuthentication
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload
@@ -9,11 +10,14 @@ from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger("app_logger")
 
 
 class CreateBill(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.BillCreationSerializer
 
     @extend_schema(tags=["Bills"], request=serializers.BillCreationSerializer)
@@ -44,6 +48,8 @@ class CreateBill(CreateAPIView):
 
 
 class FilterBills(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchBillSerilizer
 
     @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
@@ -119,6 +125,9 @@ class FilterBills(GenericAPIView):
 
 
 class GetOrDeleteBill(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchBillSerilizer
 
@@ -178,6 +187,9 @@ class GetOrDeleteBill(GenericAPIView):
 
 
 class AddBillFile(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     # Removes --> should either include a `serializer_class` attribute, or override the `get_serializer_class()` method.
     def get_serializer(self, *args, **kwargs):
         return

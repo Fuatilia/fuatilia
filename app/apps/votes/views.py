@@ -1,15 +1,19 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import CustomTokenAuthentication
 from apps.votes.models import Vote
 from apps.votes import serializers
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger("app_logger")
 
 
 class CreateVote(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.VoteCreationSerializer
 
     @extend_schema(tags=["Votes"], request=serializers.VoteCreationSerializer)
@@ -36,6 +40,8 @@ class CreateVote(CreateAPIView):
 
 
 class FilterVotes(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
@@ -91,6 +97,8 @@ class FilterVotes(GenericAPIView):
 
 
 class GetOrDeleteVote(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchVoteSerializer
 
