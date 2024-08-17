@@ -14,6 +14,7 @@ import os
 import dotenv
 from pathlib import Path
 from datetime import datetime
+import pytz
 
 
 dotenv.load_dotenv()
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Custom
     "rest_framework",
+    "django_prometheus",
     # Apps
     "apps.users",
     "apps.votes",
@@ -55,6 +57,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -62,6 +65,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "utils.custom_middlewares.OTL.RequestInjectorMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 ROOT_URLCONF = "urls"
@@ -155,6 +160,10 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "trace_formatter": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s] [%(funcName)s] %(message)s",  # optional, default is logging.BASIC_FORMAT
+            "datefmt": "%Y-%m-%d %H:%M:%S",  # optional, default is "%Y-%m-%d %H:%M:%S"
+        },
         "verbose": {
             "format": "{asctime} {levelname} module:{module} tr:{thread:d} :: {message}",
             "style": "{",
@@ -168,14 +177,14 @@ LOGGING = {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "trace_formatter",
         },
         "file": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "verbose",
-            "filename": f"logs/{datetime.now().strftime('%Y_%m_%d')}.log",
-            "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES")),
+            "formatter": "trace_formatter",
+            "filename": f"logs/{datetime.now(tz = pytz.timezone('UTC')).strftime('%Y_%m_%d')}.log",
+            "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES", "100000")),
             "backupCount": 10,
         },
         "mail_admins": {

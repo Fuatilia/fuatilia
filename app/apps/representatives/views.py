@@ -1,5 +1,6 @@
 import logging
 import os
+from utils.general import add_request_data_to_span
 from utils.auth import CustomTokenAuthentication
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload
@@ -9,9 +10,11 @@ from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
-
 from rest_framework import status
+from opentelemetry import trace
 
+
+tracer = trace.get_tracer(__name__)
 logger = logging.getLogger("app_logger")
 
 
@@ -27,6 +30,9 @@ class CreateRepresentative(CreateAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
             logger.info(f"Representative creation with details :: {request.data}")
 
             rep_serializer = serializers.RepresentativeCreationSerializer(
@@ -66,6 +72,9 @@ class FilterRepresenatatives(GenericAPIView):
         """
         Return a list of users.
         """
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
         filter_params = {}
 
         logger.info(f"Filtering Reps with {self.request.GET.dict()}")
@@ -195,6 +204,9 @@ class AddRepresentativeFile(GenericAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
             response_data = Representative.objects.get(pk=request.data["id"])
             if response_data.id:
                 reps_data_bucket_name = os.environ.get("REPS_DATA_BUCKET_NAME")
@@ -241,9 +253,7 @@ class AddRepresentativeFile(GenericAPIView):
                 else:
                     final_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-            return Response(
-                {"status_code": final_status, "data": response}, status=final_status
-            )
+            return Response({"data": response}, status=final_status)
 
         except Exception as e:
             logger.exception(e)

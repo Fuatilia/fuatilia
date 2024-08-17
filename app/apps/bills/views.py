@@ -2,6 +2,7 @@ import os
 
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.general import add_request_data_to_span
 from utils.auth import CustomTokenAuthentication
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
@@ -11,7 +12,10 @@ from drf_spectacular.utils import extend_schema
 import logging
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from opentelemetry import trace
 
+
+tracer = trace.get_tracer(__name__)
 logger = logging.getLogger("app_logger")
 
 
@@ -23,6 +27,9 @@ class CreateBill(CreateAPIView):
     @extend_schema(tags=["Bills"], request=serializers.BillCreationSerializer)
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
             logger.info(f"Initiating bill creation for {request.data}")
             serializer = self.serializer_class(data=request.data)
             if serializer.is_valid():
@@ -57,6 +64,9 @@ class FilterBills(GenericAPIView):
         return self.get_queryset()
 
     def get_queryset(self):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
         filter_params = {}
 
         logger.info(f"Filtering Bills with {self.request.GET.dict()}")
@@ -197,6 +207,9 @@ class AddBillFile(CreateAPIView):
     @extend_schema(tags=["Bills"], request=serializers.BillFileUploadSerializer)
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
             response_data = Bill.objects.get(pk=request.data["id"])
             if response_data.id:
                 bills_data_bucket_name = os.environ.get("BILLS_DATA_BUCKET_NAME")

@@ -3,6 +3,14 @@
 
 import os
 import sys
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+)
+from opentelemetry import trace
 
 
 def main():
@@ -10,6 +18,18 @@ def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.production")
     try:
         from django.core.management import execute_from_command_line
+
+        TRACING_EXPORTER_ENDPOINT = f'{os.getenv("TRACING_EXPORTER_ENDPOINT")}'
+        resource = Resource(attributes={SERVICE_NAME: "fuatilia-api-tracer"})
+
+        trace_provider = TracerProvider(resource=resource)
+        span_processor = BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=TRACING_EXPORTER_ENDPOINT)
+        )
+
+        trace_provider.add_span_processor(span_processor)
+        trace.set_tracer_provider(trace_provider)
+
     except ImportError as exc:
         raise ImportError(
             "Couldn't import Django. Are you sure it's installed and "

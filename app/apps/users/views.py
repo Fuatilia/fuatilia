@@ -1,4 +1,5 @@
 import logging
+from utils.general import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserRole, UserType
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -11,13 +12,15 @@ from utils.auth import (
     get_tokens_for_user,
     CustomTokenAuthentication,
 )
+from opentelemetry import trace
 
 logger = logging.getLogger("app_logger")
+tracer = trace.get_tracer(__name__)
 
 
 class CreateUser(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -27,6 +30,13 @@ class CreateUser(CreateAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
+            logger.info(
+                f"Initiating app creation with username {request.data["username"]}"
+            )
+
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save().__dict__
@@ -48,8 +58,8 @@ class CreateUser(CreateAPIView):
 
 
 class CreateApp(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -59,7 +69,10 @@ class CreateApp(CreateAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
             logger.info(f"Initiating app creation with details {request.data}")
+
             data = request.data
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
@@ -123,6 +136,9 @@ class FilterUsers(GenericAPIView):
         """
         Return a list of users.
         """
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
         filter_params = {}
 
         if self.request.GET.get("first_name"):
@@ -172,6 +188,9 @@ class GetOrDeleteUser(GenericAPIView):
     )
     def get(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f'Getting user with ID {kwargs.get("id")}')
             response_data = User.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
@@ -198,6 +217,9 @@ class GetOrDeleteUser(GenericAPIView):
     )
     def delete(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f'Deleting user with ID {kwargs.get("id")}')
             rep = User.objects.get(pk=kwargs.get("id"))
             if rep:
