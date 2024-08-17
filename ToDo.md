@@ -32,4 +32,7 @@ if serializer.is_valid():
 
 Hide users-swagger for external
 
-Add OpenTelemetry MTL(Jaeger) ... Grafana  ???
+Add **kwargs to span and add span traces to all endpouints with **krgs (Get/Delete)
+Update response with trace ID all endpoints ?
+
+Move from manage.py startup to proper production startup

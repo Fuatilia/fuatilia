@@ -1,20 +1,31 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from app.utils.general import add_request_data_to_span
+from utils.auth import CustomTokenAuthentication
 from apps.votes.models import Vote
 from apps.votes import serializers
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from opentelemetry import trace
 
+
+tracer = trace.get_tracer(__name__)
 logger = logging.getLogger("app_logger")
 
 
 class CreateVote(CreateAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.VoteCreationSerializer
 
     @extend_schema(tags=["Votes"], request=serializers.VoteCreationSerializer)
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
             if self.serializer_class.is_valid(request.data):
                 votes_data = self.serializer_class.create(request.data)
                 return Response(
@@ -36,6 +47,8 @@ class CreateVote(CreateAPIView):
 
 
 class FilterVotes(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
@@ -43,6 +56,9 @@ class FilterVotes(GenericAPIView):
         return self.get_queryset()
 
     def get_queryset(self):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
         filter_params = {}
 
         logger.info(f"Filtering Votes with {self.request.GET.dict()}")
@@ -91,6 +107,8 @@ class FilterVotes(GenericAPIView):
 
 
 class GetOrDeleteVote(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchVoteSerializer
 

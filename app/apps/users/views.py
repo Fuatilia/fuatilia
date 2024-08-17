@@ -1,16 +1,26 @@
 import logging
+from utils.general import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserRole, UserType
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from utils.auth import create_client_id_and_secret, get_tokens_for_user
+from rest_framework.permissions import IsAuthenticated
+from utils.auth import (
+    create_client_id_and_secret,
+    get_tokens_for_user,
+    CustomTokenAuthentication,
+)
+from opentelemetry import trace
 
 logger = logging.getLogger("app_logger")
+tracer = trace.get_tracer(__name__)
 
 
 class CreateUser(CreateAPIView):
+    authentication_classes = []
+    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -20,6 +30,13 @@ class CreateUser(CreateAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
+            logger.info(
+                f"Initiating app creation with username {request.data["username"]}"
+            )
+
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save().__dict__
@@ -41,6 +58,8 @@ class CreateUser(CreateAPIView):
 
 
 class CreateApp(CreateAPIView):
+    authentication_classes = []
+    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -50,7 +69,10 @@ class CreateApp(CreateAPIView):
     )
     def post(self, request):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
             logger.info(f"Initiating app creation with details {request.data}")
+
             data = request.data
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
@@ -86,6 +108,9 @@ class CreateApp(CreateAPIView):
 
 
 class FilterUsers(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     """
     Filter users in the system.
 
@@ -97,7 +122,7 @@ class FilterUsers(GenericAPIView):
     def get(self, request):
         return self.get_queryset()
 
-    def get_serializer(self):
+    def get_serializer(self, *args, **kwargs):
         if (
             self.request.user.is_authenticated
             and self.request.user.role == UserRole.ADMIN
@@ -111,6 +136,9 @@ class FilterUsers(GenericAPIView):
         """
         Return a list of users.
         """
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
         filter_params = {}
 
         if self.request.GET.get("first_name"):
@@ -144,17 +172,25 @@ class FilterUsers(GenericAPIView):
 
         serializer = self.get_serializer()
 
+        logger.info(f"Filtering Users with {filter_params}")
+
         queryset = User.objects.filter(**filter_params)
         return Response(serializer(queryset, many=True).data)
 
 
 class GetOrDeleteUser(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     @extend_schema(
         tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
     )
     def get(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f'Getting user with ID {kwargs.get("id")}')
             response_data = User.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
@@ -181,6 +217,9 @@ class GetOrDeleteUser(GenericAPIView):
     )
     def delete(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f'Deleting user with ID {kwargs.get("id")}')
             rep = User.objects.get(pk=kwargs.get("id"))
             if rep:
@@ -205,6 +244,9 @@ class GetOrDeleteUser(GenericAPIView):
 
 
 class UserLogin(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+
     def get_serializer(self, *args, **kwargs):
         return
 

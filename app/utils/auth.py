@@ -8,6 +8,7 @@ from apps.users.models import User
 from rest_framework import authentication
 from rest_framework import exceptions
 from argon2 import PasswordHasher
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 logger = logging.getLogger("app_logger")
 
@@ -89,3 +90,16 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed("No such user")
             else:
                 raise exceptions.AuthenticationFailed(f"Error : {e.__str__()}")
+
+
+class CustomTokenScheme(OpenApiAuthenticationExtension):
+    target_class = "utils.auth.CustomTokenAuthentication"
+    name = "CustomTokenAuthentication"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "Bearer",
+            "in": "header",
+            "name": "Authorization",
+            "description": "Token-based authentication with required prefix 'Bearer'",
+        }

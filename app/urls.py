@@ -38,6 +38,7 @@ urlpatterns = [
         name="redoc",
     ),
     path("admin/", admin.site.urls),
+    path("", include("django_prometheus.urls")),
     path("api/users/", include("apps.users.urls")),
     path("api/representatives/", include("apps.representatives.urls")),
     path("api/bills/", include("apps.bills.urls")),
