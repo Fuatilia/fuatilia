@@ -6,4 +6,5 @@ urlpatterns = [
     path("filter", views.FilterBills().as_view()),
     path("<str:id>", views.GetOrDeleteBill().as_view()),
     path("upload/file", views.AddBillFile().as_view()),
+    path("<str:id>/file", views.GetBillFile().as_view()),
 ]

@@ -184,7 +184,7 @@ class S3Processor:
                 Key=file_name,
                 Metadata=metadata,
                 # ServerSideEncryption='AES256'|'aws:kms'|'aws:kms:dsse',
-                # StorageClass='STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'|'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
+                # StorageClass='STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'
                 # WebsiteRedirectLocation='string',
                 # SSECustomerAlgorithm='string',
                 # SSECustomerKey='string',

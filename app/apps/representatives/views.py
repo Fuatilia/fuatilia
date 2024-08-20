@@ -3,7 +3,7 @@ import os
 from utils.general import add_request_data_to_span
 from utils.auth import CustomTokenAuthentication
 from utils.enum_utils import FileTypeEnum
-from utils.file_utils.generic_file_utils import file_upload
+from utils.file_utils.generic_file_utils import file_upload, get_file_data
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -21,12 +21,12 @@ logger = logging.getLogger("app_logger")
 class CreateRepresentative(CreateAPIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = serializers.RepresentativeCreationSerializer
+    serializer_class = serializers.UserFetchRepresentativeSerializer
 
     @extend_schema(
         tags=["Representatives"],
         request=serializers.RepresentativeCreationSerializer,
-        responses={201: serializers.RepresentativeCreationSerializer},
+        responses={201: serializer_class},
     )
     def post(self, request):
         try:
@@ -43,10 +43,12 @@ class CreateRepresentative(CreateAPIView):
                     rep_serializer.errors, status=status.HTTP_417_EXPECTATION_FAILED
                 )
 
-            rep_serializer.save()
-            response = self.serializer_class(rep_serializer).data
+            created_representative = rep_serializer.save()
 
-            return Response({"data": response}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"data": self.serializer_class(created_representative).data},
+                status=status.HTTP_201_CREATED,
+            )
 
         except Exception as e:
             logger.exception(e)
@@ -58,7 +60,7 @@ class CreateRepresentative(CreateAPIView):
 class FilterRepresenatatives(GenericAPIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = serializers.FullFetchRepresentativeSerializer
+    serializer_class = serializers.UserFetchRepresentativeSerializer
 
     @extend_schema(
         tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
@@ -230,23 +232,22 @@ class AddRepresentativeFile(GenericAPIView):
                 response = file_upload(
                     reps_data_bucket_name,
                     FileTypeEnum[request.data.get("file_type")],
-                    "representatives",
                     file_name,
                     request.data.get("base64_encoding"),
                     id=str(response_data.id),
                     metadata=metadata,
+                    folder="representatives",
                 )
 
                 if (
                     response.get("ResponseMetadata")
                     and response["ResponseMetadata"]["HTTPStatusCode"] == 200
                 ):
-                    folder_name = request.data.get("file_type").lower() + "s"
-                    image_url = f"s3://{reps_data_bucket_name}/representatives/{response_data.id}/{folder_name}/{file_name}"
-                    response_data.image_url = image_url
+                    response_data.image_url = response["file_url"]
                     response_data.save()
                     response = {
-                        "image_url": image_url,
+                        "message": "Image successfully uploaded",
+                        "url": response["file_url"],
                     }
 
                     final_status = status.HTTP_200_OK
@@ -262,6 +263,49 @@ class AddRepresentativeFile(GenericAPIView):
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class GetRepresentativeFilesList(GenericAPIView):
+    @extend_schema(
+        tags=["Representatives"], responses={200: "Representative file found"}
+    )
+    def get(self, request, **kwargs):
+        try:
+            response_data = Representative.objects.get(pk=kwargs.get("id"))
+            if kwargs.get("file_type") == FileTypeEnum.IMAGE.lower():
+                file_url = response_data.image_url
+
+            file_data = get_file_data(os.environ.get("REPS_DATA_BUCKET_NAME"), file_url)
+
+            return Response({"data": file_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class GetRepresentativeFiles(GenericAPIView):
+    @extend_schema(
+        tags=["Representatives"], responses={200: "Representative file found"}
+    )
+    def get(self, request, **kwargs):
+        try:
+            if kwargs.get("file_type") and kwargs.get("file_name"):
+                id = kwargs.get("id")
+                file_url = f'representatives/{id}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
+                file_data = get_file_data(
+                    os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
+                )
+                return Response({"data": file_data}, status=status.HTTP_200_OK)
+            return Response(
+                {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK
+            )
+        except Exception as e:
             return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

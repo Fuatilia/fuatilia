@@ -17,8 +17,6 @@ class UserFetchRepresentativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representative
         exclude = (
-            "created_at",
-            "updated_at",
             "updated_by",
             "pending_update_json",
             "image_url",

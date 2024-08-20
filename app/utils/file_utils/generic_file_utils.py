@@ -22,31 +22,33 @@ def file_upload(
 
     id = kwargs.get("id")
     house = kwargs.get("house")
-    folder = kwargs.get("house")
+    folder = kwargs.get("folder")
     metadata = kwargs.get("metadata")
 
     dir = representative_s3_processor.compute_s3_file_directory(
-        file_type, file_name, id=id, house=house, folder=folder
+        file_type, folder, file_name, id=id, house=house
     )
 
     try:
         response = representative_s3_processor.upload_file(
             base64encoding, bucket_name, file_name=dir, metadata=metadata
         )
-        logger.info(response)
+
+        response = {**response, "file_url": f"s3://{bucket_name}/{dir}"}
         return response
     except Exception as e:
         logging.exception(e)
         return {"error": e.__repr__()}
 
 
-async def get_file_data(bucket_name, file_name):
+def get_file_data(bucket_name, file_name):
+    logger.info(f"Fetching file : {file_name}")
     response = representative_s3_processor.get_file(bucket_name, file_name)
     logger.info(response)
     return response["Body"].read()
 
 
-async def stream_file_data(bucket_name, file_name, start_KB, stop_KB):
+def stream_file_data(bucket_name, file_name, start_KB, stop_KB):
     """
     Get a stream response of the requested file
 

@@ -6,7 +6,7 @@ from utils.general import add_request_data_to_span
 from utils.auth import CustomTokenAuthentication
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
-from utils.file_utils.generic_file_utils import file_upload
+from utils.file_utils.generic_file_utils import file_upload, get_file_data
 from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
@@ -265,6 +265,21 @@ class AddBillFile(CreateAPIView):
                     {"error": e.__str__()},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class GetBillFile(GenericAPIView):
+    @extend_schema(tags=["Bills"], responses={200: "Bill file foud"})
+    def get(self, request, **kwargs):
+        try:
+            response_data = Bill.objects.get(pk=kwargs.get("id"))
+            file_data = get_file_data(os.environ.get(), response_data.file_url)
+
+            return Response({"data": file_data}, status=status.HTTP_200_OK)
+        except Exception as e:
             return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
