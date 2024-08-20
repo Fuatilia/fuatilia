@@ -25,3 +25,6 @@ repo structure
 ***To run on docker*** <br>
 `docker build -t <_name_> .` <br>
 `docker run -it --net=host <_name_>` <br>
+
+***To run on docker (With OpenTelemetry)*** <br>
+`docker compose up --build .` <br>

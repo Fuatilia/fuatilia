@@ -47,6 +47,8 @@ class VoteCreationSerializer(serializers.Serializer):
                     f'Expected value at vote_summary found {data.get('vote_summary')}'
                 )
 
+        return data
+
 
 class VoteUpdateSerializer(serializers.Serializer):
     bill_id = serializers.CharField(default="NATIONAL")

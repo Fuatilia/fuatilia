@@ -36,3 +36,8 @@ Add **kwargs to span and add span traces to all endpouints with **krgs (Get/Dele
 Update response with trace ID all endpoints ?
 
 Move from manage.py startup to proper production startup
+
+
+move JWT algos to env 'HS512'
+
+Add AWS restrictions in scopes when pulling images i.e can pull only pro pic vs can pull all images

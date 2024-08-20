@@ -17,7 +17,7 @@ HASH_SECRET_STR = os.environ.get("HASH_SECRET_STR")
 
 def get_tokens_for_user(user: User):
     iat = datetime.datetime.now()
-    exp_time = iat + datetime.timedelta(minutes=5)
+    exp_time = iat + datetime.timedelta(minutes=60)
     exp_epoch = int(exp_time.timestamp())
     data = {
         "username": user.username,
