@@ -1,6 +1,8 @@
 # OpenTelemetry Middlewares
 import logging
 
+from django.http import StreamingHttpResponse, HttpResponse, FileResponse
+
 from opentelemetry import trace
 
 
@@ -23,11 +25,20 @@ class RequestInjectorMiddleware:
         logger.info(response)
 
         try:
-            span.set_attribute("response.body", f"{response.data}")
+            if response.__class__ == StreamingHttpResponse:
+                span.set_attribute("response.class", "StreamingHttpResponse")
+            elif response.__class__ == FileResponse:
+                span.set_attribute("response.class", "FileResponse")
+            elif response.__class == HttpResponse:
+                # Prometheus and Django URLs using HttpResponses
+                span.set_attribute("response.class", "HttpResponse")
+                span.set_attribute("response.content", f"{response.content}")
 
-        except AttributeError:
-            # Prometheus URLs using HttpResponses
-            span.set_attribute("response.content", f"{response.content}")
+            else:
+                span.set_attribute("response.body", f"{response.data}")
+
+        except Exception as e:
+            span.set_attribute("response.error", f"{e.__str__()}")
 
         span.set_attribute("response.status", f"{response.status_code}")
         span.set_attribute("response.headers", f"{response.headers}")

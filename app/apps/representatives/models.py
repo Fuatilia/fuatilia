@@ -15,7 +15,7 @@ class PositionChoices(models.TextChoices):
     MCA = "MCA"
 
 
-class GENDER(models.TextChoices):
+class GenderChoices(models.TextChoices):
     FEMALE = "FEMALE"
     MALE = "MALE"
     OTHER = "OTHER"
@@ -31,7 +31,7 @@ class Representative(models.Model):
     area_represented = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, null=True)
     image_url = models.CharField(max_length=100, null=True)
-    gender = models.CharField(max_length=2)
+    gender = models.CharField(max_length=10, choices=GenderChoices.choices)
     representation_summary = models.JSONField(null=True)
     pending_update_json = models.JSONField(null=True)
     updated_by = models.CharField(max_length=30, null=True)

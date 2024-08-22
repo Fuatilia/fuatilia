@@ -1,17 +1,24 @@
+import base64
+import io
+import json
 import logging
 import os
+from django.http import FileResponse, StreamingHttpResponse
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.enum_utils import FileTypeEnum
 from apps.bills.models import Bill
 from utils.file_utils.models import GenericFileUploadSerilizer
-from utils.file_utils.generic_file_utils import file_upload, get_file_data
+from utils.file_utils.generic_file_utils import (
+    file_upload,
+    get_file_data,
+    stream_file_data,
+)
 from utils.general import add_request_data_to_span
-from utils.auth import CustomTokenAuthentication
 from apps.votes.models import Vote
 from apps.votes import serializers
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from opentelemetry import trace
 
 
@@ -20,11 +27,11 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateVote(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchVoteSerializer
 
-    @extend_schema(tags=["Votes"], request=serializers.VoteCreationSerializer)
+    @extend_schema(
+        tags=["Votes"], request={"application/json": serializers.VoteCreationSerializer}
+    )
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -53,8 +60,6 @@ class CreateVote(CreateAPIView):
 
 
 class FilterVotes(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
@@ -97,8 +102,8 @@ class FilterVotes(GenericAPIView):
                     "updated_at_end"
                 )
 
-            page = int(self.request.GET.get("page"))
-            items_per_page = int(self.request.GET.get("items_per_page"))
+            page = int(self.request.GET.get("page", "1"))
+            items_per_page = int(self.request.GET.get("items_per_page", "10"))
             offset = (page - 1) * items_per_page
 
             queryset = Vote.objects.filter(**filter_params)[
@@ -121,8 +126,6 @@ class FilterVotes(GenericAPIView):
 
 
 class GetOrDeleteVote(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchVoteSerializer
 
@@ -182,14 +185,17 @@ class GetOrDeleteVote(GenericAPIView):
 
 
 class UploadVoteFile(GenericAPIView):
-    @extend_schema(tags=["Votes"], request=GenericFileUploadSerilizer)
+    @extend_schema(
+        tags=["Votes"], request={"application/json": GenericFileUploadSerilizer}
+    )
     def post(self, request, **kwargs):
         """
+        Uploads votes files in json formart
+
         file_type : should be set to VOTE to upload vote JSON
         """
         try:
-            vote = Vote.objects.get(pk=kwargs.get("id"))
-            bill = Bill.objects.get(pk=vote.id)
+            bill = Bill.objects.get(pk=kwargs.get("bill_id"))
 
             metadata = {
                 "source": request.data.get("file_source") or "",
@@ -198,15 +204,22 @@ class UploadVoteFile(GenericAPIView):
 
             response = file_upload(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"),
-                request.data["file_type"],
+                FileTypeEnum[request.data.get("file_type")],
                 request.data["file_name"],
                 request.data["base64_encoding"],
                 metadata=metadata,
-                house=vote.house.lower(),
+                house=bill.house.lower(),
                 folder=bill.title,
             )
 
+            if response.get("error"):
+                return Response(
+                    {"error": response["error"]},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
             return Response(response, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.exception(e)
             if e.__class__ in [Vote.DoesNotExist, Bill.DoesNotExist]:
@@ -220,14 +233,87 @@ class UploadVoteFile(GenericAPIView):
             )
 
 
-class GetVoteFile(GenericAPIView):
-    @extend_schema(tags=["Votes"], responses={200: "Vote file foud"})
+class GetVoteFileData(GenericAPIView):
+    @extend_schema(tags=["Votes"], responses={200: "Vote file found"})
     def get(self, request, **kwargs):
+        """
+        Gets vote file tied to a bill.
+        The same bill will have different ID's in Senate and in National Assembly
+        """
         try:
-            response_data = Vote.objects.get(pk=kwargs.get("id"))
-            file_data = get_file_data(os.environ.get(), response_data.file_url)
+            bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_data = get_file_data(
+                os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
+            )
+            file_data = base64.b64decode(file_data).decode("utf-8")
 
-            return Response({"data": file_data}, status=status.HTTP_200_OK)
+            return Response({"data": json.loads(file_data)}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class DownloadVoteFile(GenericAPIView):
+    @extend_schema(tags=["Votes"], responses={200: "Vote file sent"})
+    def get(self, request, **kwargs):
+        """
+        Allows browsers to download
+        Uses get file functionality but with the download header dispositions for files
+        Download vote file tied to a bill.
+        """
+        try:
+            bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_data = get_file_data(
+                os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
+            )
+            file_data = base64.b64decode(file_data.decode("utf-8"))
+
+            filename = f"{bill_data.title} - {kwargs.get("file_name")}"
+
+            response = FileResponse(
+                io.BytesIO(file_data),
+                content_type="application/json",
+                status=status.HTTP_200_OK,
+            )
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+            return response
+        except Exception as e:
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class StreamVoteFile(GenericAPIView):
+    @extend_schema(tags=["Votes"], responses={200: "Vote file received"})
+    def get(self, request, **kwargs):
+        """
+        Similar to download Votes file but allows for stream response
+        Ideal for larger files
+        """
+        try:
+            bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_data = stream_file_data(
+                os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
+            )
+            file_data = base64.b64decode(file_data.read().decode("utf-8"))
+
+            filename = f"{bill_data.title} - {kwargs.get("file_name")}"
+
+            response = StreamingHttpResponse(
+                io.BytesIO(file_data),
+                content_type="application/x-ndjson,text/event-stream",
+                status=status.HTTP_200_OK,
+            )
+            response["Content-Disposition"] = f'inline; filename="{filename}"'
+
+            return response
         except Exception as e:
             return Response(
                 {"error": e.__str__()},

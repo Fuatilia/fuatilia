@@ -1,7 +1,7 @@
+import base64
 import logging
 import os
 from utils.general import add_request_data_to_span
-from utils.auth import CustomTokenAuthentication
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload, get_file_data
 from apps.representatives.models import Representative
@@ -9,7 +9,6 @@ from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from opentelemetry import trace
 
@@ -19,13 +18,11 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateRepresentative(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = serializers.UserFetchRepresentativeSerializer
 
     @extend_schema(
         tags=["Representatives"],
-        request=serializers.RepresentativeCreationSerializer,
+        request={"application/json": serializers.RepresentativeCreationSerializer},
         responses={201: serializer_class},
     )
     def post(self, request):
@@ -58,8 +55,6 @@ class CreateRepresentative(CreateAPIView):
 
 
 class FilterRepresenatatives(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = serializers.UserFetchRepresentativeSerializer
 
     @extend_schema(
@@ -114,8 +109,8 @@ class FilterRepresenatatives(GenericAPIView):
         if self.request.GET.get("is_active"):
             filter_params["is_active"] = self.request.GET.get("is_active")
 
-        page = int(self.request.GET.get("page"))
-        items_per_page = int(self.request.GET.get("items_per_page"))
+        page = int(self.request.GET.get("page", "1"))
+        items_per_page = int(self.request.GET.get("items_per_page", "10"))
         offset = (page - 1) * items_per_page
 
         queryset = Representative.objects.filter(**filter_params)[
@@ -131,8 +126,6 @@ class FilterRepresenatatives(GenericAPIView):
 
 
 class GetOrDeleteRepresentative(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchRepresentativeSerializer
 
@@ -194,15 +187,13 @@ class GetOrDeleteRepresentative(GenericAPIView):
 
 
 class AddRepresentativeFile(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     # Removes --> should either include a `serializer_class` attribute, or override the `get_serializer_class()` method.
     def get_serializer(self, *args, **kwargs):
         return
 
     @extend_schema(
-        tags=["Representatives"], request=serializers.RepresentativeFileUploadSerializer
+        tags=["Representatives"],
+        request={"application/json": serializers.RepresentativeFileUploadSerializer},
     )
     def post(self, request):
         try:
@@ -289,7 +280,7 @@ class GetRepresentativeFilesList(GenericAPIView):
             )
 
 
-class GetRepresentativeFiles(GenericAPIView):
+class GetRepresentativeFile(GenericAPIView):
     @extend_schema(
         tags=["Representatives"], responses={200: "Representative file found"}
     )
@@ -301,6 +292,8 @@ class GetRepresentativeFiles(GenericAPIView):
                 file_data = get_file_data(
                     os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
                 )
+                # Bytes Object
+                file_data = base64.b64decode(file_data.encode("utf-8"))
                 return Response({"data": file_data}, status=status.HTTP_200_OK)
             return Response(
                 {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK

@@ -48,7 +48,9 @@ def get_file_data(bucket_name, file_name):
     return response["Body"].read()
 
 
-def stream_file_data(bucket_name, file_name, start_KB, stop_KB):
+def stream_file_data(
+    bucket_name, file_name, start_KB: int | None = None, stop_KB: int | None = None
+):
     """
     Get a stream response of the requested file
 
@@ -68,9 +70,13 @@ def stream_file_data(bucket_name, file_name, start_KB, stop_KB):
     S3 stream object
 
     """
-    response = representative_s3_processor.get_file(
-        bucket_name,
-        file_name,
-        range="bytes={}-{}".format(start_KB * 1000, stop_KB * 1000),
-    )
+
+    if start_KB is None and stop_KB is None:
+        response = representative_s3_processor.get_file(bucket_name, file_name)
+    else:
+        response = representative_s3_processor.get_file(
+            bucket_name,
+            file_name,
+            range="bytes={}-{}".format(start_KB * 1000, stop_KB * 1000),
+        )
     return response["Body"]
