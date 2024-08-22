@@ -25,8 +25,8 @@ class BillCreationSerializer(serializers.Serializer):
     title = serializers.CharField(default="Finance Bill 2024")
     status = serializers.ChoiceField(choices=BillStatus, default=BillStatus.IN_PROGRESS)
     sponsored_by = serializers.CharField(
-        default="6134fc82-0faa-4bed-b7a2-edbcf541a3c9",
-        help_text="The person that brough the damn bill before the house",
+        default="79c528bd-2771-4b4d-9a02-10e291b12693",
+        help_text="The person that brought the damn bill before the house",
     )  # rep name/ID
     supported_by = serializers.CharField(default="6134fc82-0faa-4bed-b7a2-edbcf541a3c1")
     house = serializers.ChoiceField(
@@ -37,11 +37,8 @@ class BillCreationSerializer(serializers.Serializer):
         required=False,
         help_text='Id of user that created the summary ideally of "Expert" role',
     )  # Id of portal user)
-    summary_upvoted_by = serializers.CharField(
-        required=False,
-        help_text='Comma seperated string of users that upvoted "Experts" ideally ',
-    )
-    summary_downvoted_by = serializers.CharField(required=False)
+    # Summary upvotes will be done after bill creation
+
     final_date_voted = serializers.CharField(
         required=False,
         help_text="The final day the bill was either voted for ascent by president or otherwise",
@@ -49,7 +46,6 @@ class BillCreationSerializer(serializers.Serializer):
     topics_in_the_bill = serializers.CharField(
         required=True, help_text="E.g agriculture, local seeds, radioactive waste"
     )
-    file_url = serializers.CharField(required=False)
 
     def create(self, validated_data):
         bill = Bill.objects.create(**validated_data)
@@ -75,6 +71,16 @@ class BillCreationSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f'Could not find representative with ID {data.get("supported_by")}'
                 )
+
+        # You can have the same bill in seperate houses but not in the same
+        #  Not using unique together for better response output
+        bill = Bill.objects.filter(
+            title=data.get("title"), house=data.get("house")
+        ).first()
+        if bill:
+            raise serializers.ValidationError(
+                f'Duplicate bill  < {data.get("title")} > for {data.get("house")} house'
+            )
 
         return data
 

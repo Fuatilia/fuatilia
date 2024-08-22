@@ -3,7 +3,6 @@ import os
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
 from utils.general import add_request_data_to_span
-from utils.auth import CustomTokenAuthentication
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload, get_file_data
@@ -11,7 +10,6 @@ from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from opentelemetry import trace
 
 
@@ -20,18 +18,18 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateBill(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = serializers.BillCreationSerializer
+    serializer_class = serializers.UserFetchBillSerilizer
 
-    @extend_schema(tags=["Bills"], request=serializers.BillCreationSerializer)
+    @extend_schema(
+        tags=["Bills"], request={"application/json": serializers.BillCreationSerializer}
+    )
     def post(self, request):
         try:
             span = trace.get_current_span()
             add_request_data_to_span(span, request)
 
             logger.info(f"Initiating bill creation for {request.data}")
-            serializer = self.serializer_class(data=request.data)
+            serializer = serializers.BillCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save()
 
@@ -55,8 +53,6 @@ class CreateBill(CreateAPIView):
 
 
 class FilterBills(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = serializers.FullFetchBillSerilizer
 
     @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
@@ -118,8 +114,8 @@ class FilterBills(GenericAPIView):
         if self.request.GET.get("updated_at_end"):
             filter_params["updated_at__lte"] = self.request.GET.get("updated_at_end")
 
-        page = int(self.request.GET.get("page"))
-        items_per_page = int(self.request.GET.get("items_per_page"))
+        page = int(self.request.GET.get("page", "1"))
+        items_per_page = int(self.request.GET.get("items_per_page", "10"))
         offset = (page - 1) * items_per_page
 
         queryset = Bill.objects.filter(**filter_params)[
@@ -135,9 +131,6 @@ class FilterBills(GenericAPIView):
 
 
 class GetOrDeleteBill(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchBillSerilizer
 
@@ -197,14 +190,14 @@ class GetOrDeleteBill(GenericAPIView):
 
 
 class AddBillFile(CreateAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     # Removes --> should either include a `serializer_class` attribute, or override the `get_serializer_class()` method.
     def get_serializer(self, *args, **kwargs):
         return
 
-    @extend_schema(tags=["Bills"], request=serializers.BillFileUploadSerializer)
+    @extend_schema(
+        tags=["Bills"],
+        request={"application/json": serializers.BillFileUploadSerializer},
+    )
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -272,6 +265,9 @@ class AddBillFile(CreateAPIView):
 
 
 class GetBillFile(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(tags=["Bills"], responses={200: "Bill file foud"})
     def get(self, request, **kwargs):
         try:

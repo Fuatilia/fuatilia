@@ -88,11 +88,13 @@ class S3Processor:
             case FileTypeEnum.MANIFESTO:
                 return f"{folder}/{id}/manifestos/" + file_name
             case FileTypeEnum.BILL:
-                return f"{folder}/bills/{house}/" + file_name
+                return f"bills/{house}/{folder}/" + file_name
             case FileTypeEnum.PROCEEDING:
-                return f"{folder}/proceedings/{house}/" + file_name
+                # Folder will be the the proceeding date
+                return f"proceedings/{house}/{folder}/" + file_name
             case FileTypeEnum.VOTE:
-                return f"{folder}/votes/{house}/" + file_name
+                # Folder will be the bill title/name
+                return f"votes/{house}/{folder}/" + file_name
 
     def create_bucket(self, bucket_name, region=None):
         """
@@ -318,14 +320,12 @@ class S3Processor:
 
         return res
 
-    def download_file(
-        self, bucket_name, object_name, file_name, monitor_progress: bool = True
-    ):
+    def download_file(self, bucket_name, object_name, monitor_progress: bool = True):
         if monitor_progress:
-            callback_func = ProgressPercentage(file_name or "file")
+            callback_func = ProgressPercentage(object_name or "file")
         else:
             callback_func = None
 
         return self.s3_client.download_file(
-            bucket_name, object_name, file_name, Callback=callback_func
+            bucket_name, object_name, Callback=callback_func
         )

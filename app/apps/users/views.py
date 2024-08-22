@@ -6,11 +6,9 @@ from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from utils.auth import (
     create_client_id_and_secret,
     get_tokens_for_user,
-    CustomTokenAuthentication,
 )
 from opentelemetry import trace
 
@@ -19,13 +17,11 @@ tracer = trace.get_tracer(__name__)
 
 
 class CreateUser(CreateAPIView):
-    authentication_classes = []
-    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
         tags=["Users"],
-        request=serializers.UserCreationSerializer,
+        request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
     def post(self, request):
@@ -58,13 +54,11 @@ class CreateUser(CreateAPIView):
 
 
 class CreateApp(CreateAPIView):
-    authentication_classes = []
-    permission_classes = []
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
         tags=["Users"],
-        request=serializers.AppCreationPayloadSerializer,
+        request={"application/json": serializers.AppCreationPayloadSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
     def post(self, request):
@@ -108,9 +102,6 @@ class CreateApp(CreateAPIView):
 
 
 class FilterUsers(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     """
     Filter users in the system.
 
@@ -172,16 +163,20 @@ class FilterUsers(GenericAPIView):
 
         serializer = self.get_serializer()
 
-        logger.info(f"Filtering Users with {filter_params}")
+        page = int(self.request.GET.get("page", "1"))
+        items_per_page = int(self.request.GET.get("items_per_page", "10"))
+        offset = (page - 1) * items_per_page
 
-        queryset = User.objects.filter(**filter_params)
-        return Response(serializer(queryset, many=True).data)
+        queryset = User.objects.filter(**filter_params)[
+            offset : (offset + items_per_page)
+        ]
+
+        return Response(
+            {"data": serializer(queryset, many=True).data}, status=status.HTTP_200_OK
+        )
 
 
 class GetOrDeleteUser(GenericAPIView):
-    authentication_classes = [CustomTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     @extend_schema(
         tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
@@ -250,7 +245,9 @@ class UserLogin(GenericAPIView):
     def get_serializer(self, *args, **kwargs):
         return
 
-    @extend_schema(tags=["Users"], request=serializers.UserLoginSerializer)
+    @extend_schema(
+        tags=["Users"], request={"application/json": serializers.UserLoginSerializer}
+    )
     def post(self, request):
         try:
             user = User.objects.get(username=request.data.get("username"))
@@ -294,7 +291,9 @@ class AppLogin(UserLogin):
     def get_serializer(self, *args, **kwargs):
         return
 
-    @extend_schema(tags=["Users"], request=serializers.AppLoginSerializer)
+    @extend_schema(
+        tags=["Users"], request={"application/json": serializers.AppLoginSerializer}
+    )
     def post(self, request):
         try:
             return super().post(request)
