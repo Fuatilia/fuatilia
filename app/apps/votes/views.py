@@ -10,9 +10,9 @@ from utils.enum_utils import FileTypeEnum
 from apps.bills.models import Bill
 from utils.file_utils.models import GenericFileUploadSerilizer
 from utils.file_utils.generic_file_utils import (
-    file_upload,
-    get_file_data,
-    stream_file_data,
+    file_upload_to_s3,
+    get_s3_file_data,
+    stream_s3_file_data,
 )
 from utils.general import add_request_data_to_span
 from apps.votes.models import Vote
@@ -200,9 +200,14 @@ class UploadVoteFile(GenericAPIView):
             metadata = {
                 "source": request.data.get("file_source") or "",
                 "extension": request.data["file_extension"],
+                "string_encoding_fmt": request.data["string_encoding_fmt"],
             }
 
-            response = file_upload(
+            logger.info(
+                f"Initiating votr file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
+            )
+
+            response = file_upload_to_s3(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"),
                 FileTypeEnum[request.data.get("file_type")],
                 request.data["file_name"],
@@ -243,7 +248,7 @@ class GetVoteFileData(GenericAPIView):
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
             file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
-            file_data = get_file_data(
+            file_data = get_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
             file_data = base64.b64decode(file_data).decode("utf-8")
@@ -267,7 +272,7 @@ class DownloadVoteFile(GenericAPIView):
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
             file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
-            file_data = get_file_data(
+            file_data = get_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
             file_data = base64.b64decode(file_data.decode("utf-8"))
@@ -291,7 +296,7 @@ class DownloadVoteFile(GenericAPIView):
 
 class StreamVoteFile(GenericAPIView):
     @extend_schema(tags=["Votes"], responses={200: "Vote file received"})
-    def get(self, request, **kwargs):
+    async def get(self, request, **kwargs):
         """
         Similar to download Votes file but allows for stream response
         Ideal for larger files
@@ -299,7 +304,7 @@ class StreamVoteFile(GenericAPIView):
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
             file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
-            file_data = stream_file_data(
+            file_data = await stream_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
             file_data = base64.b64decode(file_data.read().decode("utf-8"))

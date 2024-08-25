@@ -8,7 +8,7 @@ logger = logging.getLogger("app_logger")
 representative_s3_processor = S3Processor()
 
 
-def file_upload(
+def file_upload_to_s3(
     bucket_name: str, file_type: FileTypeEnum, file_name, base64encoding, **kwargs
 ):
     """
@@ -41,14 +41,14 @@ def file_upload(
         return {"error": e.__repr__()}
 
 
-def get_file_data(bucket_name, file_name):
+def get_s3_file_data(bucket_name, file_name):
     logger.info(f"Fetching file : {file_name}")
     response = representative_s3_processor.get_file(bucket_name, file_name)
     logger.info(response)
     return response["Body"].read()
 
 
-def stream_file_data(
+async def stream_s3_file_data(
     bucket_name, file_name, start_KB: int | None = None, stop_KB: int | None = None
 ):
     """

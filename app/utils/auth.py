@@ -13,11 +13,13 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 logger = logging.getLogger("app_logger")
 
 HASH_SECRET_STR = os.environ.get("HASH_SECRET_STR")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM")
+TOKEN_DELTA = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 
 def get_tokens_for_user(user: User):
     iat = datetime.datetime.now()
-    exp_time = iat + datetime.timedelta(minutes=60)
+    exp_time = iat + datetime.timedelta(minutes=TOKEN_DELTA)
     exp_epoch = int(exp_time.timestamp())
     data = {
         "username": user.username,
@@ -29,7 +31,7 @@ def get_tokens_for_user(user: User):
         "iat": int(iat.timestamp()),
     }
 
-    token = jwt.encode(data, HASH_SECRET_STR, algorithm="HS512")
+    token = jwt.encode(data, HASH_SECRET_STR, algorithm=JWT_ALGORITHM)
 
     return {"access": str(token), "exp": exp_epoch}
 
@@ -37,7 +39,7 @@ def get_tokens_for_user(user: User):
 def verify_user_token(token: str, user: User):
     logger.info(f"Verifying user token for {user.id}")
     try:
-        decoded_data = jwt.decode(token, HASH_SECRET_STR, algorithms=["HS512"])
+        decoded_data = jwt.decode(token, HASH_SECRET_STR, algorithms=[JWT_ALGORITHM])
     except Exception as e:
         logger.exception(e)
         logger.error(f"Failed to verify user token for {user.id}")
