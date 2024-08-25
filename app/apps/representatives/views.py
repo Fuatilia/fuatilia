@@ -3,7 +3,7 @@ import logging
 import os
 from utils.general import add_request_data_to_span
 from utils.enum_utils import FileTypeEnum
-from utils.file_utils.generic_file_utils import file_upload, get_file_data
+from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -54,7 +54,7 @@ class CreateRepresentative(CreateAPIView):
             )
 
 
-class FilterRepresenatatives(GenericAPIView):
+class FilterRepresentatives(GenericAPIView):
     serializer_class = serializers.UserFetchRepresentativeSerializer
 
     @extend_schema(
@@ -206,7 +206,7 @@ class AddRepresentativeFile(GenericAPIView):
                 file_name = request.data.get("file_name")
 
                 logger.info(
-                    f"Initiating file upload --- > to S3 for {response_data.full_name}"
+                    f"Initiating representative file upload --- > to S3 for {response_data.full_name}"
                 )
                 metadata = {
                     "rep_id": str(response_data.id),
@@ -214,13 +214,13 @@ class AddRepresentativeFile(GenericAPIView):
                         "%d/%m/%Y %H:%M:%S"
                     ),
                     "source": request.data.get("image_source") or "",
-                    "version": request.data["version"],
                     "representative_name": response_data.full_name,
                     "content_type": request.data["file_extension"],
+                    "string_encoding_fmt": request.data["string_encoding_fmt"],
                 }
 
                 # # File path should allow for replacement of images
-                response = file_upload(
+                response = file_upload_to_s3(
                     reps_data_bucket_name,
                     FileTypeEnum[request.data.get("file_type")],
                     file_name,
@@ -270,7 +270,9 @@ class GetRepresentativeFilesList(GenericAPIView):
             if kwargs.get("file_type") == FileTypeEnum.IMAGE.lower():
                 file_url = response_data.image_url
 
-            file_data = get_file_data(os.environ.get("REPS_DATA_BUCKET_NAME"), file_url)
+            file_data = get_s3_file_data(
+                os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
+            )
 
             return Response({"data": file_data}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -289,7 +291,7 @@ class GetRepresentativeFile(GenericAPIView):
             if kwargs.get("file_type") and kwargs.get("file_name"):
                 id = kwargs.get("id")
                 file_url = f'representatives/{id}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
-                file_data = get_file_data(
+                file_data = get_s3_file_data(
                     os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
                 )
                 # Bytes Object

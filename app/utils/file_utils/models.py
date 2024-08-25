@@ -7,7 +7,14 @@ class GenericFileUploadSerilizer(serializers.Serializer):
         required=False, help_text="Where the file was gotten from e.g Gok Site"
     )
     file_type = serializers.ChoiceField(choices=FileTypeTextChoices.choices)
-    base64_encoding = serializers.CharField()
+    base64_encoding = serializers.CharField(
+        default="ewogICAgIlJlcHJlc2VudGF0aXZl\
+                IG9uZSI6ICJZRVMiLAogICAgIlJlcHJlc2VudGF0aXZlIHR3\
+                byI6ICJOTyIsCiAgICAiUmVwcmVzZW50YXRpdmUgdGhyZWUiOi\
+                AiQUJTRU5UIiwKICAgICJSZXByZXNlbnRhdGl2ZSBmb3VyIjog\
+                Ik4vQSIsCiAgICAiUmVwcmVzZW50YXRpdmUgZml2ZSI6ICJJTk\
+                FVRElCTEUiCn0="
+    )
     file_extension = serializers.CharField(default=".jpeg")
     file_name = serializers.CharField(default="IMAGE.jpeg")
-    version = serializers.CharField(default="v1")
+    string_encoding_fmt = serializers.CharField(default="utf-8")

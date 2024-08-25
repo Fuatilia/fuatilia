@@ -5,7 +5,7 @@ from rest_framework import status
 from utils.general import add_request_data_to_span
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
-from utils.file_utils.generic_file_utils import file_upload, get_file_data
+from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
 from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
@@ -209,7 +209,7 @@ class AddBillFile(CreateAPIView):
                 file_name = request.data.get("file_name")
 
                 logger.info(
-                    f"Initiating file upload --- > to S3 for {response_data.full_name}"
+                    f"Initiating bill file upload --- > to S3 for {response_data.title}"
                 )
                 metadata = {
                     "rep_id": str(response_data.id),
@@ -217,13 +217,12 @@ class AddBillFile(CreateAPIView):
                         "%d/%m/%Y %H:%M:%S"
                     ),
                     "source": request.data.get("image_source") or "",
-                    "version": request.data["version"],
-                    "representative_name": response_data.full_name,
                     "content_type": request.data["file_extension"],
+                    "string_encoding_fmt": request.data["string_encoding_fmt"],
                 }
 
                 # # File path should allow for replacement of images
-                response = file_upload(
+                response = file_upload_to_s3(
                     bills_data_bucket_name,
                     FileTypeEnum[request.data.get("file_type")],
                     "bills",
@@ -268,11 +267,11 @@ class GetBillFile(GenericAPIView):
     def get_serializer(self, *args, **kwargs):
         return
 
-    @extend_schema(tags=["Bills"], responses={200: "Bill file foud"})
+    @extend_schema(tags=["Bills"], responses={200: "Bill file found"})
     def get(self, request, **kwargs):
         try:
             response_data = Bill.objects.get(pk=kwargs.get("id"))
-            file_data = get_file_data(os.environ.get(), response_data.file_url)
+            file_data = get_s3_file_data(os.environ.get(), response_data.file_url)
 
             return Response({"data": file_data}, status=status.HTTP_200_OK)
         except Exception as e:

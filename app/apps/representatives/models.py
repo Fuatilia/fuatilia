@@ -24,7 +24,7 @@ class GenderChoices(models.TextChoices):
 # Actual representative Model
 class Representative(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    full_name = models.CharField(max_length=100)
+    full_name = models.CharField(max_length=100, unique=True)
     position = models.CharField(max_length=10, choices=PositionChoices.choices)
     position_type = models.CharField(max_length=10, choices=PositionTypeChoices.choices)
     house = models.CharField(max_length=10, choices=HouseChoices.choices)
