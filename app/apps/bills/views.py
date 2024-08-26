@@ -197,6 +197,7 @@ class AddBillFile(CreateAPIView):
     @extend_schema(
         tags=["Bills"],
         request={"application/json": serializers.BillFileUploadSerializer},
+        responses={200: "File upload successful"},
     )
     def post(self, request):
         try:

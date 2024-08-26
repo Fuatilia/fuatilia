@@ -204,7 +204,7 @@ class UploadVoteFile(GenericAPIView):
             }
 
             logger.info(
-                f"Initiating votr file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
+                f"Initiating vote file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
             )
 
             response = file_upload_to_s3(
