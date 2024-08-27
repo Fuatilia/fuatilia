@@ -9,6 +9,7 @@ from rest_framework import authentication
 from rest_framework import exceptions
 from argon2 import PasswordHasher
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.plumbing import build_bearer_security_scheme_object
 
 logger = logging.getLogger("app_logger")
 
@@ -79,7 +80,13 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
             )
         try:
             user = User.objects.get(username=username)
-            token = request.headers.get("Authorization").split(" ")[1]
+            token = request.headers.get("Authorization")
+            if not token:
+                raise exceptions.AuthenticationFailed(
+                    "Expected <str> in Authorization found <none>"
+                )
+
+            token = token.split(" ")[1]
             verified = verify_user_token(token, user)
             if verified["verified"]:
                 return (user, None)
@@ -89,7 +96,7 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 )
         except Exception as e:
             if e.__class__ == User.DoesNotExist:
-                raise exceptions.AuthenticationFailed("No such user")
+                raise exceptions.AuthenticationFailed("Could not authenticate user.")
             else:
                 raise exceptions.AuthenticationFailed(f"Error : {e.__str__()}")
 
@@ -99,9 +106,7 @@ class CustomTokenScheme(OpenApiAuthenticationExtension):
     name = "CustomTokenAuthentication"
 
     def get_security_definition(self, auto_schema):
-        return {
-            "type": "Bearer",
-            "in": "header",
-            "name": "Authorization",
-            "description": "Token-based authentication with required prefix 'Bearer'",
-        }
+        return build_bearer_security_scheme_object(
+            header_name="Authorization",
+            token_prefix="Bearer ",
+        )
