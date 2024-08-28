@@ -32,7 +32,7 @@ class PermissionCreationSerializer(serializers.Serializer):
 
 
 class RoleCreationSerializer(serializers.Serializer):
-    role_name = serializers.CharField(min_length=3)
+    role_name = serializers.CharField(min_length=3, default="dev")
     action = serializers.CharField(
         default="add", help_text="Option are <add> or <remove>"
     )

@@ -1,4 +1,6 @@
+import functools
 import os
+from typing import List
 import jwt
 import random
 import string
@@ -69,6 +71,36 @@ def create_client_id_and_secret(username: str):
         "client_secret": c_secret,
         "client_secret_str": c_secret_str,
     }
+
+
+def has_expected_permissions(permission_list: List[str]):
+    def decorator_expected_permissions(func):
+        @functools.wraps(func)
+        def wrapper_expected_permissions(*args, **kwargs):
+            user: User = args[1].user
+            if not user.is_superuser:
+                # Whatever is going on after this if check does not look like I should have done it
+                # Need to find a way to make it quicker
+                user = User.objects.get(username=user.username)
+                user_groups = list(user.groups.all())
+                # Current assumprion is that a user will belong to one role
+                user_permissions = user_groups[0].permissions.all()
+                user_permissions_list = [
+                    permission.codename for permission in user_permissions
+                ]
+
+                for permission in permission_list:
+                    # If permissions are assigned individualy
+                    if permission not in user_permissions_list:
+                        raise exceptions.AuthenticationFailed(
+                            f"User does not have permission --> {permission}"
+                        )
+
+            return func(*args, **kwargs)
+
+        return wrapper_expected_permissions
+
+    return decorator_expected_permissions
 
 
 class CustomTokenAuthentication(authentication.BaseAuthentication):

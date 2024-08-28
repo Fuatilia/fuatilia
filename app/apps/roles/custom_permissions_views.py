@@ -1,6 +1,7 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import has_expected_permissions
 from utils.general import add_request_data_to_span
 from apps.roles import serializers
 from drf_spectacular.utils import extend_schema
@@ -19,6 +20,7 @@ class CreateCustomPermission(CreateAPIView):
         tags=["Roles"],
         request={"application/json": serializers.PermissionCreationSerializer},
     )
+    @has_expected_permissions(["add_permission"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -52,6 +54,7 @@ class FilterPermissions(GenericAPIView):
     serializer_class = serializers.FetchPermissionsSerializers
 
     @extend_schema(tags=["Roles"], parameters=[serializers.PermissionFilterSerializer])
+    @has_expected_permissions(["view_permission"])
     def get(self, request):
         return self.get_queryset()
 
@@ -65,25 +68,11 @@ class FilterPermissions(GenericAPIView):
             logger.info(f"Filtering permissions with {self.request.GET.dict()}")
 
             if self.request.GET.get("permission_name"):
-                filter_params["codename__contains"] = self.request.GET.get("rule")
+                filter_params["codename__contains"] = self.request.GET.get(
+                    "permission_name"
+                )
             if self.request.GET.get("definition"):
                 filter_params["name__contains"] = self.request.GET.get("definition")
-            if self.request.GET.get("created_at_start"):
-                filter_params["created_at__gte"] = self.request.GET.get(
-                    "created_at_start"
-                )
-            if self.request.GET.get("created_at_end"):
-                filter_params["created_at__lte"] = self.request.GET.get(
-                    "created_at_end"
-                )
-            if self.request.GET.get("updated_at_start"):
-                filter_params["updated_at__gte"] = self.request.GET.get(
-                    "updated_at_start"
-                )
-            if self.request.GET.get("updated_at_end"):
-                filter_params["updated_at__lte"] = self.request.GET.get(
-                    "updated_at_end"
-                )
 
             page = int(self.request.GET.get("page", "1"))
             items_per_page = int(self.request.GET.get("items_per_page", "10"))
@@ -115,6 +104,7 @@ class GetOrDeletePermissions(GenericAPIView):
         tags=["Roles"],
         responses={201: serializers.FetchPermissionsSerializers},
     )
+    @has_expected_permissions(["view_permission"])
     def get(self, request, **kwargs):
         try:
             logger.info(f"Getting permission with ID {kwargs.get("id")}")
@@ -141,6 +131,7 @@ class GetOrDeletePermissions(GenericAPIView):
         tags=["Roles"],
         responses={204: {"message": "Permission succesfully deleted"}},
     )
+    @has_expected_permissions(["delete_permission"])
     def delete(self, request, **kwargs):
         try:
             logger.info(f"Deleting permission with ID {kwargs.get("id")}")

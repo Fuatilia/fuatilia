@@ -1,6 +1,7 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import has_expected_permissions
 from utils.general import add_request_data_to_span
 from django.contrib.auth.models import Group
 from apps.roles import serializers
@@ -20,6 +21,7 @@ class CreateCustomRole(CreateAPIView):
     @extend_schema(
         tags=["Roles"], request={"application/json": serializers.RoleCreationSerializer}
     )
+    @has_expected_permissions(["add_group"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -51,6 +53,7 @@ class UpdateRolePermissions(GenericAPIView):
     @extend_schema(
         tags=["Roles"], request={"application/json": serializers.RoleCreationSerializer}
     )
+    @has_expected_permissions(["change_group"])
     def put(self, request):
         try:
             creation_serializer = serializers.RoleCreationSerializer(data=request.data)
@@ -94,6 +97,7 @@ class FilterRoles(GenericAPIView):
     serializer_class = serializers.FetchRolesSerializers
 
     @extend_schema(tags=["Roles"], parameters=[serializers.RoleFilterSerializer])
+    @has_expected_permissions(["view_group"])
     def get(self, request):
         return self.get_queryset()
 
@@ -107,23 +111,7 @@ class FilterRoles(GenericAPIView):
             logger.info(f"Filtering roles with {self.request.GET.dict()}")
 
             if self.request.GET.get("role_name"):
-                filter_params["rname__contains"] = self.request.GET.get("role_name")
-            if self.request.GET.get("created_at_start"):
-                filter_params["created_at__gte"] = self.request.GET.get(
-                    "created_at_start"
-                )
-            if self.request.GET.get("created_at_end"):
-                filter_params["created_at__lte"] = self.request.GET.get(
-                    "created_at_end"
-                )
-            if self.request.GET.get("updated_at_start"):
-                filter_params["updated_at__gte"] = self.request.GET.get(
-                    "updated_at_start"
-                )
-            if self.request.GET.get("updated_at_end"):
-                filter_params["updated_at__lte"] = self.request.GET.get(
-                    "updated_at_end"
-                )
+                filter_params["name__contains"] = self.request.GET.get("role_name")
 
             page = int(self.request.GET.get("page", "1"))
             items_per_page = int(self.request.GET.get("items_per_page", "10"))
@@ -155,6 +143,7 @@ class GetOrDeleteRole(GenericAPIView):
         tags=["Roles"],
         responses={201: serializers.RoleFilterSerializer},
     )
+    @has_expected_permissions(["view_group"])
     def get(self, request, **kwargs):
         try:
             logger.info(f"Getting role with ID {kwargs.get("id")}")
@@ -181,6 +170,7 @@ class GetOrDeleteRole(GenericAPIView):
         tags=["Roles"],
         responses={204: {"message": "Role succesfully deleted"}},
     )
+    @has_expected_permissions(["add_group"])
     def delete(self, request, **kwargs):
         try:
             logger.info(f"Deleting role with ID {kwargs.get("id")}")
