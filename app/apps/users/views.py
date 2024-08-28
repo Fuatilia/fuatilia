@@ -9,8 +9,10 @@ from rest_framework import status
 from utils.auth import (
     create_client_id_and_secret,
     get_tokens_for_user,
+    has_expected_permissions,
 )
 from opentelemetry import trace
+from django.contrib.auth.models import Group
 
 logger = logging.getLogger("app_logger")
 tracer = trace.get_tracer(__name__)
@@ -18,19 +20,21 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_dict = {"post": ["has_abc"]}
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
+    @has_expected_permissions(["add_user"])
     def post(self, request):
         try:
             span = trace.get_current_span()
             add_request_data_to_span(span, request)
 
             logger.info(
-                f"Initiating app creation with username {request.data["username"]}"
+                f"Initiating user creation with username {request.data["username"]}"
             )
 
             serializer = serializers.UserCreationSerializer(data=request.data)
@@ -61,6 +65,7 @@ class CreateApp(CreateAPIView):
         request={"application/json": serializers.AppCreationPayloadSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
+    @has_expected_permissions(["add_user"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -110,6 +115,7 @@ class FilterUsers(GenericAPIView):
     """
 
     @extend_schema(tags=["Users"], parameters=[serializers.UserFilterSerializer])
+    @has_expected_permissions(["view_user"])
     def get(self, request):
         return self.get_queryset()
 
@@ -177,10 +183,13 @@ class FilterUsers(GenericAPIView):
 
 
 class GetOrDeleteUser(GenericAPIView):
+    serializer_class = serializers.UserFetchSerializer
+
     @extend_schema(
         tags=["Users"],
         responses={201: serializers.UserFetchSerializer},
     )
+    @has_expected_permissions(["view_user"])
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -210,6 +219,7 @@ class GetOrDeleteUser(GenericAPIView):
         tags=["Users"],
         responses={204: {"message": "User succesfully deleted"}},
     )
+    @has_expected_permissions(["delete_user"])
     def delete(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -299,6 +309,44 @@ class AppLogin(UserLogin):
             return super().post(request)
         except Exception as e:
             logger.exception(e)
+            return Response(
+                {"error": e.__str__()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class UpdateUserRoles(GenericAPIView):
+    @extend_schema(
+        tags=["Users"],
+        request={"application/json": serializers.UserRoleUpdateSerializer},
+    )
+    @has_expected_permissions(["update_user_roles"])
+    def put(self, request):
+        try:
+            user = User.objects.get(id=request.data["user_id"])
+            group = Group.objects.get(name=request.data["role"])
+            user.groups.add(group)
+
+            return Response(
+                {"message": f"User role(s) updated to {user.groups.get()}"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.exception(e)
+
+            if e.__class__ == User.DoesNotExist:
+                return Response(
+                    {"error": "User with specified ID not found"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if e.__class__ == Group.DoesNotExist:
+                return Response(
+                    {"error": f"Role name {request.data["role"]} not found"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             return Response(
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

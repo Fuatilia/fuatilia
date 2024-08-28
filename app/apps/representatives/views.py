@@ -1,6 +1,7 @@
 import base64
 import logging
 import os
+from utils.auth import has_expected_permissions
 from utils.general import add_request_data_to_span
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
@@ -25,6 +26,7 @@ class CreateRepresentative(CreateAPIView):
         request={"application/json": serializers.RepresentativeCreationSerializer},
         responses={201: serializer_class},
     )
+    @has_expected_permissions(["add_representative"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -60,6 +62,7 @@ class FilterRepresentatives(GenericAPIView):
     @extend_schema(
         tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
     )
+    @has_expected_permissions(["view_representative"])
     def get(self, request):
         return self.get_queryset()
 
@@ -133,6 +136,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
         tags=["Representatives"],
         responses={201: serializers.FullFetchRepresentativeSerializer},
     )
+    @has_expected_permissions(["view_representative"])
     def get(self, request, **kwargs):
         try:
             logger.info(f"Getting represenatative with ID {kwargs.get("id")}")
@@ -160,6 +164,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
         tags=["Representatives"],
         responses={204: {"message": "Representative succesfully deleted"}},
     )
+    @has_expected_permissions(["delete_representative"])
     def delete(self, request, **kwargs):
         try:
             logger.info(f"Deleting representative with ID {kwargs.get("id")}")
@@ -195,6 +200,7 @@ class AddRepresentativeFile(GenericAPIView):
         tags=["Representatives"],
         request={"application/json": serializers.RepresentativeFileUploadSerializer},
     )
+    @has_expected_permissions(["add_representative_file"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -264,6 +270,7 @@ class GetRepresentativeFilesList(GenericAPIView):
     @extend_schema(
         tags=["Representatives"], responses={200: "Representative file found"}
     )
+    @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:
             response_data = Representative.objects.get(pk=kwargs.get("id"))
@@ -286,6 +293,7 @@ class GetRepresentativeFile(GenericAPIView):
     @extend_schema(
         tags=["Representatives"], responses={200: "Representative file found"}
     )
+    @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:
             if kwargs.get("file_type") and kwargs.get("file_name"):

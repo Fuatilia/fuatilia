@@ -2,6 +2,7 @@ import os
 
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import has_expected_permissions
 from utils.general import add_request_data_to_span
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
@@ -23,6 +24,7 @@ class CreateBill(CreateAPIView):
     @extend_schema(
         tags=["Bills"], request={"application/json": serializers.BillCreationSerializer}
     )
+    @has_expected_permissions(["add_bill"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -56,6 +58,7 @@ class FilterBills(GenericAPIView):
     serializer_class = serializers.FullFetchBillSerilizer
 
     @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
+    @has_expected_permissions(["view_bill"])
     def get(self, request):
         return self.get_queryset()
 
@@ -138,6 +141,7 @@ class GetOrDeleteBill(GenericAPIView):
         tags=["Bills"],
         responses={200: serializers.FullFetchBillSerilizer},
     )
+    @has_expected_permissions(["view_bill"])
     def get(self, request, **kwargs):
         try:
             logger.info(f'Getting bill with ID {kwargs.get("id")}')
@@ -164,6 +168,7 @@ class GetOrDeleteBill(GenericAPIView):
         tags=["Bills"],
         responses={204: {"message": "Bill succesfully deleted"}},
     )
+    @has_expected_permissions(["delete_bill"])
     def delete(self, request, **kwargs):
         try:
             logger.info(f'Deleting bill with ID {kwargs.get("id")}')
@@ -197,7 +202,9 @@ class AddBillFile(CreateAPIView):
     @extend_schema(
         tags=["Bills"],
         request={"application/json": serializers.BillFileUploadSerializer},
+        responses={200: "File upload successful"},
     )
+    @has_expected_permissions(["add_bill_file"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -268,6 +275,7 @@ class GetBillFile(GenericAPIView):
         return
 
     @extend_schema(tags=["Bills"], responses={200: "Bill file found"})
+    @has_expected_permissions(["view_bill_file"])
     def get(self, request, **kwargs):
         try:
             response_data = Bill.objects.get(pk=kwargs.get("id"))

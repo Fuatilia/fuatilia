@@ -1,4 +1,6 @@
+import functools
 import os
+from typing import List
 import jwt
 import random
 import string
@@ -9,6 +11,7 @@ from rest_framework import authentication
 from rest_framework import exceptions
 from argon2 import PasswordHasher
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.plumbing import build_bearer_security_scheme_object
 
 logger = logging.getLogger("app_logger")
 
@@ -70,6 +73,36 @@ def create_client_id_and_secret(username: str):
     }
 
 
+def has_expected_permissions(permission_list: List[str]):
+    def decorator_expected_permissions(func):
+        @functools.wraps(func)
+        def wrapper_expected_permissions(*args, **kwargs):
+            user: User = args[1].user
+            if not user.is_superuser:
+                # Whatever is going on after this if check does not look like I should have done it
+                # Need to find a way to make it quicker
+                user = User.objects.get(username=user.username)
+                user_groups = list(user.groups.all())
+                # Current assumprion is that a user will belong to one role
+                user_permissions = user_groups[0].permissions.all()
+                user_permissions_list = [
+                    permission.codename for permission in user_permissions
+                ]
+
+                for permission in permission_list:
+                    # If permissions are assigned individualy
+                    if permission not in user_permissions_list:
+                        raise exceptions.AuthenticationFailed(
+                            f"User does not have permission --> {permission}"
+                        )
+
+            return func(*args, **kwargs)
+
+        return wrapper_expected_permissions
+
+    return decorator_expected_permissions
+
+
 class CustomTokenAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         username = request.META.get("HTTP_X_AUTHENTICATED_USERNAME")
@@ -79,7 +112,13 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
             )
         try:
             user = User.objects.get(username=username)
-            token = request.headers.get("Authorization").split(" ")[1]
+            token = request.headers.get("Authorization")
+            if not token:
+                raise exceptions.AuthenticationFailed(
+                    "Expected <str> in Authorization found <none>"
+                )
+
+            token = token.split(" ")[1]
             verified = verify_user_token(token, user)
             if verified["verified"]:
                 return (user, None)
@@ -89,7 +128,7 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 )
         except Exception as e:
             if e.__class__ == User.DoesNotExist:
-                raise exceptions.AuthenticationFailed("No such user")
+                raise exceptions.AuthenticationFailed("Could not authenticate user.")
             else:
                 raise exceptions.AuthenticationFailed(f"Error : {e.__str__()}")
 
@@ -99,9 +138,7 @@ class CustomTokenScheme(OpenApiAuthenticationExtension):
     name = "CustomTokenAuthentication"
 
     def get_security_definition(self, auto_schema):
-        return {
-            "type": "Bearer",
-            "in": "header",
-            "name": "Authorization",
-            "description": "Token-based authentication with required prefix 'Bearer'",
-        }
+        return build_bearer_security_scheme_object(
+            header_name="Authorization",
+            token_prefix="Bearer ",
+        )

@@ -8,4 +8,5 @@ urlpatterns = [
     path("v1/<str:id>", views.GetOrDeleteUser().as_view()),
     path("v1/login/user", views.UserLogin().as_view()),
     path("v1/login/app", views.AppLogin().as_view()),
+    path("v1/update/role", views.UpdateUserRoles().as_view()),
 ]

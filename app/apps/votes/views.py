@@ -6,6 +6,7 @@ import os
 from django.http import FileResponse, StreamingHttpResponse
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.auth import has_expected_permissions
 from utils.enum_utils import FileTypeEnum
 from apps.bills.models import Bill
 from utils.file_utils.models import GenericFileUploadSerilizer
@@ -32,6 +33,7 @@ class CreateVote(CreateAPIView):
     @extend_schema(
         tags=["Votes"], request={"application/json": serializers.VoteCreationSerializer}
     )
+    @has_expected_permissions(["add_vote"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -63,6 +65,7 @@ class FilterVotes(GenericAPIView):
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
+    @has_expected_permissions(["view_vote"])
     def get(self, request):
         return self.get_queryset()
 
@@ -133,6 +136,7 @@ class GetOrDeleteVote(GenericAPIView):
         tags=["Votes"],
         responses={201: serializers.FullFetchVoteSerializer},
     )
+    @has_expected_permissions(["view_vote"])
     def get(self, request, **kwargs):
         try:
             logger.info(f"Getting vote with ID {kwargs.get("id")}")
@@ -159,6 +163,7 @@ class GetOrDeleteVote(GenericAPIView):
         tags=["Votes"],
         responses={204: {"message": "Vote succesfully deleted"}},
     )
+    @has_expected_permissions(["delete_vote"])
     def delete(self, request, **kwargs):
         try:
             logger.info(f"Deleting vote with ID {kwargs.get("id")}")
@@ -188,6 +193,7 @@ class UploadVoteFile(GenericAPIView):
     @extend_schema(
         tags=["Votes"], request={"application/json": GenericFileUploadSerilizer}
     )
+    @has_expected_permissions(["add_votes_file"])
     def post(self, request, **kwargs):
         """
         Uploads votes files in json formart
@@ -204,7 +210,7 @@ class UploadVoteFile(GenericAPIView):
             }
 
             logger.info(
-                f"Initiating votr file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
+                f"Initiating vote file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
             )
 
             response = file_upload_to_s3(
@@ -240,6 +246,7 @@ class UploadVoteFile(GenericAPIView):
 
 class GetVoteFileData(GenericAPIView):
     @extend_schema(tags=["Votes"], responses={200: "Vote file found"})
+    @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
         """
         Gets vote file tied to a bill.
@@ -263,6 +270,7 @@ class GetVoteFileData(GenericAPIView):
 
 class DownloadVoteFile(GenericAPIView):
     @extend_schema(tags=["Votes"], responses={200: "Vote file sent"})
+    @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
         """
         Allows browsers to download
@@ -296,6 +304,7 @@ class DownloadVoteFile(GenericAPIView):
 
 class StreamVoteFile(GenericAPIView):
     @extend_schema(tags=["Votes"], responses={200: "Vote file received"})
+    @has_expected_permissions(["view_votes_file"])
     async def get(self, request, **kwargs):
         """
         Similar to download Votes file but allows for stream response
