@@ -83,11 +83,15 @@ def has_expected_permissions(permission_list: List[str]):
                 # Need to find a way to make it quicker
                 user = User.objects.get(username=user.username)
                 user_groups = list(user.groups.all())
-                # Current assumprion is that a user will belong to one role
-                user_permissions = user_groups[0].permissions.all()
-                user_permissions_list = [
-                    permission.codename for permission in user_permissions
-                ]
+
+                # Current assumption is that a user will belong to one role
+                if len(user_groups) < 1:
+                    user_permissions_list = []
+                else:
+                    user_permissions = user_groups[0].permissions.all()
+                    user_permissions_list = [
+                        permission.codename for permission in user_permissions
+                    ]
 
                 for permission in permission_list:
                     # If permissions are assigned individualy
