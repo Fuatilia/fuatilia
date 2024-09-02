@@ -28,3 +28,6 @@ repo structure
 
 ***To run on docker (With OpenTelemetry)*** <br>
 `docker compose up --build .` <br>
+
+***To run tests (Locally)***<br>
+`python app/manage.py test app/apps` <br>

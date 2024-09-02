@@ -1,8 +1,6 @@
 # OpenTelemetry Middlewares
 import logging
-
 from django.http import StreamingHttpResponse, HttpResponse, FileResponse
-
 from opentelemetry import trace
 
 

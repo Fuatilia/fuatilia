@@ -20,7 +20,6 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
-    permission_dict = {"post": ["has_abc"]}
 
     @extend_schema(
         tags=["Users"],
@@ -274,7 +273,7 @@ class UserLogin(GenericAPIView):
                     headers={"X_AUTHENTICATED_USERNAME": user.username},
                 )
 
-            logger.info(f"Failed to authenticate app with username {user.username}")
+            logger.info(f"Failed to authenticate user with username {user.username}")
             return Response(
                 {"error": "Invalid username or credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
