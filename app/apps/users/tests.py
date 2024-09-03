@@ -1,10 +1,11 @@
 import logging
-from utils.testing_utils.generic_TC_utils import GenericTestCasesMethods
 from apps.users.models import User
 from rest_framework import status
+from rest_framework.test import APITestCase
+from utils.testing_utils.user_helpers import UserTestCasesHelpers
 
 
-class SuperUserTestCases(GenericTestCasesMethods):
+class SuperUserTestCases(APITestCase, UserTestCasesHelpers):
     def setUp(self):
         logging.disable(logging.CRITICAL)
         test_superuser = User.objects.create_superuser(
@@ -71,7 +72,7 @@ class SuperUserTestCases(GenericTestCasesMethods):
         return super().tearDown()
 
 
-class AdminUserTestCases(GenericTestCasesMethods):
+class AdminUserTestCases(UserTestCasesHelpers):
     def setUp(self):
         logging.disable(logging.CRITICAL)
         superuser = self.create_superuser_bare()
