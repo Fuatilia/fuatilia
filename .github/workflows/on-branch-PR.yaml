@@ -32,8 +32,8 @@ jobs:
       - name: Test with logs
         shell: powershell
         run: |
-          mkdir ${{ runner.temp }}/fuatilia/fuatilia/logs
-          echo "Logs from building" > ${{ runner.temp }}/fuatilia/fuatilia/logs/test.log
+          mkdir logs
+          echo "Logs from building" > logs/test.log
       - name: Run Tests
         run: python app/manage.py test app/apps
       # - name: Run tests
