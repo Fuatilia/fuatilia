@@ -27,7 +27,9 @@ jobs:
         run: |
           pip install ruff
           ruff check .
-      # - name: Run tests
-      #   run: |
-      #     pip install pytest pytest-cov
-      #     pytest app/tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+      # - name: Run Tests
+        # run: python app/manage.py test app/apps
+      - name: Run tests
+        run: |
+          pip install pytest pytest-cov
+          pytest app/tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
