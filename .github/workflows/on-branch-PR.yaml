@@ -32,4 +32,4 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest pytest-cov
-          pytest app/tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+          pytest app/apps --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
