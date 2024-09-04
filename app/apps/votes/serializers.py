@@ -39,7 +39,7 @@ class VoteCreationSerializer(serializers.Serializer):
                 )
             if not data.get("representative_id"):
                 raise serializers.ValidationError(
-                    f'vote_type {VoteTypeChoices.INDIVIDUAL} requires expected string value at representative_id. Current value {data.get('representative_id')}'
+                    f"vote_type {VoteTypeChoices.INDIVIDUAL} requires expected string value at representative_id. Current value {data.get('representative_id')}"
                 )
             if not data.get("vote"):
                 raise serializers.ValidationError(
@@ -48,7 +48,7 @@ class VoteCreationSerializer(serializers.Serializer):
         else:
             if not data.get("vote_summary"):
                 raise serializers.ValidationError(
-                    f'Expected value at vote_summary found {data.get('vote_summary')}'
+                    f"Expected value at vote_summary found {data.get('vote_summary')}"
                 )
 
         return data
