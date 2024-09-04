@@ -30,7 +30,6 @@ jobs:
       - name: List dirs
         run: ls
       - name: Test with logs
-        shell: powershell
         run: |
           mkdir logs
           echo "Logs from building" > logs/test.log
