@@ -19,13 +19,13 @@ class VoteCreationSerializer(serializers.Serializer):
     )
     vote_summary = serializers.JSONField(
         required=False,
-        default={"YES": 100, "NO": 20, "ABSENT": 30},
-        help_text="Only for use in the event of consensus(AYE/NO) type votes",
+        help_text="Only for use in the event of consensus(AYE/NO) type votes\n"
+        + 'example :--> {"YES": 100, "NO": 20, "ABSENT": 30}',
     )
     house = serializers.ChoiceField(
         choices=HouseChoices.choices, default=HouseChoices.NATIONAL
     )
-    vote = serializers.CharField(required=True)
+    vote = serializers.CharField(required=False)
 
     def create(self, validated_data):
         representative = Vote.objects.create(**validated_data)
@@ -40,6 +40,10 @@ class VoteCreationSerializer(serializers.Serializer):
             if not data.get("representative_id"):
                 raise serializers.ValidationError(
                     f'vote_type {VoteTypeChoices.INDIVIDUAL} requires expected string value at representative_id. Current value {data.get('representative_id')}'
+                )
+            if not data.get("vote"):
+                raise serializers.ValidationError(
+                    "<vote> is required for vote type INDIVIDUAL"
                 )
         else:
             if not data.get("vote_summary"):
