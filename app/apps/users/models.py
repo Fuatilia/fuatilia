@@ -2,7 +2,7 @@ import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
-from argon2 import PasswordHasher
+from django.contrib.auth.hashers import Argon2PasswordHasher
 
 logger = logging.getLogger("app_logger")
 
@@ -69,7 +69,7 @@ class User(AbstractUser):
     def verify_app_credentials(self, data):
         logger.info(f"Verifying app credentials for {self.id}")
         if self.client_id == data["client_id"]:
-            if PasswordHasher().verify(self.client_secret, data["client_secret"]):
+            if Argon2PasswordHasher().verify(data["client_secret"], self.client_secret):
                 logger.info(f"Succesfully verified app credentials for {self.id}")
                 return True
         return False
