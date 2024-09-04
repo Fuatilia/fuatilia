@@ -3,9 +3,10 @@ from apps.users.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 from utils.testing_utils.user_helpers import UserTestCasesHelpers
+from utils.testing_utils.role_helpers import RoleTestCasesHelpers
 
 
-class SuperUserTestCases(APITestCase, UserTestCasesHelpers):
+class SuperUserTestCases(APITestCase, UserTestCasesHelpers, RoleTestCasesHelpers):
     def setUp(self):
         logging.disable(logging.CRITICAL)
         test_superuser = User.objects.create_superuser(
@@ -38,7 +39,7 @@ class SuperUserTestCases(APITestCase, UserTestCasesHelpers):
         login_response = self.user_log_in(
             self.superuser_username, self.superuser_password
         )
-        response = self.create_admin_role(
+        response = self.create_role(
             self.superuser_username, login_response.data.get("access")
         )
         print("================ >> ", self.test_superuser_can_create_role.__name__)
@@ -52,7 +53,7 @@ class SuperUserTestCases(APITestCase, UserTestCasesHelpers):
         user_response = self.create_admin_user(
             self.superuser_username, login_response.data.get("access")
         ).data
-        role_response = self.create_admin_role(
+        role_response = self.create_role(
             self.superuser_username, login_response.data.get("access")
         ).data
         response = self.assign_role_to_user(
@@ -79,7 +80,7 @@ class AdminUserTestCases(UserTestCasesHelpers):
         admin_user = self.create_admin_user_bare()
         login_response = self.user_log_in(superuser.username, self.superuser_password)
 
-        role_creation_response = self.create_admin_role(
+        role_creation_response = self.create_role(
             superuser.username, login_response.data.get("access")
         )
 

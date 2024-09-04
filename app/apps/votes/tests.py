@@ -3,6 +3,7 @@ import random
 from rest_framework import status
 from rest_framework.test import APITestCase
 from apps.votes.models import VoteTypeChoices
+from utils.testing_utils.role_helpers import RoleTestCasesHelpers
 from utils.testing_utils.vote_helpers import VoteTestCasesHelpers
 from utils.testing_utils.user_helpers import UserTestCasesHelpers
 from utils.testing_utils.bill_helpers import BillTestCasesHelpers
@@ -11,6 +12,7 @@ from utils.testing_utils.representative_helpers import RepresentativeTestCasesHe
 
 class VoteTestCases(
     APITestCase,
+    RoleTestCasesHelpers,
     VoteTestCasesHelpers,
     UserTestCasesHelpers,
     BillTestCasesHelpers,
@@ -22,7 +24,7 @@ class VoteTestCases(
         admin_user = self.create_admin_user_bare()
         login_response = self.user_log_in(superuser.username, self.superuser_password)
 
-        role_creation_response = self.create_admin_role(
+        role_creation_response = self.create_role(
             superuser.username, login_response.data.get("access")
         )
 
