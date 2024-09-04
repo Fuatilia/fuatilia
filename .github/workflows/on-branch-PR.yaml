@@ -27,7 +27,10 @@ jobs:
         run: |
           pip install ruff
           ruff check .
+      - name: List dirs
+        run: ls
       - name: Test with logs
+        shell: powershell
         run: |
           mkdir ${{ runner.temp }}/fuatilia/fuatilia/logs
           echo "Logs from building" > ${{ runner.temp }}/fuatilia/fuatilia/logs/test.log
