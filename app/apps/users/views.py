@@ -342,7 +342,7 @@ class UpdateUserRoles(GenericAPIView):
 
             if e.__class__ == Group.DoesNotExist:
                 return Response(
-                    {"error": f"Role name {request.data["role"]} not found"},
+                    {"error": f"Role name {request.data['role']} not found"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 

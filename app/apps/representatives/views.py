@@ -139,7 +139,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
     @has_expected_permissions(["view_representative"])
     def get(self, request, **kwargs):
         try:
-            logger.info(f"Getting represenatative with ID {kwargs.get("id")}")
+            logger.info(f"Getting represenatative with ID {kwargs.get('id')}")
             response_data = Representative.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
@@ -167,7 +167,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
     @has_expected_permissions(["delete_representative"])
     def delete(self, request, **kwargs):
         try:
-            logger.info(f"Deleting representative with ID {kwargs.get("id")}")
+            logger.info(f"Deleting representative with ID {kwargs.get('id')}")
             rep = Representative.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()

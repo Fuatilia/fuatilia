@@ -107,7 +107,7 @@ class GetOrDeletePermissions(GenericAPIView):
     @has_expected_permissions(["view_permission"])
     def get(self, request, **kwargs):
         try:
-            logger.info(f"Getting permission with ID {kwargs.get("id")}")
+            logger.info(f"Getting permission with ID {kwargs.get('id')}")
             response_data = Permission.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
@@ -134,7 +134,7 @@ class GetOrDeletePermissions(GenericAPIView):
     @has_expected_permissions(["delete_permission"])
     def delete(self, request, **kwargs):
         try:
-            logger.info(f"Deleting permission with ID {kwargs.get("id")}")
+            logger.info(f"Deleting permission with ID {kwargs.get('id')}")
             rep = Permission.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
