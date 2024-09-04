@@ -19,20 +19,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup python
         uses: actions/setup-python@v5
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
       - name: Check lint with Ruff
         run: |
           pip install ruff
           ruff check .
-      - name: List dirs
-        run: ls
       - name: Test with logs
         run: |
           mkdir logs
           echo "Logs from building" > logs/test.log
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
       - name: Run Tests
         run: python app/manage.py test app/apps
       # - name: Run tests

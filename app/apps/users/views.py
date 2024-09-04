@@ -33,7 +33,7 @@ class CreateUser(CreateAPIView):
             add_request_data_to_span(span, request)
 
             logger.info(
-                f"Initiating user creation with username {request.data["username"]}"
+                f"Initiating user creation with username {request.data['username']}"
             )
 
             serializer = serializers.UserCreationSerializer(data=request.data)

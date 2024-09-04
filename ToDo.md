@@ -28,3 +28,6 @@ Move from manage.py startup to proper production startup
 Add AWS restrictions in scopes when pulling images i.e can pull only pro pic vs can pull all images
 
 Confirm date params for groups and permissions
+
+
+Switch from hardcoding URLs to using django url reverse for test
