@@ -29,8 +29,8 @@ jobs:
           ruff check .
       - name: Test with logs
         run: |
-          mkdir ./fuatilia/fuatilia/logs
-          echo "Logs from building" > ./fuatilia/fuatilia/logs/test.log
+          mkdir /home/runner/work/fuatilia/fuatilia/logs
+          echo "Logs from building" > /home/runner/work/fuatilia/fuatilia/logs/test.log
           exit 1
       - name: Run Tests
         run: python app/manage.py test app/apps
