@@ -59,50 +59,6 @@ class UserTestCasesHelpers(GenericTestCasesHelpers):
 
         return self.send_request(username, token, url, data, method="post")
 
-    def create_admin_role(self, username, token):
-        url = "/api/roles/v1/create"
-        data = {
-            "permissions": [
-                "add_user",
-                "change_user",
-                "view_user",
-                "delete_user",
-                "add_representative",
-                "change_representative",
-                "view_representative",
-                "delete_representative",
-                "add_bill",
-                "change_bill",
-                "view_bill",
-                "delete_bill",
-                "add_vote",
-                "change_vote",
-                "view_vote",
-                "delete_vote",
-                "add_group",
-                "change_group",
-                "view_group",
-                "delete_group",
-            ],
-            "role_name": "admin",
-            "action": "add",
-        }
-
-        return self.send_request(username, token, url, data, method="post")
-
-    def assign_permission_to_role(self, username, token):
-        url = "/api/roles/v1/update-permissions"
-        data = {
-            "permissions": [
-                "add_bill_file",
-                "view_bill_file",
-            ],
-            "role_name": "admin",
-            "action": "add",
-        }
-
-        return self.send_request(username, token, url, data, method="put")
-
     def assign_role_to_user(self, username, token, id, role):
         url = "/api/users/v1/update/role"
         data = {"user_id": id, "role": role}

@@ -4,10 +4,12 @@ from rest_framework.test import APITestCase
 from utils.testing_utils.representative_helpers import RepresentativeTestCasesHelpers
 from utils.testing_utils.bill_helpers import BillTestCasesHelpers
 from utils.testing_utils.user_helpers import UserTestCasesHelpers
+from utils.testing_utils.role_helpers import RoleTestCasesHelpers
 
 
 class BillTestCases(
     APITestCase,
+    RoleTestCasesHelpers,
     BillTestCasesHelpers,
     UserTestCasesHelpers,
     RepresentativeTestCasesHelpers,
@@ -18,7 +20,7 @@ class BillTestCases(
         admin_user = self.create_admin_user_bare()
         login_response = self.user_log_in(superuser.username, self.superuser_password)
 
-        role_creation_response = self.create_admin_role(
+        role_creation_response = self.create_role(
             superuser.username, login_response.data.get("access")
         )
 
