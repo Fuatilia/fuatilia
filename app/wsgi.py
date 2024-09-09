@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.production")
 
 DjangoInstrumentor().instrument()
 LoggingInstrumentor().instrument()
