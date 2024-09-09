@@ -1,7 +1,7 @@
 import logging
 from utils.general import add_request_data_to_span
 from apps.users import serializers
-from apps.users.models import User, UserRole, UserType
+from apps.users.models import User, UserType
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -71,7 +71,7 @@ class CreateApp(CreateAPIView):
             add_request_data_to_span(span, request)
             logger.info(f"Initiating app creation with details {request.data}")
 
-            data = request.data
+            data = request.data.copy()
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
             data["client_id"] = app_credentials["client_id"]
@@ -119,10 +119,7 @@ class FilterUsers(GenericAPIView):
         return self.get_queryset()
 
     def get_serializer(self, *args, **kwargs):
-        if (
-            self.request.user.is_authenticated
-            and self.request.user.role == UserRole.ADMIN
-        ):
+        if self.request.user.is_authenticated and self.request.user.role == "admin":
             return serializers.FullUserFetchSerializer
         return serializers.UserFetchSerializer
 

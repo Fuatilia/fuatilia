@@ -62,7 +62,7 @@ def create_client_id_and_secret(username: str):
     c_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
     c_secret_str = "".join(random.choices(string.ascii_letters + string.digits, k=30))
     ph = Argon2PasswordHasher()
-    c_secret = ph.encode(c_secret_str)
+    c_secret = ph.encode(c_secret_str, "111111111")
 
     logger.info(f"Finalized credential creation for app under username {username}")
     return {

@@ -1,4 +1,4 @@
-from apps.users.models import User, UserRole, UserType
+from apps.users.models import User, UserType
 from rest_framework import serializers
 
 
@@ -27,9 +27,9 @@ class UserCreationSerializer(serializers.Serializer):
     last_name = serializers.CharField(min_length=3, default="doe")
     email = serializers.CharField(min_length=3, default="janedoe@fuatilia.com")
     username = serializers.CharField(min_length=3, default="janedoe")
-    phone_number = serializers.CharField(required=False, default="+254111111111")
+    phone_number = serializers.CharField(required=False, default="254111111111")
     password = serializers.CharField(min_length=10, default="password1234")
-    role = serializers.ChoiceField(choices=UserRole.choices, default=UserRole.STAFF)
+    role = serializers.CharField(required=False, default="client_api")
     parent_organization = serializers.CharField(
         required=False,
         default="fuatilia",
@@ -48,7 +48,7 @@ class UserUpdateSerializer(serializers.Serializer):
     email = serializers.CharField(min_length=3, required=False)
     username = serializers.CharField(min_length=3, required=False)
     phone_number = serializers.CharField(required=False)
-    role = serializers.ChoiceField(required=False, choices=UserRole)
+    role = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
     is_active = serializers.CharField(required=False)
     updated_by = serializers.CharField(max_length=30)
@@ -58,7 +58,7 @@ class UserUpdateSerializer(serializers.Serializer):
 class AppCreationPayloadSerializer(serializers.Serializer):
     email = serializers.CharField(min_length=3, default="janedoe@fuatilia.com")
     username = serializers.CharField(min_length=3, default="janedoe")
-    phone_number = serializers.CharField(required=False, default="+254111111111")
+    phone_number = serializers.CharField(default="254111111111")
     parent_organization = serializers.CharField(required=False, default="fuatilia")
     user_type = serializers.CharField(default="APP")
 
