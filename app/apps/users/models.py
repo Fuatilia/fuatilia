@@ -57,9 +57,7 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     def verify_app_credentials(self, data):
-        logger.info(
-            f"Verifying app credentials for {self.id} ????? {data["client_secret"]}"
-        )
+        logger.info(f"Verifying app credentials for {self.id}")
         if self.client_id == data["client_id"]:
             if Argon2PasswordHasher().verify(data["client_secret"], self.client_secret):
                 logger.info(f"Succesfully verified app credentials for {self.id}")
