@@ -2,17 +2,9 @@ import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
-from argon2 import PasswordHasher
+from django.contrib.auth.hashers import Argon2PasswordHasher
 
 logger = logging.getLogger("app_logger")
-
-
-class UserRole(models.TextChoices):
-    EXPERT = "EXPERT"  # , _('EXPERT')
-    OBSERVER = "OBSERVER"  # , _('OBSERVER')
-    STAFF = "STAFF"  # , _('STAFF')
-    ADMIN = "ADMIN"  # , _('ADMIN')
-    DEV = "DEV"  # , _('DEV')
 
 
 class UserType(models.TextChoices):
@@ -36,9 +28,7 @@ class User(AbstractUser):
         choices=UserType.choices, max_length=10, default=UserType.USER
     )
     parent_organization = models.CharField(max_length=100)
-    role = models.CharField(
-        choices=UserRole.choices, max_length=50, null=True
-    )  # Create a table with roles and permissions that can be updated/removed
+    role = models.CharField(max_length=50, null=True)
     pending_update_json = models.JSONField(null=True)  # Incase of maker-cheker
     is_active = models.BooleanField(default=False)
     updated_by = models.CharField(max_length=30, null=True)
@@ -48,7 +38,7 @@ class User(AbstractUser):
     USERNAME_FIELD = "username"
 
     def __repr__(self):
-        return self.__dict__
+        return self.username
 
     class Meta:
         ordering = ["-created_at"]
@@ -69,7 +59,7 @@ class User(AbstractUser):
     def verify_app_credentials(self, data):
         logger.info(f"Verifying app credentials for {self.id}")
         if self.client_id == data["client_id"]:
-            if PasswordHasher().verify(self.client_secret, data["client_secret"]):
+            if Argon2PasswordHasher().verify(data["client_secret"], self.client_secret):
                 logger.info(f"Succesfully verified app credentials for {self.id}")
                 return True
         return False

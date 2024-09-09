@@ -146,7 +146,7 @@ class GetOrDeleteRole(GenericAPIView):
     @has_expected_permissions(["view_group"])
     def get(self, request, **kwargs):
         try:
-            logger.info(f"Getting role with ID {kwargs.get("id")}")
+            logger.info(f"Getting role with ID {kwargs.get('id')}")
             response_data = Group.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
@@ -173,7 +173,7 @@ class GetOrDeleteRole(GenericAPIView):
     @has_expected_permissions(["add_group"])
     def delete(self, request, **kwargs):
         try:
-            logger.info(f"Deleting role with ID {kwargs.get("id")}")
+            logger.info(f"Deleting role with ID {kwargs.get('id')}")
             rep = Group.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()

@@ -9,7 +9,7 @@ import datetime
 from apps.users.models import User
 from rest_framework import authentication
 from rest_framework import exceptions
-from argon2 import PasswordHasher
+from django.contrib.auth.hashers import Argon2PasswordHasher
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from drf_spectacular.plumbing import build_bearer_security_scheme_object
 
@@ -35,7 +35,6 @@ def get_tokens_for_user(user: User):
     }
 
     token = jwt.encode(data, HASH_SECRET_STR, algorithm=JWT_ALGORITHM)
-
     return {"access": str(token), "exp": exp_epoch}
 
 
@@ -62,8 +61,8 @@ def create_client_id_and_secret(username: str):
     random.seed(client_id_seed)
     c_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
     c_secret_str = "".join(random.choices(string.ascii_letters + string.digits, k=30))
-    ph = PasswordHasher()
-    c_secret = ph.hash(c_secret_str)
+    ph = Argon2PasswordHasher()
+    c_secret = ph.encode(c_secret_str, "111111111")
 
     logger.info(f"Finalized credential creation for app under username {username}")
     return {

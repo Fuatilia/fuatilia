@@ -139,7 +139,7 @@ class GetOrDeleteVote(GenericAPIView):
     @has_expected_permissions(["view_vote"])
     def get(self, request, **kwargs):
         try:
-            logger.info(f"Getting vote with ID {kwargs.get("id")}")
+            logger.info(f"Getting vote with ID {kwargs.get('id')}")
             response_data = Vote.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
 
@@ -166,7 +166,7 @@ class GetOrDeleteVote(GenericAPIView):
     @has_expected_permissions(["delete_vote"])
     def delete(self, request, **kwargs):
         try:
-            logger.info(f"Deleting vote with ID {kwargs.get("id")}")
+            logger.info(f"Deleting vote with ID {kwargs.get('id')}")
             rep = Vote.objects.get(pk=kwargs.get("id"))
             if rep:
                 rep.delete()
@@ -210,7 +210,7 @@ class UploadVoteFile(GenericAPIView):
             }
 
             logger.info(
-                f"Initiating vote file upload --- > to S3 for {bill.title} --> {request.data["file_name"]}"
+                f"Initiating vote file upload --- > to S3 for {bill.title} --> {request.data['file_name']}"
             )
 
             response = file_upload_to_s3(
@@ -254,7 +254,7 @@ class GetVoteFileData(GenericAPIView):
         """
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
-            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get('file_name')}"
             file_data = get_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
@@ -279,13 +279,13 @@ class DownloadVoteFile(GenericAPIView):
         """
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
-            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get('file_name')}"
             file_data = get_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
             file_data = base64.b64decode(file_data.decode("utf-8"))
 
-            filename = f"{bill_data.title} - {kwargs.get("file_name")}"
+            filename = f"{bill_data.title} - {kwargs.get('file_name')}"
 
             response = FileResponse(
                 io.BytesIO(file_data),
@@ -312,13 +312,13 @@ class StreamVoteFile(GenericAPIView):
         """
         try:
             bill_data = Bill.objects.get(pk=kwargs.get("bill_id"))
-            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get("file_name")}"
+            file_url = f"votes/{bill_data.house.lower()}/{bill_data.title}/{kwargs.get('file_name')}"
             file_data = await stream_s3_file_data(
                 os.environ.get("VOTES_DATA_BUCKET_NAME"), file_url
             )
             file_data = base64.b64decode(file_data.read().decode("utf-8"))
 
-            filename = f"{bill_data.title} - {kwargs.get("file_name")}"
+            filename = f"{bill_data.title} - {kwargs.get('file_name')}"
 
             response = StreamingHttpResponse(
                 io.BytesIO(file_data),

@@ -16,7 +16,7 @@ class Bill(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100)
     status = models.CharField(
-        max_length=20, choices=BillStatus, default=BillStatus.IN_PROGRESS
+        max_length=20, choices=BillStatus.choices, default=BillStatus.IN_PROGRESS
     )
     sponsored_by = models.CharField(max_length=100)  # rep name/ID
     supported_by = models.CharField(max_length=100, null=True)

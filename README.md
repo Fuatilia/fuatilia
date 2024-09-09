@@ -30,4 +30,4 @@ repo structure
 `docker compose up --build .` <br>
 
 ***To run tests (Locally)***<br>
-`python app/manage.py test app/apps` <br>
+`pytest --log-disable={{your current logger}}` <br>
