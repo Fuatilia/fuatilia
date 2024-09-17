@@ -1,11 +1,20 @@
 import pytest
 import factory
+from apps.bills.models import BillStatus
+from apps.representatives.models import (
+    GenderChoices,
+    PositionChoices,
+    PositionTypeChoices,
+)
+from apps.votes.models import VoteTypeChoices
+from utils.enum_utils import HouseChoices
 from tests import factories
+from factory import fuzzy
 from rest_framework.test import APIClient
 from pytest_factoryboy import register
 
 register(factories.UserFactory)
-register(factories.BillsFactory)
+register(factories.BillFactory)
 register(factories.ConsensusVoteFactory)
 register(factories.IndividualVoteFactory)
 register(factories.RepresentativeFactory)
@@ -96,3 +105,50 @@ def auth_appuser_api_client_fixt(app_user_fixt):
         },
     )
     return client
+
+
+# REPRESENTATIVE
+@pytest.fixture
+def representative_fixt():
+    return factories.RepresentativeFactory.create(
+        full_name=factory.Faker("name"),
+        position=fuzzy.FuzzyChoice(PositionChoices.choices),
+        position_type=fuzzy.FuzzyChoice(PositionTypeChoices.choices),
+        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+        area_represented=factory.Faker("city"),
+        gender=fuzzy.FuzzyChoice(GenderChoices.choices),
+    )
+
+
+# BILLS
+@pytest.fixture
+def bill_fixt():
+    return factories.BillFactory.create(
+        title=factory.Faker("sentence", nb_words=4),
+        status=fuzzy.FuzzyChoice(BillStatus.choices),
+        sponsored_by=factory.SubFactory(factories.RepresentativeFactory),
+        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+    )
+
+
+# VOTES
+@pytest.fixture
+def individual_vote_fixt():
+    return factories.IndividualVoteFactory.create(
+        bill_id=factory.SubFactory(factories.BillFactory),
+        representative_id=factory.SubFactory(factories.RepresentativeFactory),
+        vote_type=VoteTypeChoices.INDIVIDUAL,
+        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+        vote=fuzzy.FuzzyChoice(["YES", "NO"]),
+    )
+
+
+@pytest.fixture
+def consensus_vote_fixt():
+    return factories.ConsensusVoteFactory.create(
+        bill_id=factory.SubFactory(factories.BillFactory),
+        representative_id=factory.SubFactory(factories.RepresentativeFactory),
+        vote_type=VoteTypeChoices.CONCENSUS,
+        vote_summary={"YES": 100, "NO": 20, "ABSENT": 30},
+        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+    )
