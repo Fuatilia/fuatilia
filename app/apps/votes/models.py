@@ -33,7 +33,7 @@ class Vote(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __repr__(self):
-        return self.__dict__
+        return f"{self.vote_type} {self.house}  {self.vote} {self.vote_summary}"
 
     class Meta:
         indexes = [
