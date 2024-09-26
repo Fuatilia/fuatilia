@@ -49,6 +49,20 @@ def admin_user_fixt():
 
 
 @pytest.fixture
+def regular_user_fixt():
+    return factories.UserFactory.create(
+        first_name=factory.Faker("name"),
+        last_name=factory.Faker("name"),
+        username="test_regularuser",
+        email="test_regularuser@fuatilia.com",
+        password="test_password",
+        user_type="USER",
+        parent_organization="fuatilia",
+        is_active=True,
+    )
+
+
+@pytest.fixture
 def api_client_fixt():
     return APIClient()
 

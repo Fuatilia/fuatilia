@@ -83,3 +83,45 @@ def test_app_user_can_log_in(app_user_fixt, api_client_fixt):
     )
     assert response.status_code == status.HTTP_200_OK
     assert response.data.get("access") is not None
+
+
+def test_user_filter(api_client_fixt, superuser_token_api_client_fixt, super_user_fixt):
+    token = superuser_token_api_client_fixt
+    response = api_client_fixt.get(
+        "/api/users/v1/filter?items_per_page=10&page=1",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.data.get("data")) > 0
+
+
+def test_user_fetch(
+    api_client_fixt, superuser_token_api_client_fixt, super_user_fixt, regular_user_fixt
+):
+    token = superuser_token_api_client_fixt
+    response = api_client_fixt.get(
+        f"/api/users/v1/{regular_user_fixt.id}",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.data.get("data")) > 0
+
+
+def test_user_delete(
+    api_client_fixt, superuser_token_api_client_fixt, super_user_fixt, regular_user_fixt
+):
+    token = superuser_token_api_client_fixt
+    response = api_client_fixt.delete(
+        f"/api/users/v1/{regular_user_fixt.id}",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
+        },
+    )
+    assert response.status_code == 204

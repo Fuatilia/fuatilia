@@ -1,9 +1,6 @@
-import logging
 import pytest
 
 pytestmark = pytest.mark.django_db
-
-logging.disable(logging.CRITICAL)
 
 
 @pytest.fixture
