@@ -44,7 +44,7 @@ class CreateVote(CreateAPIView):
                 votes_data = creation_serializer.save()
                 data = self.serializer_class(votes_data).data
 
-                logger.info(f" Created cote with detail : {data}")
+                logger.info(f" Created vote with detail : {data}")
                 return Response({"data": data}, status=status.HTTP_201_CREATED)
             else:
                 return Response(

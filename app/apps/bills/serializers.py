@@ -26,9 +26,12 @@ class BillCreationSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=BillStatus, default=BillStatus.IN_PROGRESS)
     sponsored_by = serializers.CharField(
         default="79c528bd-2771-4b4d-9a02-10e291b12693",
-        help_text="The person that brought the damn bill before the house",
+        help_text="Id of the representative that brought the damn bill before the house",
     )  # rep name/ID
-    supported_by = serializers.CharField(default="6134fc82-0faa-4bed-b7a2-edbcf541a3c1")
+    supported_by = serializers.CharField(
+        required=False,
+        help_text="Id of the representative that brought the damn bill before the house",
+    )
     house = serializers.ChoiceField(
         choices=HouseChoices.choices, default=HouseChoices.NATIONAL
     )
