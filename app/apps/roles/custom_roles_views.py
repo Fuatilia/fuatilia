@@ -1,8 +1,9 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from apps.generics.error_handler import process_error_response
 from utils.auth import has_expected_permissions
-from utils.general import add_request_data_to_span
+from apps.generics.general import add_request_data_to_span
 from django.contrib.auth.models import Group
 from apps.roles import serializers
 from drf_spectacular.utils import extend_schema
@@ -43,10 +44,7 @@ class CreateCustomRole(CreateAPIView):
                 )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return process_error_response(e)
 
 
 class UpdateRolePermissions(GenericAPIView):
@@ -87,10 +85,7 @@ class UpdateRolePermissions(GenericAPIView):
                 )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return process_error_response(e)
 
 
 class FilterRoles(GenericAPIView):
@@ -129,11 +124,7 @@ class FilterRoles(GenericAPIView):
             )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class GetOrDeleteRole(GenericAPIView):
@@ -155,16 +146,7 @@ class GetOrDeleteRole(GenericAPIView):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Group.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
     @extend_schema(
         tags=["Roles"],
@@ -184,13 +166,4 @@ class GetOrDeleteRole(GenericAPIView):
                     status=status.HTTP_204_NO_CONTENT,
                 )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Group.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)

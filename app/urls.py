@@ -39,9 +39,10 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
     path("", include("django_prometheus.urls")),
-    path("api/users/", include("apps.users.urls")),
-    path("api/representatives/", include("apps.representatives.urls")),
     path("api/bills/", include("apps.bills.urls")),
-    path("api/votes/", include("apps.votes.urls")),
+    path("api/props/", include("apps.props.urls")),
+    path("api/representatives/", include("apps.representatives.urls")),
     path("api/roles/", include("apps.roles.urls")),
+    path("api/votes/", include("apps.votes.urls")),
+    path("api/users/", include("apps.users.urls")),
 ]

@@ -1,8 +1,9 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from apps.generics.error_handler import process_error_response
 from utils.auth import has_expected_permissions
-from utils.general import add_request_data_to_span
+from apps.generics.general import add_request_data_to_span
 from apps.roles import serializers
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
@@ -44,10 +45,7 @@ class CreateCustomPermission(CreateAPIView):
                 )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return process_error_response(e)
 
 
 class FilterPermissions(GenericAPIView):
@@ -90,11 +88,7 @@ class FilterPermissions(GenericAPIView):
             )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class GetOrDeletePermissions(GenericAPIView):
@@ -116,16 +110,7 @@ class GetOrDeletePermissions(GenericAPIView):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Permission.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
     @extend_schema(
         tags=["Roles"],
@@ -145,13 +130,4 @@ class GetOrDeletePermissions(GenericAPIView):
                     status=status.HTTP_204_NO_CONTENT,
                 )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Permission.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)

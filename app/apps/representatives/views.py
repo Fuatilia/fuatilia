@@ -1,8 +1,9 @@
 import base64
 import logging
 import os
+from apps.generics.error_handler import process_error_response
 from utils.auth import has_expected_permissions
-from utils.general import add_request_data_to_span
+from apps.generics.general import add_request_data_to_span
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
 from apps.representatives.models import Representative
@@ -50,10 +51,7 @@ class CreateRepresentative(CreateAPIView):
             )
 
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__repr__()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return process_error_response(e)
 
 
 class FilterRepresentatives(GenericAPIView):
@@ -64,6 +62,8 @@ class FilterRepresentatives(GenericAPIView):
     )
     @has_expected_permissions(["view_representative"])
     def get(self, request):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, request)
         return self.get_queryset()
 
     def get_queryset(
@@ -72,8 +72,6 @@ class FilterRepresentatives(GenericAPIView):
         """
         Return a list of users.
         """
-        span = trace.get_current_span()
-        add_request_data_to_span(span, self.request)
 
         filter_params = {}
 
@@ -149,16 +147,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
             )
 
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Representative.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
     @extend_schema(
         tags=["Representatives"],
@@ -179,16 +168,7 @@ class GetOrDeleteRepresentative(GenericAPIView):
                 )
 
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Representative.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class AddRepresentativeFile(GenericAPIView):
@@ -254,16 +234,7 @@ class AddRepresentativeFile(GenericAPIView):
             return Response({"data": response}, status=final_status)
 
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == Representative.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class GetRepresentativeFilesList(GenericAPIView):
@@ -283,10 +254,7 @@ class GetRepresentativeFilesList(GenericAPIView):
 
             return Response({"data": file_data}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class GetRepresentativeFile(GenericAPIView):
@@ -309,7 +277,4 @@ class GetRepresentativeFile(GenericAPIView):
                 {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
