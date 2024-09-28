@@ -31,3 +31,9 @@ repo structure
 
 ***To run tests (Locally)***<br>
 `pytest --log-disable={{your current logger}}` <br>
+
+
+Any serializer that are named xyz...Body do not have any functions tied to them e.g validate or update , they re mostly for the input schema
+Those that end in xyz...Serializer implement the said functions
+
+FOr any serializers that implements any functions , we default to the"xyz...Serializer" naming to avid duplication . And thus the same serilizer will function as the request body in the schema unless there is need to have a schema body that has different params than what the serializer needs.

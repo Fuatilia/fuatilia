@@ -1,5 +1,6 @@
 import logging
-from utils.general import add_request_data_to_span
+from apps.generics.error_handler import process_error_response
+from apps.generics.general import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserType
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -50,10 +51,7 @@ class CreateUser(CreateAPIView):
             )
 
         except Exception as e:
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class CreateApp(CreateAPIView):
@@ -98,11 +96,7 @@ class CreateApp(CreateAPIView):
                 {"error": serializer.errors}, status=status.HTTP_417_EXPECTATION_FAILED
             )
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class FilterUsers(GenericAPIView):
@@ -200,16 +194,7 @@ class GetOrDeleteUser(GenericAPIView):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == User.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
     @extend_schema(
         tags=["Users"],
@@ -232,16 +217,7 @@ class GetOrDeleteUser(GenericAPIView):
                     status=status.HTTP_204_NO_CONTENT,
                 )
         except Exception as e:
-            logger.exception(e)
-            if e.__class__ == User.DoesNotExist:
-                return Response(
-                    {"error": e.__str__()},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class UserLogin(GenericAPIView):
@@ -276,18 +252,7 @@ class UserLogin(GenericAPIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         except Exception as e:
-            logger.exception(e)
-
-            if e.__class__ == User.DoesNotExist:
-                return Response(
-                    {"error": "Invalid username or credentials"},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class AppLogin(UserLogin):
@@ -304,11 +269,7 @@ class AppLogin(UserLogin):
         try:
             return super().post(request)
         except Exception as e:
-            logger.exception(e)
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)
 
 
 class UpdateUserRoles(GenericAPIView):
@@ -329,21 +290,4 @@ class UpdateUserRoles(GenericAPIView):
             )
 
         except Exception as e:
-            logger.exception(e)
-
-            if e.__class__ == User.DoesNotExist:
-                return Response(
-                    {"error": "User with specified ID not found"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            if e.__class__ == Group.DoesNotExist:
-                return Response(
-                    {"error": f"Role name {request.data['role']} not found"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            return Response(
-                {"error": e.__str__()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return process_error_response(e)

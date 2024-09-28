@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.representatives",
     "apps.bills",
     "apps.roles",
+    "apps.props",
     # docs
     "drf_spectacular",
     "drf_spectacular_sidecar",

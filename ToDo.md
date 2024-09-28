@@ -31,3 +31,8 @@ Confirm date params for groups and permissions
 
 
 Switch from hardcoding URLs to using django url reverse for test
+
+
+Add update options for all models
+
+Add credential reset for CLinet APIs
