@@ -1,6 +1,5 @@
 from rest_framework import serializers
-
-from apps.generics.general import GenericFilterSerializer
+from app.apps.helpers.general import GenericFilterSerializer
 from apps.users.models import User
 from apps.props.models import FAQ, Config
 
