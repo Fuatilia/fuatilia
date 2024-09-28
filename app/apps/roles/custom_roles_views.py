@@ -1,9 +1,9 @@
 import logging
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
-from apps.generics.error_handler import process_error_response
+from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
-from apps.generics.general import add_request_data_to_span
+from utils.generics import add_request_data_to_span
 from django.contrib.auth.models import Group
 from apps.roles import serializers
 from drf_spectacular.utils import extend_schema

@@ -1,6 +1,7 @@
 import logging
 from rest_framework import serializers
 
+from apps.helpers.general import GenericFilterSerializer
 from apps.representatives.models import Representative
 from utils.enum_utils import HouseChoices
 from apps.bills.models import Bill, BillStatus
@@ -88,7 +89,7 @@ class BillCreationSerializer(serializers.Serializer):
         return data
 
 
-class BillFilterSerializer(serializers.Serializer):
+class BillFilterSerializer(GenericFilterSerializer):
     title = serializers.CharField(
         required=False,
     )
@@ -104,20 +105,6 @@ class BillFilterSerializer(serializers.Serializer):
     topics_in_the_bill = serializers.CharField(required=False)
     final_date_voted_start = serializers.DateTimeField(required=False)
     final_date_voted_end = serializers.DateTimeField(required=False)
-    created_at_start = serializers.DateTimeField(
-        required=False, help_text="Start of date range filter for creation date"
-    )
-    created_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for creation date"
-    )
-    updated_at_start = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
-    updated_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
-    page = serializers.IntegerField(default=1)
-    items_per_page = serializers.IntegerField(default=10)
 
 
 class BillFileUploadSerializer(GenericFileUploadSerilizer):

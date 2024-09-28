@@ -2,9 +2,9 @@ import os
 
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
-from apps.generics.error_handler import process_error_response
+from utils.error_handler import process_error_response
+from utils.generics import add_request_data_to_span
 from utils.auth import has_expected_permissions
-from apps.generics.general import add_request_data_to_span
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
