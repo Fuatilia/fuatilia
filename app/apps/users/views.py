@@ -1,6 +1,6 @@
 import logging
-from apps.generics.error_handler import process_error_response
-from apps.generics.general import add_request_data_to_span
+from utils.error_handler import process_error_response
+from utils.generics import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserType
 from rest_framework.generics import CreateAPIView, GenericAPIView

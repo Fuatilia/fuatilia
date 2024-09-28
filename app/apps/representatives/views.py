@@ -1,9 +1,9 @@
 import base64
 import logging
 import os
-from apps.generics.error_handler import process_error_response
+from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
-from apps.generics.general import add_request_data_to_span
+from utils.generics import add_request_data_to_span
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
 from apps.representatives.models import Representative

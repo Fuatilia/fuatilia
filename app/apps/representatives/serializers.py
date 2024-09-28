@@ -1,3 +1,4 @@
+from apps.helpers.general import GenericFilterSerializer
 from utils.file_utils.models import GenericFileUploadSerilizer
 from apps.representatives.models import (
     PositionChoices,
@@ -52,7 +53,7 @@ class RepresentativeUpdateSerializer(serializers.Serializer):
     representation_summary = serializers.JSONField(required=False)
 
 
-class RepresentativeFilterSerilizer(serializers.Serializer):
+class RepresentativeFilterSerilizer(GenericFilterSerializer):
     full_name = serializers.CharField(required=False)
     position = serializers.CharField(required=False)
     position_type = serializers.CharField(required=False)
@@ -62,20 +63,6 @@ class RepresentativeFilterSerilizer(serializers.Serializer):
     gender = serializers.CharField(required=False)
     updated_by = serializers.CharField(required=False)
     # representation_summary = serializers.CharField(required=False)
-    created_at_start = serializers.DateTimeField(
-        required=False, help_text="Start of date range filter for creation date"
-    )
-    created_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for creation date"
-    )
-    updated_at_start = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
-    updated_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
-    page = serializers.IntegerField(default=1)
-    items_per_page = serializers.IntegerField(default=10)
 
 
 class RepresentativeFileUploadSerializer(GenericFileUploadSerilizer):

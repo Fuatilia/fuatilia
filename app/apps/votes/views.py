@@ -6,7 +6,7 @@ import os
 from django.http import FileResponse, StreamingHttpResponse
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
-from apps.generics.error_handler import process_error_response
+from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
 from utils.enum_utils import FileTypeEnum
 from apps.bills.models import Bill
@@ -16,7 +16,7 @@ from utils.file_utils.generic_file_utils import (
     get_s3_file_data,
     stream_s3_file_data,
 )
-from apps.generics.general import add_request_data_to_span
+from utils.generics import add_request_data_to_span
 from apps.votes.models import Vote
 from apps.votes import serializers
 from drf_spectacular.utils import extend_schema

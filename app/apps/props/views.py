@@ -1,8 +1,8 @@
 import logging
 from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
-from apps.generics.error_handler import process_error_response
-from apps.generics.general import add_request_data_to_span
+from utils.error_handler import process_error_response
+from utils.generics import add_request_data_to_span
 from apps.props.models import FAQ, Config
 from apps.props import serializers
 from rest_framework.response import Response

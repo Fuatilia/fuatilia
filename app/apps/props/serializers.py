@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.generics.general import GenericFilterSerilizer
+from apps.generics.general import GenericFilterSerializer
 from apps.users.models import User
 from apps.props.models import FAQ, Config
 
@@ -40,7 +40,7 @@ class ConfigFetchSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FilterConfigsBody(GenericFilterSerilizer):
+class FilterConfigsBody(GenericFilterSerializer):
     name = serializers.CharField(required=False)
     value = serializers.CharField(required=False)
     created_by = serializers.CharField(required=False)
@@ -84,7 +84,7 @@ class FAQFetchSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FilterFAQsBody(GenericFilterSerilizer):
+class FilterFAQsBody(GenericFilterSerializer):
     faq = serializers.CharField(required=False)
     answer = serializers.CharField(required=False)
     created_by = serializers.CharField(required=False)

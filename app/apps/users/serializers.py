@@ -1,3 +1,4 @@
+from apps.helpers.general import GenericFilterSerializer
 from apps.users.models import User, UserType
 from rest_framework import serializers
 
@@ -77,7 +78,7 @@ class AppCreationSerializer(serializers.Serializer):
         return user
 
 
-class UserFilterSerializer(serializers.Serializer):
+class UserFilterSerializer(GenericFilterSerializer):
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     user_type = serializers.ChoiceField(required=False, choices=UserType)
@@ -85,21 +86,7 @@ class UserFilterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone_number = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
-    created_at_start = serializers.DateTimeField(
-        required=False, help_text="Start of date range filter for creation date"
-    )
-    created_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for creation date"
-    )
-    updated_at_start = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
-    updated_at_end = serializers.DateTimeField(
-        required=False, help_text="End of date range filter for update date"
-    )
     is_active = serializers.CharField(required=False)
-    page = serializers.IntegerField(default=1)
-    items_per_page = serializers.IntegerField(default=10)
 
 
 class UserLoginSerializer(serializers.Serializer):
