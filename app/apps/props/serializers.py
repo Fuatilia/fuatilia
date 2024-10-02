@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from app.apps.helpers.general import GenericFilterSerializer
+from apps.helpers.general import GenericFilterSerializer
 from apps.users.models import User
 from apps.props.models import FAQ, Config
 
@@ -9,9 +9,9 @@ class ConfigCreationSerializer(serializers.Serializer):
     value = serializers.CharField()
     created_by = serializers.CharField()
 
-    # def validate(self, data):
-    #     if User.objects.get(id=data["created_by"]):
-    #         return data
+    def validate(self, data):
+        if User.objects.get(id=data["created_by"]):
+            return data
 
     def create(self, validated_data) -> Config:
         return Config.objects.create(**validated_data)

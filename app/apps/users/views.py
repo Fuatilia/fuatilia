@@ -1,4 +1,7 @@
 import logging
+
+from django.http import HttpResponseRedirect
+from apps.users.tasks import send_user_registration_verification_email
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from apps.users import serializers
@@ -11,6 +14,7 @@ from utils.auth import (
     create_client_id_and_secret,
     get_tokens_for_user,
     has_expected_permissions,
+    verify_user_token,
 )
 from opentelemetry import trace
 from django.contrib.auth.models import Group
@@ -21,13 +25,15 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    @has_expected_permissions(["add_user"])
+    # @has_expected_permissions(["add_user"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -39,10 +45,17 @@ class CreateUser(CreateAPIView):
 
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
-                resp = serializer.save().__dict__
-                del resp["_state"]
+                resp = serializer.save()
+
+                # # Move to celery
+                # email_body = EmailGenerator().generate_user_verification_email(serializer.validated_data["username"], "https://www.google.com")
+                # SendgridEmailer().send_via_api([serializer.validated_data["email"]], "Fuatilia signup", email_body,"info")
+
+                send_user_registration_verification_email(resp)
+
+                # del resp["_state"]
                 return Response(
-                    {"data": self.serializer_class(resp).data},
+                    {"data": self.serializer_class(resp.__dict__).data},
                     status=status.HTTP_201_CREATED,
                 )
 
@@ -56,6 +69,8 @@ class CreateUser(CreateAPIView):
 
 class CreateApp(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
@@ -288,6 +303,31 @@ class UpdateUserRoles(GenericAPIView):
                 {"message": f"User role(s) updated to {user.groups.get()}"},
                 status=status.HTTP_200_OK,
             )
+
+        except Exception as e:
+            return process_error_response(e)
+
+
+class VerifyUser(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+
+    @extend_schema(
+        tags=["Users"],
+    )
+    def get(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            username = kwargs.get("username")
+            logger.info(f"Verifying email for user {username}")
+            token = kwargs.get("token")
+            user = User.objects.get(username=username)
+            if verify_user_token(token, user)["verified"]:
+                user.is_active = True
+                user.save()
+                return HttpResponseRedirect("https://www.fuatilia.africa/")
 
         except Exception as e:
             return process_error_response(e)
