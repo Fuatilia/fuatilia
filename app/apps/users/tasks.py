@@ -8,7 +8,7 @@ from utils.notifications.email_utils import EmailGenerator, GCPEmailer, Sendgrid
 def send_user_registration_verification_email(username):
     user = User.objects.get(username=username)
     token = get_tokens_for_user(user, "email_verification")["access"]
-    link = f"{os.environ.get("BASE_URL")}/api/users/v1/verify/{user.username}/{token}"
+    link = f"{os.environ.get('BASE_URL')}/api/users/v1/verify/{user.username}/{token}"
     email_body = EmailGenerator().generate_user_verification_email(
         user.first_name, link
     )
