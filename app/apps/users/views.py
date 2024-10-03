@@ -1,5 +1,4 @@
 import logging
-
 from django.http import HttpResponseRedirect
 from apps.users.tasks import send_user_registration_verification_email
 from utils.error_handler import process_error_response
@@ -25,15 +24,13 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
-    permission_classes = []
-    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    # @has_expected_permissions(["add_user"])
+    @has_expected_permissions(["add_user"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -47,15 +44,11 @@ class CreateUser(CreateAPIView):
             if serializer.is_valid():
                 resp = serializer.save()
 
-                # # Move to celery
-                # email_body = EmailGenerator().generate_user_verification_email(serializer.validated_data["username"], "https://www.google.com")
-                # SendgridEmailer().send_via_api([serializer.validated_data["email"]], "Fuatilia signup", email_body,"info")
+                # Move to celery/SNS/Kafka
+                send_user_registration_verification_email(resp.username)
 
-                send_user_registration_verification_email(resp)
-
-                # del resp["_state"]
                 return Response(
-                    {"data": self.serializer_class(resp.__dict__).data},
+                    {"data": self.serializer_class(resp).data},
                     status=status.HTTP_201_CREATED,
                 )
 
@@ -69,8 +62,6 @@ class CreateUser(CreateAPIView):
 
 class CreateApp(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
-    permission_classes = []
-    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],

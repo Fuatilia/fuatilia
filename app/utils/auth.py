@@ -85,7 +85,7 @@ def has_expected_permissions(permission_list: List[str]):
         def wrapper_expected_permissions(*args, **kwargs):
             user: User = args[1].user
             if not user.is_superuser:
-                # Whatever is going on after this if check does not look like I should have done it
+                # Whatever is going on after this if-check does not look like I should have done it
                 # Need to find a way to make it quicker
                 user = User.objects.get(username=user.username)
                 user_groups = list(user.groups.all())

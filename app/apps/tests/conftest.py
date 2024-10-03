@@ -19,6 +19,8 @@ register(factories.ConsensusVoteFactory)
 register(factories.IndividualVoteFactory)
 register(factories.RepresentativeFactory)
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def super_user_fixt():
@@ -87,7 +89,7 @@ def adminuser_token_api_client_fixt(admin_user_fixt):
 
 
 @pytest.fixture
-def app_user_fixt(api_client_fixt, super_user_fixt, superuser_token_api_client_fixt):
+def app_user_fixt(super_user_fixt, api_client_fixt, superuser_token_api_client_fixt):
     response = api_client_fixt.post(
         "/api/users/v1/create/app",
         data={
@@ -103,6 +105,11 @@ def app_user_fixt(api_client_fixt, super_user_fixt, superuser_token_api_client_f
             "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
         },
     )
+
+    print("===>>>>>>>>>>>>>>>>>>======= ", super_user_fixt.is_active)
+    print("===========================")
+    print(response.data)
+    print("===========================")
 
     return response.data
 

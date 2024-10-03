@@ -5,6 +5,28 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture
+def create_app_user_fixt(
+    super_user_fixt, api_client_fixt, superuser_token_api_client_fixt
+):
+    return api_client_fixt.post(
+        "/api/users/v1/create/app",
+        data={
+            "username": "test_appuser",
+            "email": "test_appuser@fuatilia.com",
+            "password": "test_password",
+            "phone_number": "254111111111",
+            "user_type": "APP",
+            "parent_organization": "fuatilia",
+            "is_active": True,
+        },
+        headers={
+            "Authorization": f"Bearer {superuser_token_api_client_fixt}",
+            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
+        },
+    )
+
+
 def test_superuser_can_log_in(super_user_fixt, api_client_fixt):
     response = api_client_fixt.post(
         "/api/users/v1/login/user",
@@ -17,7 +39,6 @@ def test_superuser_can_log_in(super_user_fixt, api_client_fixt):
 def test_superuser_can_create_admin_user(
     super_user_fixt, api_client_fixt, superuser_token_api_client_fixt
 ):
-    token = superuser_token_api_client_fixt
     response = api_client_fixt.post(
         "/api/users/v1/create/user",
         {
@@ -31,7 +52,7 @@ def test_superuser_can_create_admin_user(
             "is_active": True,
         },
         headers={
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Bearer {superuser_token_api_client_fixt}",
             "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
         },
     )
@@ -48,37 +69,18 @@ def test_admin_user_can_log_in(admin_user_fixt, api_client_fixt):
     assert response.data.get("access") is not None
 
 
-def test_superuser_can_create_app_user(
-    super_user_fixt, api_client_fixt, superuser_token_api_client_fixt
-):
-    token = superuser_token_api_client_fixt
-    response = api_client_fixt.post(
-        "/api/users/v1/create/app",
-        data={
-            "username": "test_appuser",
-            "email": "test_appuser@fuatilia.com",
-            "password": "test_password",
-            "phone_number": "254111111111",
-            "parent_organization": "fuatilia",
-            "is_active": True,
-        },
-        headers={
-            "Authorization": f"Bearer {token}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
-        },
-    )
-
-    assert response.status_code == status.HTTP_201_CREATED
+def test_superuser_can_create_app_user(create_app_user_fixt):
+    assert create_app_user_fixt.status_code == status.HTTP_201_CREATED
 
 
-def test_app_user_can_log_in(app_user_fixt, api_client_fixt):
+def test_app_user_can_log_in(create_app_user_fixt, api_client_fixt):
     response = api_client_fixt.post(
         "/api/users/v1/login/app",
         {
-            "username": app_user_fixt.get("data").get("username"),
+            "username": create_app_user_fixt.data.get("data").get("username"),
             "grant-type": "password",
-            "client_id": app_user_fixt.get("data").get("client_id"),
-            "client_secret": app_user_fixt.get("data").get("client_secret"),
+            "client_id": create_app_user_fixt.data.get("data").get("client_id"),
+            "client_secret": create_app_user_fixt.data.get("data").get("client_secret"),
         },
     )
     assert response.status_code == status.HTTP_200_OK
