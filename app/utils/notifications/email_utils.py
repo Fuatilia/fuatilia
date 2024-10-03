@@ -35,7 +35,7 @@ class SendgridEmailer:
             mail_json = mail.get()
             response = sg.client.mail.send.post(request_body=mail_json)
             logger.info(
-                f"=====Completed Sendgrid API email send\n==== status: {response.status_code}\n==== message-id: {response.headers["X-Message-Id"]}"
+                f"=====Completed Sendgrid API email send\n==== status: {response.status_code}\n==== message-id: {response.headers['X-Message-Id']}"
             )
         except Exception as e:
             logger.exception(e)
@@ -67,7 +67,7 @@ class SendgridEmailer:
         )
 
         logger.info(
-            f"=====Completed Sendgrid  SMTP email send\n==== response: {response.status_code}"
+            f"=====Completed Sendgrid  SMTP email send\n==== response: {response}"
         )
         server.close()
 
@@ -98,9 +98,7 @@ class GCPEmailer:
             msg.as_string(),
         )
 
-        logger.info(
-            f"=====Completed GCP SMTP email send\n==== response: {response.status_code}"
-        )
+        logger.info(f"=====Completed GCP SMTP email send\n==== response: {response}")
         server.close()
 
 

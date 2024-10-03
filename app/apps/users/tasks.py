@@ -14,7 +14,7 @@ def send_user_registration_verification_email(username):
     )
 
     email_client = Config.objects.filter(name="email_client").first()
-    email = user["email"]
+    email = user.email
     subject = "Fuatilia user signup"
     if email_client == "sendgrid_api":
         SendgridEmailer().send_via_api([email], subject, email_body, "info")
