@@ -20,11 +20,12 @@ JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM")
 TOKEN_DELTA = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 
-def get_tokens_for_user(user: User):
+def get_tokens_for_user(user: User, scope: str = ""):
     iat = datetime.datetime.now()
     exp_time = iat + datetime.timedelta(minutes=TOKEN_DELTA)
     exp_epoch = int(exp_time.timestamp())
     data = {
+        "scope": scope,
         "username": user.username,
         "id": str(user.id),
         "role": user.role,
@@ -50,6 +51,12 @@ def verify_user_token(token: str, user: User):
     if decoded_data.get("username") != user.username:
         logger.error(f"Failed to verify user token for {user.id}")
         return {"verified": False, "error": "Invalid user token"}
+
+    if not user.is_active:
+        # Allow verification of email tokens
+        if "email_verification" not in decoded_data.get("scope"):
+            logger.error(f"Failed to verify user token for {user.id}")
+            return {"verified": False, "error": "Unverified account/email/user"}
 
     logger.info(f"Verified user token for {user.id}")
     return {"verified": True}
@@ -78,7 +85,7 @@ def has_expected_permissions(permission_list: List[str]):
         def wrapper_expected_permissions(*args, **kwargs):
             user: User = args[1].user
             if not user.is_superuser:
-                # Whatever is going on after this if check does not look like I should have done it
+                # Whatever is going on after this if-check does not look like I should have done it
                 # Need to find a way to make it quicker
                 user = User.objects.get(username=user.username)
                 user_groups = list(user.groups.all())

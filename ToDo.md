@@ -35,4 +35,6 @@ Switch from hardcoding URLs to using django url reverse for test
 
 Add update options for all models
 
-Add credential reset for CLinet APIs
+Add credential reset for Client APIs
+
+Add queueing celery/kafka or background tasks
