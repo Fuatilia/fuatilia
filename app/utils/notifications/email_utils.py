@@ -67,7 +67,7 @@ class SendgridEmailer:
         )
 
         logger.info(
-            f"=====Completed Sendgrid  SMTP email send\n==== response: {response}"
+            f"=====Completed Sendgrid  SMTP email send\n==== response: {response.status_code}"
         )
         server.close()
 
@@ -98,7 +98,9 @@ class GCPEmailer:
             msg.as_string(),
         )
 
-        logger.info(f"=====Completed GCP SMTP email send\n==== response: {response}")
+        logger.info(
+            f"=====Completed GCP SMTP email send\n==== response: {response.status_code}"
+        )
         server.close()
 
 
