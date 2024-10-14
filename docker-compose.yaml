@@ -5,7 +5,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - TRACING_EXPORTER_ENDPOINT=http://jaeger:4317
+      - TRACING_EXPORTER_ENDPOINT=${TRACING_EXPORTER_ENDPOINT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+
 
   jaeger:
     image: jaegertracing/all-in-one:1.60.0
@@ -16,7 +22,7 @@ services:
       - "6831:6831"
       - "4317:4317"
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=info
 
   prometheus:
     image: prom/prometheus:v2.54.0
@@ -66,3 +72,22 @@ services:
       - promtail
       - jaeger
       - loki
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: redis-server --loglevel info
+
+# FOR TESTS
+  # redis-insight:
+  #   image: redis/redisinsight:latest
+  #   restart: always
+  #   ports:
+  #     - "5540:5540"

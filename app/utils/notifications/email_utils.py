@@ -6,8 +6,12 @@ from typing import List
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from opentelemetry import trace
 
-logger = logging.getLogger("app_logger")
+from utils.generics import add_string_data_to_span
+
+logger = logging.getLogger()
+span = trace.get_current_span()
 
 
 class SendgridEmailer:
@@ -18,6 +22,9 @@ class SendgridEmailer:
     def send_via_api(
         self, recipients: List[str], subject: str, message: str, message_type: str
     ):
+        add_string_data_to_span(
+            span, f"Initiating email to {recipients}", "email.recipients"
+        )
         if message_type == "info":
             sending_email = self.info_email
         else:
@@ -44,6 +51,9 @@ class SendgridEmailer:
     def send_via_smtp(
         self, recipients: List[str], subject: str, message: str, message_type: str
     ):
+        add_string_data_to_span(
+            span, f"Initiating email to {recipients}", "email.recipients"
+        )
         server = SMTP(
             os.environ.get("SG_SMTP_SERVER"), int(os.environ.get("SG_SMTP_PORT"))
         )
@@ -80,6 +90,9 @@ class GCPEmailer:
     def send_via_smtp(
         self, recipients: List[str], subject: str, message: str, message_type: str
     ):
+        add_string_data_to_span(
+            span, f"Initiating email to {recipients}", "email.recipients"
+        )
         server = SMTP("smtp.gmail.com", 587)
         server.starttls()
 
@@ -106,11 +119,12 @@ class EmailGenerator:
     def __init__(self):
         pass
 
-    def generate_user_verification_email(self, name, link):
+    def generate_user_verification_email(self, name, link, **kwargs):
+        user_role = kwargs.get("user_role", "user")
         return f"""
         Hello {name},
         <br><br>
-        You registered an account on Fuatilia, before being able to use your account
+        You registered an account with us as a Fuatilia {user_role} , before being able to use your account
         you need to verify that this is your email address by <a href={link}>clicking here</a>
         <br><br>
         If you did not intiate this email, you can safely ignore.
@@ -120,7 +134,7 @@ class EmailGenerator:
         Fuatilia.Africa Team<br>
         """
 
-    def generate_app_verification_email(self, name, link):
+    def generate_app_verification_email(self, name, link, **kwargs):
         return f""",
         Hello {name},
         <br><br>

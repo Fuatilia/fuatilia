@@ -44,8 +44,7 @@ class CreateUser(CreateAPIView):
             if serializer.is_valid():
                 resp = serializer.save()
 
-                # Move to celery/SNS/Kafka
-                send_user_registration_verification_email(resp.username)
+                send_user_registration_verification_email.delay(resp.username)
 
                 return Response(
                     {"data": self.serializer_class(resp).data},

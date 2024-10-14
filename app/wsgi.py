@@ -14,11 +14,13 @@ from django.core.wsgi import get_wsgi_application
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
+from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 DjangoInstrumentor().instrument()
 LoggingInstrumentor().instrument()
 BotocoreInstrumentor().instrument()
+CeleryInstrumentor().instrument()
 
 application = get_wsgi_application()

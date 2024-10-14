@@ -32,9 +32,9 @@ Confirm date params for groups and permissions
 
 Switch from hardcoding URLs to using django url reverse for test
 
-
 Add update options for all models
 
 Add credential reset for Client APIs
 
-Add queueing celery/kafka or background tasks
+Add celery logs (tasks,emails etc) to Otel
+Try to add serializer classes fo all views
