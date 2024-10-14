@@ -13,6 +13,17 @@ tracer = trace.get_tracer(__name__)
 logger = logging.getLogger("app_logger")
 
 
+class HealthCheker(GenericAPIView):
+    permission_classes = []
+    authentication_classes = []
+
+    @extend_schema(tags=["Health"])
+    def get(self, request):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, request)
+        return Response(data={"message": "Bado Niko Bie!!"}, status=status.HTTP_200_OK)
+
+
 class CreateOrUpdateConfig(GenericAPIView):
     serializer_class = serializers.ConfigFetchSerializer
 

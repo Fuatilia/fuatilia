@@ -33,6 +33,10 @@ repo structure
 `pytest --log-disable={{your current logger}}` <br>
 
 
+*** To view celery logs ***
+`cd app`
+`celery -A settings worker --pool=solo -l info`<br>
+
 Any serializer that are named xyz...Body do not have any functions tied to them e.g validate or update , they re mostly for the input schema
 Those that end in xyz...Serializer implement the said functions
 

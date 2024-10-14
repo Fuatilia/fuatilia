@@ -16,11 +16,11 @@ from pathlib import Path
 from datetime import datetime
 import pytz
 
-
 dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -185,7 +185,10 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "trace_formatter",
-            "filename": f"logs/{datetime.now(tz = pytz.timezone('UTC')).strftime('%Y_%m_%d')}.log",
+            "filename": os.path.join(
+                PROJECT_DIR,
+                f"logs/{datetime.now(tz = pytz.timezone('UTC')).strftime('%Y_%m_%d')}.log",
+            ),
             "maxBytes": int(os.environ.get("MAX_LOGFILE_BYTES", "100000")),
             "backupCount": 10,
         },
@@ -229,3 +232,5 @@ REST_FRAMEWORK = {
 # CELERY
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
