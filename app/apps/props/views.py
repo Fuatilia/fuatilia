@@ -17,6 +17,9 @@ class HealthCheker(GenericAPIView):
     permission_classes = []
     authentication_classes = []
 
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(tags=["Health"])
     def get(self, request):
         span = trace.get_current_span()
@@ -122,7 +125,7 @@ class FilterConfigs(GenericAPIView):
 class GUDConfig(GenericAPIView):
     serializer_class = serializers.ConfigFetchSerializer
 
-    @extend_schema(tags=["Configs"], responses={200: "Succesful"})
+    @extend_schema(tags=["Configs"], responses={200: serializer_class})
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -278,7 +281,7 @@ class FilterFAQs(GenericAPIView):
 class GUDFAQ(GenericAPIView):
     serializer_class = serializers.FAQFetchSerializer
 
-    @extend_schema(tags=["FAQs"], responses={200: "Succesful"})
+    @extend_schema(tags=["FAQs"], responses={200: serializer_class})
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()

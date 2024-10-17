@@ -18,3 +18,12 @@ class GenericFileUploadSerilizer(serializers.Serializer):
     file_extension = serializers.CharField(default=".jpeg")
     file_name = serializers.CharField(default="IMAGE.jpeg")
     string_encoding_fmt = serializers.CharField(default="utf-8")
+
+
+class GenericObjectResponse(serializers.Serializer):
+    data = serializers.DictField()
+
+
+class GenericObjectResponseExtra(serializers.Serializer):
+    data = serializers.DictField()
+    message = serializers.CharField(required=False)

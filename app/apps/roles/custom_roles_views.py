@@ -17,7 +17,7 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateCustomRole(CreateAPIView):
-    serializer_class = serializers.FetchRolesSerializers
+    serializer_class = serializers.FetchRoleSerializers
 
     @extend_schema(
         tags=["Roles"], request={"application/json": serializers.RoleCreationSerializer}
@@ -48,6 +48,8 @@ class CreateCustomRole(CreateAPIView):
 
 
 class UpdateRolePermissions(GenericAPIView):
+    serializer_class = serializers.FetchRoleSerializers
+
     @extend_schema(
         tags=["Roles"], request={"application/json": serializers.RoleCreationSerializer}
     )
@@ -89,7 +91,7 @@ class UpdateRolePermissions(GenericAPIView):
 
 
 class FilterRoles(GenericAPIView):
-    serializer_class = serializers.FetchRolesSerializers
+    serializer_class = serializers.FetchRoleSerializers
 
     @extend_schema(tags=["Roles"], parameters=[serializers.RoleFilterSerializer])
     @has_expected_permissions(["view_group"])
@@ -128,7 +130,7 @@ class FilterRoles(GenericAPIView):
 
 
 class GetOrDeleteRole(GenericAPIView):
-    serializer_class = serializers.FetchRolesSerializers
+    serializer_class = serializers.FetchRoleSerializers
 
     @extend_schema(
         tags=["Roles"],

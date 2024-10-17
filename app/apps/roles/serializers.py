@@ -10,7 +10,7 @@ class FetchPermissionsSerializers(serializers.ModelSerializer):
         fields = ("pk", "codename", "name")
 
 
-class FetchRolesSerializers(serializers.ModelSerializer):
+class FetchRoleSerializers(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = "__all__"

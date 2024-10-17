@@ -224,6 +224,38 @@ class GetOrDeleteUser(GenericAPIView):
         except Exception as e:
             return process_error_response(e)
 
+    @extend_schema(tags=["Users"], responses={200: serializers.UserFetchSerializer})
+    @has_expected_permissions(["change_user"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            logger.info(f'Updating user with ID {kwargs.get("id")}')
+            user_to_update = User.objects.get(pk=kwargs.get("id"))
+
+            update_serializer = serializers.UserUpdateSerializer(
+                data=request.data, partial=True
+            )
+            if update_serializer.is_valid():
+                update_serializer.update(user_to_update, request.data)
+                return Response(
+                    {
+                        "data": self.serializer_class(user_to_update).data,
+                        "message": "User succesfully updated",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "error": update_serializer.errors,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except Exception as e:
+            return process_error_response(e)
+
 
 class UserLogin(GenericAPIView):
     authentication_classes = []
@@ -278,6 +310,9 @@ class AppLogin(UserLogin):
 
 
 class UpdateUserRoles(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserRoleUpdateSerializer},
@@ -301,6 +336,9 @@ class UpdateUserRoles(GenericAPIView):
 class VerifyUser(GenericAPIView):
     authentication_classes = []
     permission_classes = []
+
+    def get_serializer(self, *args, **kwargs):
+        return
 
     @extend_schema(
         tags=["Users"],

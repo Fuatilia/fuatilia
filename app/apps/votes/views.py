@@ -170,6 +170,9 @@ class GetOrDeleteVote(GenericAPIView):
 
 
 class UploadVoteFile(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(
         tags=["Votes"], request={"application/json": GenericFileUploadSerilizer}
     )
@@ -216,6 +219,9 @@ class UploadVoteFile(GenericAPIView):
 
 
 class GetVoteFileData(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
     @extend_schema(tags=["Votes"], responses={200: "Vote file found"})
     @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
@@ -237,7 +243,10 @@ class GetVoteFileData(GenericAPIView):
 
 
 class DownloadVoteFile(GenericAPIView):
-    @extend_schema(tags=["Votes"], responses={200: "Vote file sent"})
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Votes"])
     @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
         """
@@ -268,7 +277,10 @@ class DownloadVoteFile(GenericAPIView):
 
 
 class StreamVoteFile(GenericAPIView):
-    @extend_schema(tags=["Votes"], responses={200: "Vote file received"})
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Votes"])
     @has_expected_permissions(["view_votes_file"])
     async def get(self, request, **kwargs):
         """

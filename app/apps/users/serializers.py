@@ -1,3 +1,4 @@
+import datetime
 from apps.helpers.general import GenericFilterSerializer
 from apps.users.models import User, UserType
 from rest_framework import serializers
@@ -13,7 +14,7 @@ class UserFetchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = (
-            "updated_by",
+            "last_updated_by",
             "password",
             "client_id",
             "client_secret",
@@ -52,7 +53,13 @@ class UserUpdateSerializer(serializers.Serializer):
     role = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
     is_active = serializers.CharField(required=False)
-    updated_by = serializers.CharField(max_length=30)
+    last_updated_by = serializers.CharField(max_length=30, required=True)
+
+    def update(self, user: User, validated_data) -> None:
+        User.objects.filter(pk=user.id).update(
+            **{**validated_data, "updated_at": datetime.datetime.now()}
+        )
+        user.refresh_from_db()
 
 
 # For Api Apps

@@ -1,6 +1,7 @@
 import base64
 import logging
 import os
+from utils.file_utils.models import GenericObjectResponse
 from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
 from utils.generics import add_request_data_to_span
@@ -81,9 +82,9 @@ class FilterRepresentatives(GenericAPIView):
             filter_params["full_name__icontains"] = self.request.GET.get("full_name")
         if self.request.GET.get("position"):
             filter_params["position__icontains"] = self.request.GET.get("position")
-        if self.request.GET.get("position_type"):
-            filter_params["position_type__icontains"] = self.request.GET.get(
-                "position_type"
+        if self.request.GET.get("position_class"):
+            filter_params["position_class__icontains"] = self.request.GET.get(
+                "position_class"
             )
         if self.request.GET.get("house"):
             filter_params["house"] = self.request.GET.get("house")
@@ -97,8 +98,10 @@ class FilterRepresentatives(GenericAPIView):
             )
         if self.request.GET.get("gender"):
             filter_params["gender"] = self.request.GET.get("gender")
-        if self.request.GET.get("updated_by"):
-            filter_params["updated_by__icontains"] = self.request.GET.get("updated_by")
+        if self.request.GET.get("last_updated_by"):
+            filter_params["last_updated_by__icontains"] = self.request.GET.get(
+                "last_updated_by"
+            )
         if self.request.GET.get("created_at_start"):
             filter_params["created_at__gte"] = self.request.GET.get("created_at_start")
         if self.request.GET.get("created_at_end"):
@@ -238,9 +241,10 @@ class AddRepresentativeFile(GenericAPIView):
 
 
 class GetRepresentativeFilesList(GenericAPIView):
-    @extend_schema(
-        tags=["Representatives"], responses={200: "Representative file found"}
-    )
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
     @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:
@@ -258,9 +262,10 @@ class GetRepresentativeFilesList(GenericAPIView):
 
 
 class GetRepresentativeFile(GenericAPIView):
-    @extend_schema(
-        tags=["Representatives"], responses={200: "Representative file found"}
-    )
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
     @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:

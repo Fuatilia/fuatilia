@@ -4,7 +4,7 @@ from apps.bills.models import BillStatus
 from apps.representatives.models import (
     GenderChoices,
     PositionChoices,
-    PositionTypeChoices,
+    PositionClassChoices,
 )
 from apps.votes.models import VoteTypeChoices
 from utils.enum_utils import HouseChoices
@@ -134,7 +134,7 @@ def representative_fixt():
     return factories.RepresentativeFactory.create(
         full_name=factory.Faker("name"),
         position=fuzzy.FuzzyChoice(PositionChoices.choices),
-        position_type=fuzzy.FuzzyChoice(PositionTypeChoices.choices),
+        position_class=fuzzy.FuzzyChoice(PositionClassChoices.choices),
         house=fuzzy.FuzzyChoice(HouseChoices.choices),
         area_represented=factory.Faker("city"),
         gender=fuzzy.FuzzyChoice(GenderChoices.choices),
