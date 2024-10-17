@@ -31,7 +31,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=50, null=True)
     pending_update_json = models.JSONField(null=True)  # Incase of maker-cheker
     is_active = models.BooleanField(default=False)
-    updated_by = models.CharField(max_length=30, null=True)
+    last_updated_by = models.CharField(max_length=30, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

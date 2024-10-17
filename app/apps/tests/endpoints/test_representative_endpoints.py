@@ -15,7 +15,7 @@ def create_representative(
             "full_name": "Some random name",
             "house": "NATIONAL",
             "position": "MP",
-            "position_type": "ELECTED",
+            "position_class": "ELECTED",
             "gender": "M",
             "representation_summary": {},
         },

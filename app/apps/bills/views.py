@@ -2,6 +2,7 @@ import os
 
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
+from utils.file_utils.models import GenericObjectResponse
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from utils.auth import has_expected_permissions
@@ -182,7 +183,7 @@ class AddBillFile(CreateAPIView):
     @extend_schema(
         tags=["Bills"],
         request={"application/json": serializers.BillFileUploadSerializer},
-        responses={200: "File upload successful"},
+        responses={200: GenericObjectResponse},
     )
     @has_expected_permissions(["add_bill_file"])
     def post(self, request):
@@ -245,7 +246,7 @@ class GetBillFile(GenericAPIView):
     def get_serializer(self, *args, **kwargs):
         return
 
-    @extend_schema(tags=["Bills"], responses={200: "Bill file found"})
+    @extend_schema(tags=["Bills"], responses={200: GenericObjectResponse})
     @has_expected_permissions(["view_bill_file"])
     def get(self, request, **kwargs):
         try:
