@@ -33,6 +33,7 @@ class RepresentativeCreationSerializer(serializers.Serializer):
     image_url = serializers.CharField(required=False)
     phone_number = serializers.CharField(required=False)
     gender = serializers.CharField(required=False)
+    current_parliamentary_roles = serializers.CharField(required=False)
     representation_summary = serializers.JSONField(required=False)
 
     def create(self, validated_data):

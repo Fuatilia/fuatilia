@@ -269,23 +269,35 @@ class UserLogin(GenericAPIView):
     )
     def post(self, request):
         try:
-            user = User.objects.get(username=request.data.get("username"))
-            if user.user_type == UserType.USER:
-                credentials_match = user.check_password(request.data.get("password"))
-            elif user.user_type == UserType.APP:
-                credentials_match = user.verify_app_credentials(request.data)
+            req_serializer = serializers.UserLoginSerializer(data=request.data)
+            if req_serializer.is_valid():
+                user = User.objects.get(username=request.data.get("username"))
+                if user.user_type == UserType.USER:
+                    credentials_match = user.check_password(
+                        request.data.get("password")
+                    )
+                elif user.user_type == UserType.APP:
+                    credentials_match = user.verify_app_credentials(request.data)
 
-            if credentials_match:
-                response = get_tokens_for_user(user)
+                if credentials_match:
+                    response = get_tokens_for_user(user)
+                    return Response(
+                        response,
+                        status=200,
+                        headers={"X_AUTHENTICATED_USERNAME": user.username},
+                    )
+
+                logger.info(
+                    f"Failed to authenticate user with username {user.username}"
+                )
+            else:
                 return Response(
-                    response,
-                    status=200,
-                    headers={"X_AUTHENTICATED_USERNAME": user.username},
+                    data={"error": req_serializer.errors},
+                    status=status.HTTP_417_EXPECTATION_FAILED,
                 )
 
-            logger.info(f"Failed to authenticate user with username {user.username}")
             return Response(
-                {"error": "Invalid username or credentials"},
+                data={"error": "Invalid username or credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         except Exception as e:

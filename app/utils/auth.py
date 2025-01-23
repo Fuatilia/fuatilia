@@ -136,6 +136,7 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed(
                     f'Could not authenticate user. {verified["error"]}'
                 )
+
         except Exception as e:
             if e.__class__ == User.DoesNotExist:
                 raise exceptions.AuthenticationFailed("Could not authenticate user.")

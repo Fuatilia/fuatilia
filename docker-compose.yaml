@@ -1,5 +1,6 @@
 services:
   fuatilia-api:
+    image: fuatilia-api:0.0.1
     build: .
     container_name: fuatilia-api
     ports:
@@ -11,7 +12,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-
+    deploy:
+      mode: replicated
+      replicas: 3
 
   jaeger:
     image: jaegertracing/all-in-one:1.60.0
@@ -23,6 +26,9 @@ services:
       - "4317:4317"
     environment:
       - LOG_LEVEL=info
+    deploy:
+      mode: replicated
+      replicas: 1
 
   prometheus:
     image: prom/prometheus:v2.54.0
@@ -33,6 +39,9 @@ services:
       - '--config.file=/etc/prometheus/${ENVIRONMENT}-config.yaml'
     ports:
       - 9090:9090
+    deploy:
+      mode: replicated
+      replicas: 1
 
   promtail:
     image: grafana/promtail:3.1.1
@@ -46,6 +55,9 @@ services:
       - '--config.file=/etc/promtail/${ENVIRONMENT}-config.yaml'
     ports:
       - "9080:9080"
+    deploy:
+      mode: replicated
+      replicas: 2
 
   loki:
     image: grafana/loki:2.7.0
@@ -58,6 +70,9 @@ services:
       - '--config.file=/etc/loki/${ENVIRONMENT}-config.yaml'
     depends_on:
       - promtail
+    deploy:
+      mode: replicated
+      replicas: 2
 
   grafana:
     image: grafana/grafana:11.1.4
@@ -72,6 +87,9 @@ services:
       - promtail
       - jaeger
       - loki
+    deploy:
+      mode: replicated
+      replicas: 1
 
   redis:
     image: redis:7.4.1
@@ -83,7 +101,10 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-    command: redis-server --loglevel info
+    command: redis-server --loglevel verbose
+    deploy:
+      mode: replicated
+      replicas: 1
 
 # FOR TESTS
   # redis-insight:

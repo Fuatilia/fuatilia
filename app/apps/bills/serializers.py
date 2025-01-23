@@ -36,6 +36,11 @@ class BillCreationSerializer(serializers.Serializer):
     house = serializers.ChoiceField(
         choices=HouseChoices.choices, default=HouseChoices.NATIONAL
     )
+    bill_no = serializers.CharField(
+        required=True
+    )  # e.g "10 of 2024", Tracks bills in the year
+    gazette_no = serializers.CharField(required=True)
+    date_introduced = serializers.DateField(format="DD-MM-YYYY")
     summary = serializers.CharField(required=False)
     summary_created_by = serializers.CharField(
         required=False,
@@ -45,11 +50,12 @@ class BillCreationSerializer(serializers.Serializer):
 
     final_date_voted = serializers.CharField(
         required=False,
-        help_text="The final day the bill was either voted for ascent by president or otherwise",
+        help_text="Third reading date",
     )
     topics_in_the_bill = serializers.CharField(
-        required=True, help_text="E.g agriculture, local seeds, radioactive waste"
+        required=False, help_text="E.g agriculture, local seeds, radioactive waste"
     )
+    metadata = serializers.DictField(required=False)
 
     def create(self, validated_data):
         bill = Bill.objects.create(**validated_data)

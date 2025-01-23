@@ -97,8 +97,8 @@ class UserFilterSerializer(GenericFilterSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(default="user")
-    password = serializers.CharField(default="password")
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
 
 
 class AppLoginSerializer(serializers.Serializer):
