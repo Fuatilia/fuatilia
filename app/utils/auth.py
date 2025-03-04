@@ -69,7 +69,9 @@ def create_client_id_and_secret(username: str):
     c_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
     c_secret_str = "".join(random.choices(string.ascii_letters + string.digits, k=30))
     ph = Argon2PasswordHasher()
-    c_secret = ph.encode(c_secret_str, "111111111")
+    CLIENT_ID_SECRET_SALT = os.environ.get("CLIENT_ID_SECRET_SALT")
+
+    c_secret = ph.encode(c_secret_str, CLIENT_ID_SECRET_SALT)
 
     logger.info(f"Finalized credential creation for app under username {username}")
     return {
@@ -87,7 +89,16 @@ def has_expected_permissions(permission_list: List[str]):
             if not user.is_superuser:
                 # Whatever is going on after this if-check does not look like I should have done it
                 # Need to find a way to make it quicker
-                user = User.objects.get(username=user.username)
+                try:
+                    user = User.objects.get(username=user.username)
+                except Exception as user_fetch_exp:
+                    # In the event of something like AnonymousUser
+                    logger.error(
+                        f"Unable to authenticate user << {user} >> error {user_fetch_exp}"
+                    )
+                    raise exceptions.AuthenticationFailed(
+                        "Unable to authenticate user. Token is invalid or missing"
+                    )
                 user_groups = list(user.groups.all())
 
                 # Current assumption is that a user will belong to one role
@@ -136,6 +147,7 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed(
                     f'Could not authenticate user. {verified["error"]}'
                 )
+
         except Exception as e:
             if e.__class__ == User.DoesNotExist:
                 raise exceptions.AuthenticationFailed("Could not authenticate user.")

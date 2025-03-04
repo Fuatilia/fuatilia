@@ -1,6 +1,7 @@
 import base64
 import logging
 import os
+from apps.props.models import Config
 from utils.file_utils.models import GenericObjectResponse
 from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
@@ -112,6 +113,10 @@ class FilterRepresentatives(GenericAPIView):
             filter_params["updated_at__lte"] = self.request.GET.get("updated_at_end")
         if self.request.GET.get("is_active"):
             filter_params["is_active"] = self.request.GET.get("is_active")
+        if self.request.GET.get("current_parliamentary_roles"):
+            filter_params["current_parliamentary_roles__icontains"] = (
+                self.request.GET.get("current_parliamentary_roles")
+            )
 
         page = int(self.request.GET.get("page", "1"))
         items_per_page = int(self.request.GET.get("items_per_page", "10"))
@@ -129,8 +134,7 @@ class FilterRepresentatives(GenericAPIView):
         )
 
 
-class GetOrDeleteRepresentative(GenericAPIView):
-    # TODO , change serializer class for Admins
+class GUDRepresentative(GenericAPIView):
     serializer_class = serializers.FullFetchRepresentativeSerializer
 
     @extend_schema(
@@ -169,6 +173,123 @@ class GetOrDeleteRepresentative(GenericAPIView):
                     },
                     status=status.HTTP_204_NO_CONTENT,
                 )
+
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Representatives"],
+        request={"application/json": serializers.RepresentativeUpdateSerializer},
+        responses={200: serializer_class},
+    )
+    @has_expected_permissions(["update_representative"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+
+            logger.info(f"Representative update with details :: {request.data}")
+
+            # add updated by
+            user_id_in_session = request.user
+
+            full_update_data = {
+                **request.data,
+                "last_updated_by": user_id_in_session.id,
+            }
+
+            rep_serializer = serializers.RepresentativeUpdateSerializer(
+                data=request.data
+            )
+            if not rep_serializer.is_valid():
+                return Response(
+                    rep_serializer.errors, status=status.HTTP_417_EXPECTATION_FAILED
+                )
+
+            # Check if maker-checker is on for representative update
+            config = Config.objects.filter(name="representative_update_mode").first()
+            if config and config.value == "maker_checker":
+                update_dict = {"pending_update_json": full_update_data}
+
+                updated_representative = rep_serializer.update(
+                    kwargs.get("id"), update_dict
+                )
+
+                return Response(
+                    {"message": "Update initiated pending approval"},
+                    status=status.HTTP_200_OK,
+                )
+
+            else:
+                updated_representative = rep_serializer.update(
+                    kwargs.get("id"), full_update_data
+                )
+
+            return Response(
+                {"data": self.serializer_class(updated_representative).data},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return process_error_response(e)
+
+
+class ApproveRepresentative(GenericAPIView):
+    serializer_class = serializers.FullFetchRepresentativeSerializer
+
+    @extend_schema(
+        tags=["Representatives"],
+        request={"application/json": serializers.RepresentativeUpdateSerializer},
+        responses={200: serializer_class},
+    )
+    @has_expected_permissions(["approve_representative_update"])
+    def post(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, request)
+            # add updated by
+            user_id_in_session = request.user
+
+            logger.info(
+                f"Representative update approval for :: {kwargs.id} by  {user_id_in_session}"
+            )
+
+            full_update_data = {
+                **request.data,
+                "last_updated_by": user_id_in_session.id,
+            }
+
+            rep_serializer = serializers.RepresentativeUpdateSerializer(
+                data=request.data
+            )
+            if not rep_serializer.is_valid():
+                return Response(
+                    rep_serializer.errors, status=status.HTTP_417_EXPECTATION_FAILED
+                )
+
+            # Check if maker checker is on for representative update
+            config = Config.objects.filter(name="representative_update_mode").first()
+            if config and config.value == "maker_checker":
+                update_dict = {"pending_update_json": full_update_data}
+
+                updated_representative = rep_serializer.update(
+                    kwargs.get("id"), update_dict
+                )
+
+                return Response(
+                    {"message": "Update initiated pending approval"},
+                    status=status.HTTP_200_OK,
+                )
+
+            else:
+                updated_representative = rep_serializer.update(
+                    kwargs.get("id"), full_update_data
+                )
+
+            return Response(
+                {"data": self.serializer_class(updated_representative).data},
+                status=status.HTTP_200_OK,
+            )
 
         except Exception as e:
             return process_error_response(e)

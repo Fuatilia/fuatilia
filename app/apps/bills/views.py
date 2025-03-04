@@ -1,5 +1,4 @@
 import os
-
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
 from utils.file_utils.models import GenericObjectResponse

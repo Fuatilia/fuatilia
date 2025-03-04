@@ -32,10 +32,14 @@ class Representative(models.Model):
     house = models.CharField(max_length=10, choices=HouseChoices.choices)
     area_represented = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, null=True)
-    image_url = models.CharField(max_length=100, null=True)
+    image_url = models.CharField(max_length=250, null=True)
     gender = models.CharField(max_length=10, choices=GenderChoices.choices)
+    current_parliamentary_roles = models.CharField(
+        max_length=100, null=True
+    )  # e.g chief whip , Majority leader, (Overwrites any previous role)
     representation_summary = models.JSONField(null=True)
     pending_update_json = models.JSONField(null=True)
+    version = models.IntegerField(default=0)
     last_updated_by = models.CharField(max_length=30, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

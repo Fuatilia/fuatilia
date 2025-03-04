@@ -97,15 +97,15 @@ class UserFilterSerializer(GenericFilterSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(default="user")
-    password = serializers.CharField(default="password")
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
 
 
 class AppLoginSerializer(serializers.Serializer):
     username = serializers.CharField(default="app username")
     client_id = serializers.CharField(default="jak2**********cocn")
     client_secret = serializers.CharField(default="MjG**********woHl")
-    grant_type = serializers.CharField(default="password")
+    grant_type = serializers.CharField(default="client_credentials")
 
 
 class UserRoleUpdateSerializer(serializers.Serializer):

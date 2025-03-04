@@ -106,11 +106,6 @@ def app_user_fixt(super_user_fixt, api_client_fixt, superuser_token_api_client_f
         },
     )
 
-    print("===>>>>>>>>>>>>>>>>>>======= ", super_user_fixt.is_active)
-    print("===========================")
-    print(response.data)
-    print("===========================")
-
     return response.data
 
 
@@ -120,7 +115,7 @@ def auth_appuser_api_client_fixt(app_user_fixt):
         "/api/users/v1/login/app",
         {
             "username": app_user_fixt.get("data").get("username"),
-            "grant_type": "password",
+            "grant_type": "client_credentials",
             "client_id": app_user_fixt.get("data").get("client_id"),
             "client_secret": app_user_fixt.get("data").get("client_secret"),
         },

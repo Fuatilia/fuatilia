@@ -1,6 +1,7 @@
 # OpenTelemetry Middlewares
 import logging
 from django.http import (
+    HttpResponseNotFound,
     StreamingHttpResponse,
     HttpResponse,
     FileResponse,
@@ -33,6 +34,7 @@ class RequestInjectorMiddleware:
             elif (
                 response.__class__ == HttpResponse
                 or response.__class__ == HttpResponseRedirect
+                or response.__class__ == HttpResponseNotFound
             ):
                 # Prometheus and Django URLs using HttpResponses
                 span.set_attribute("response.class", "HttpResponse")
