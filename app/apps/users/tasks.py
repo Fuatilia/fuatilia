@@ -49,7 +49,7 @@ def send_app_registration_verification_email(self, username):
 
     email_client = Config.objects.filter(name="email_client").first()
     email = user.email
-    subject = "Fuatilia user signup"
+    subject = "Fuatilia App signup"
     logger.info(f"Initiating {email_client} email to app-user {username}")
     if email_client == "sendgrid_api":
         SendgridEmailer().send_via_api([email], subject, email_body, "info")

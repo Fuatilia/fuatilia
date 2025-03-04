@@ -1,6 +1,9 @@
 import logging
 from django.http import HttpResponseRedirect
-from apps.users.tasks import send_user_registration_verification_email
+from apps.users.tasks import (
+    send_app_registration_verification_email,
+    send_user_registration_verification_email,
+)
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from apps.users import serializers
@@ -85,6 +88,7 @@ class CreateApp(CreateAPIView):
                 resp = serializer.save()
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
+                send_app_registration_verification_email.delay(app_data["username"])
                 return Response(
                     {
                         "message": "Kindly copy your client ID and Secret and save them securely",
@@ -260,6 +264,7 @@ class GetOrDeleteUser(GenericAPIView):
 class UserLogin(GenericAPIView):
     authentication_classes = []
     permission_classes = []
+    input_serializer_class = serializers.UserLoginSerializer
 
     def get_serializer(self, *args, **kwargs):
         return
@@ -269,7 +274,7 @@ class UserLogin(GenericAPIView):
     )
     def post(self, request):
         try:
-            req_serializer = serializers.UserLoginSerializer(data=request.data)
+            req_serializer = self.input_serializer_class(data=request.data)
             if req_serializer.is_valid():
                 user = User.objects.get(username=request.data.get("username"))
                 if user.user_type == UserType.USER:
@@ -307,6 +312,7 @@ class UserLogin(GenericAPIView):
 class AppLogin(UserLogin):
     authentication_classes = []
     permission_classes = []
+    input_serializer_class = serializers.AppLoginSerializer
 
     def get_serializer(self, *args, **kwargs):
         return
@@ -333,7 +339,7 @@ class UpdateUserRoles(GenericAPIView):
     def put(self, request):
         try:
             user = User.objects.get(id=request.data["user_id"])
-            group = Group.objects.get(name=request.data["role"])
+            group = Group.objects.get(name=request.data["role_name"])
             user.groups.add(group)
 
             return Response(

@@ -36,9 +36,10 @@ class Representative(models.Model):
     gender = models.CharField(max_length=10, choices=GenderChoices.choices)
     current_parliamentary_roles = models.CharField(
         max_length=100, null=True
-    )  # e.g chief whip , Majority leader
+    )  # e.g chief whip , Majority leader, (Overwrites any previous role)
     representation_summary = models.JSONField(null=True)
     pending_update_json = models.JSONField(null=True)
+    version = models.IntegerField(default=0)
     last_updated_by = models.CharField(max_length=30, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

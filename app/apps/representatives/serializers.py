@@ -1,3 +1,4 @@
+import logging
 from apps.helpers.general import GenericFilterSerializer
 from utils.file_utils.models import GenericFileUploadSerilizer
 from apps.representatives.models import (
@@ -6,6 +7,9 @@ from apps.representatives.models import (
     Representative,
 )
 from rest_framework import serializers
+
+
+logger = logging.getLogger("app_logger")
 
 
 class FullFetchRepresentativeSerializer(serializers.ModelSerializer):
@@ -34,7 +38,7 @@ class RepresentativeCreationSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     gender = serializers.CharField(required=False)
     current_parliamentary_roles = serializers.CharField(required=False)
-    representation_summary = serializers.JSONField(required=False)
+    representation_summary = serializers.DictField(required=False)
 
     def create(self, validated_data):
         representative = Representative.objects.create(**validated_data)
@@ -50,8 +54,26 @@ class RepresentativeUpdateSerializer(serializers.Serializer):
     area_represented = serializers.CharField(required=False)
     phone_number = serializers.CharField(required=False)
     gender = serializers.CharField(required=False)
-    last_updated_by = serializers.CharField(max_length=30)
-    representation_summary = serializers.JSONField(required=False)
+    current_parliamentary_roles = serializers.CharField(required=False)
+    representation_summary = serializers.DictField(required=False)
+    version = serializers.IntegerField()
+
+    def update(self, representative_id, validated_data):
+        version = validated_data.get("version") or validated_data[
+            "pending_update_json"
+        ].get("version")
+        version_exists = Representative.objects.filter(id=representative_id).first()
+        if version_exists.version >= version:
+            raise Exception(
+                f"Version {version} passed on update is invalid or not up to date"
+            )
+
+        updated = Representative.objects.update(id=representative_id, **validated_data)
+
+        logger.info(
+            f"Update response  -- {updated} --- representative {representative_id} now has  :: {updated}"
+        )
+        return Representative.objects.get(id=representative_id)
 
 
 class RepresentativeFilterSerilizer(GenericFilterSerializer):
@@ -63,6 +85,7 @@ class RepresentativeFilterSerilizer(GenericFilterSerializer):
     phone_number = serializers.CharField(required=False)
     gender = serializers.CharField(required=False)
     last_updated_by = serializers.CharField(required=False)
+    current_parliamentary_roles = serializers.CharField(required=False)
     # representation_summary = serializers.CharField(required=False)
 
 

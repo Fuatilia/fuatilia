@@ -105,7 +105,7 @@ class AppLoginSerializer(serializers.Serializer):
     username = serializers.CharField(default="app username")
     client_id = serializers.CharField(default="jak2**********cocn")
     client_secret = serializers.CharField(default="MjG**********woHl")
-    grant_type = serializers.CharField(default="password")
+    grant_type = serializers.CharField(default="client_credentials")
 
 
 class UserRoleUpdateSerializer(serializers.Serializer):

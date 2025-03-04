@@ -15,7 +15,7 @@ class BillStatus(models.TextChoices):
 
 class Bill(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=150)
     status = models.CharField(
         max_length=20, choices=BillStatus.choices, default=BillStatus.IN_PROGRESS
     )
@@ -37,8 +37,8 @@ class Bill(models.Model):
     summary_downvoted_by = models.CharField(
         max_length=100, null=True
     )  # (expert names/ids)
-    final_date_voted = models.CharField(
-        max_length=100, null=True
+    final_date_voted = models.DateField(
+        null=True
     )  # (When the bill was passed or failed)
     topics_in_the_bill = models.CharField(
         max_length=200, null=True
@@ -50,6 +50,6 @@ class Bill(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "bill"
+        verbose_name_plural = "bills"
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["summary", "topics_in_the_bill"])]

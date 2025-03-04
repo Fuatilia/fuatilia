@@ -6,7 +6,7 @@ from django.db import models
 class Config(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     name = models.CharField(max_length=100, unique=True)
-    value = models.CharField(max_length=100)
+    value = models.TextField()
     created_by = models.CharField(max_length=100)
     last_updated_by = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
