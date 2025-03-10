@@ -80,6 +80,9 @@ class CreateApp(CreateAPIView):
             data = request.data.copy()
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
+            #  client_app will be the default role for apps
+            # TODO : mOVE THIS TO AUTO CREATION WHEN AN APP IS CREATED i.e add actual user to group
+            data["role"] = request.data.get("role") or "client_app"
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
             serializer = serializers.AppCreationSerializer(data=data)
@@ -195,8 +198,9 @@ class GetOrDeleteUser(GenericAPIView):
             add_request_data_to_span(span, self.request)
 
             logger.info(f'Getting user with ID {kwargs.get("id")}')
-            response_data = User.objects.get(pk=kwargs.get("id"))
-            response = self.serializer_class(response_data).data
+            user_data = User.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(user_data).data
+            response["role"] = list(user_data.groups.values_list("name", flat=True))
 
             return Response(
                 {"data": response},

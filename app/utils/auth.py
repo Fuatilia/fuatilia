@@ -28,7 +28,7 @@ def get_tokens_for_user(user: User, scope: str = ""):
         "scope": scope,
         "username": user.username,
         "id": str(user.id),
-        "role": user.role,
+        "role": list(user.groups.values_list("name", flat=True)),
         "user_type": user.user_type,
         "organisation": user.parent_organization,
         "exp": exp_epoch,

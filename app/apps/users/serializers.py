@@ -50,7 +50,6 @@ class UserUpdateSerializer(serializers.Serializer):
     email = serializers.CharField(min_length=3, required=False)
     username = serializers.CharField(min_length=3, required=False)
     phone_number = serializers.CharField(required=False)
-    role = serializers.CharField(required=False)
     parent_organization = serializers.CharField(required=False)
     is_active = serializers.CharField(required=False)
     last_updated_by = serializers.CharField(max_length=30, required=True)

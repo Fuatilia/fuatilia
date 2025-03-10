@@ -28,7 +28,6 @@ class User(AbstractUser):
         choices=UserType.choices, max_length=10, default=UserType.USER
     )
     parent_organization = models.CharField(max_length=100)
-    role = models.CharField(max_length=50, null=True)
     pending_update_json = models.JSONField(null=True)  # Incase of maker-cheker
     is_active = models.BooleanField(default=False)
     last_updated_by = models.CharField(max_length=30, null=True)

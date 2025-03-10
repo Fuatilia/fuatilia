@@ -182,7 +182,7 @@ class GUDRepresentative(GenericAPIView):
         request={"application/json": serializers.RepresentativeUpdateSerializer},
         responses={200: serializer_class},
     )
-    @has_expected_permissions(["update_representative"])
+    @has_expected_permissions(["change_representative"])
     def patch(self, request, **kwargs):
         try:
             span = trace.get_current_span()
