@@ -8,6 +8,7 @@ from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserType
+from apps.users.signals import role_assignment_signal
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -48,6 +49,12 @@ class CreateUser(CreateAPIView):
                 resp = serializer.save()
 
                 send_user_registration_verification_email.delay(resp.username)
+                user = User.objects.get(id=resp["id"])
+                role_assignment_signal.send(
+                    sender=self.__class__,
+                    user=user,
+                    role_name=request.data.get("role"),
+                )
 
                 return Response(
                     {"data": self.serializer_class(resp).data},
@@ -81,8 +88,6 @@ class CreateApp(CreateAPIView):
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
             #  client_app will be the default role for apps
-            # TODO : mOVE THIS TO AUTO CREATION WHEN AN APP IS CREATED i.e add actual user to group
-            data["role"] = request.data.get("role") or "client_app"
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
             serializer = serializers.AppCreationSerializer(data=data)
@@ -92,6 +97,12 @@ class CreateApp(CreateAPIView):
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
                 send_app_registration_verification_email.delay(app_data["username"])
+                user = User.objects.get(id=app_data["id"])
+                role_assignment_signal.send(
+                    sender=self.__class__,
+                    user=user,
+                    role_name=request.data.get("role") or "client_app",
+                )
                 return Response(
                     {
                         "message": "Kindly copy your client ID and Secret and save them securely",

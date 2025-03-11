@@ -50,7 +50,9 @@ def send_app_registration_verification_email(self, username):
     email_client = Config.objects.filter(name="email_client").first()
     email = user.email
     subject = "Fuatilia App signup"
-    logger.info(f"Initiating {email_client} email to app-user {username}")
+    logger.info(
+        f"Initiating {email_client} email to app-user {username} :: >> \n {email_body}"
+    )
     if email_client == "sendgrid_api":
         SendgridEmailer().send_via_api([email], subject, email_body, "info")
     elif email_client == "sendgrid_smtp":

@@ -34,11 +34,23 @@ def file_upload_to_s3(
             base64encoding, bucket_name, file_name=dir, metadata=metadata
         )
 
-        response = {**response, "file_url": f"s3://{bucket_name}/{dir}"}
+        # Use dir instead of full s3 url to allow for fetching
+        # As at the time of writing there's no GetObject using s3 url , just bucket and key
+        response = {**response, "file_url": dir}
         return response
     except Exception as e:
         logging.exception(e)
         return {"error": e.__repr__()}
+
+
+def get_s3_folder_objects(bucket_name, dir, name_only=False):
+    logger.info(f"Fetching files bucket {bucket_name} in dir {dir}")
+    response = representative_s3_processor.get_bucket_file_list(bucket_name, dir)
+    logger.info(response)
+    # This will remove the file dir from S3 "Key" and return the name only
+    if name_only:
+        response = [x.split("/")[-1] for x in response]
+    return response
 
 
 def get_s3_file_data(bucket_name, file_name):
