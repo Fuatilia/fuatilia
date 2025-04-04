@@ -56,7 +56,9 @@ def get_s3_folder_objects(bucket_name, dir, name_only=False):
 def get_s3_file_data(bucket_name, file_name):
     logger.info(f"Fetching file : {file_name}")
     response = representative_s3_processor.get_file(bucket_name, file_name)
-    logger.info(response)
+    logger.info(
+        f"get_s3_file_data S3 response --- >  {response}",
+    )
     return response["Body"].read()
 
 

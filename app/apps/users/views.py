@@ -28,13 +28,15 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    @has_expected_permissions(["add_user"])
+    # IP restricted endpoint
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -71,13 +73,15 @@ class CreateUser(CreateAPIView):
 
 class CreateApp(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.AppCreationPayloadSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    @has_expected_permissions(["add_user"])
+    # IP restricted endpoint
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -136,7 +140,8 @@ class FilterUsers(GenericAPIView):
         return self.get_queryset()
 
     def get_serializer(self, *args, **kwargs):
-        if self.request.user.is_authenticated and self.request.user.role == "admin":
+        # Add check for Admins
+        if self.request.user.is_authenticated:
             return serializers.FullUserFetchSerializer
         return serializers.UserFetchSerializer
 
@@ -195,7 +200,7 @@ class FilterUsers(GenericAPIView):
         )
 
 
-class GetOrDeleteUser(GenericAPIView):
+class GUDUser(GenericAPIView):
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(

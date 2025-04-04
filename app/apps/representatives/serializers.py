@@ -46,34 +46,46 @@ class RepresentativeCreationSerializer(serializers.Serializer):
 
 
 class RepresentativeUpdateSerializer(serializers.Serializer):
-    full_name = serializers.CharField(required=False)
-    position = serializers.CharField(required=False)
-    position_class = serializers.CharField(required=False)
-    house = serializers.CharField(required=False)
-    image_url = serializers.CharField(required=False)
-    area_represented = serializers.CharField(required=False)
-    phone_number = serializers.CharField(required=False)
-    gender = serializers.CharField(required=False)
-    current_parliamentary_roles = serializers.CharField(required=False)
-    representation_summary = serializers.DictField(required=False)
+    full_name = serializers.CharField(required=False, allow_null=True)
+    position = serializers.CharField(required=False, allow_null=True)
+    position_class = serializers.CharField(required=False, allow_null=True)
+    house = serializers.CharField(required=False, allow_null=True)
+    image_url = serializers.CharField(required=False, allow_null=True)
+    area_represented = serializers.CharField(required=False, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_null=True)
+    gender = serializers.CharField(required=False, allow_null=True)
+    current_parliamentary_roles = serializers.CharField(required=False, allow_null=True)
+    representation_summary = serializers.DictField(required=False, allow_null=True)
     version = serializers.IntegerField()
 
     def update(self, representative_id, validated_data):
-        version = validated_data.get("version") or validated_data[
-            "pending_update_json"
-        ].get("version")
-        version_exists = Representative.objects.filter(id=representative_id).first()
-        if version_exists.version >= version:
+        version = validated_data.get("version")
+        if (
+            version is None
+        ):  # Equating with Or on the "version" assignment results in a falsey because 0 = False
+            print(f"Resolving to version in update JSON for {representative_id}")
+            version = validated_data["pending_update_json"].get("version")
+
+        rep_exists = Representative.objects.filter(id=representative_id).first()
+
+        if rep_exists.version >= version or rep_exists.version + 1 < version:
             raise Exception(
                 f"Version {version} passed on update is invalid or not up to date"
             )
 
-        updated = Representative.objects.update(id=representative_id, **validated_data)
+        validated_data["version"] = version
 
         logger.info(
-            f"Update response  -- {updated} --- representative {representative_id} now has  :: {updated}"
+            f"Updating Representative with validated data  ====== >>>  {validated_data}"
         )
-        return Representative.objects.get(id=representative_id)
+        update_resp = Representative.objects.filter(id=representative_id).update(
+            **validated_data
+        )
+        rep_exists.refresh_from_db()
+        logger.info(
+            f"Update response  -- {update_resp} --- representative {representative_id} now has  :: {rep_exists.__dict__}"
+        )
+        return rep_exists
 
 
 class RepresentativeFilterSerilizer(GenericFilterSerializer):

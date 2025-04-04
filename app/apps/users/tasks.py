@@ -29,8 +29,10 @@ def send_user_registration_verification_email(self, username):
 
     email_client = Config.objects.filter(name="email_client").first()
     email = user.email
-    subject = "Fuatilia user signup"
-    logger.info(f"Initiating {email_client} email to user {username}")
+    subject = "Fuatilia User Signup"
+    logger.info(
+        f"Initiating {email_client or "GMAIL SMTP"} email to user {username} :: >> \n {email_body}"
+    )
     if email_client == "sendgrid_api":
         SendgridEmailer().send_via_api([email], subject, email_body, "info")
     elif email_client == "sendgrid_smtp":
@@ -45,13 +47,13 @@ def send_app_registration_verification_email(self, username):
     user = User.objects.get(username=username)
     token = get_tokens_for_user(user, "email_verification")["access"]
     link = f"{os.environ.get('BASE_URL')}/api/users/v1/verify/{user.username}/{token}"
-    email_body = EmailGenerator().generate_app_verification_email(user.first_name, link)
+    email_body = EmailGenerator().generate_app_verification_email(user.username, link)
 
     email_client = Config.objects.filter(name="email_client").first()
     email = user.email
-    subject = "Fuatilia App signup"
+    subject = "Fuatilia App Signup"
     logger.info(
-        f"Initiating {email_client} email to app-user {username} :: >> \n {email_body}"
+        f"Initiating {email_client or "gmail_smtp"} to app-user {username} :: >> \n {email_body}"
     )
     if email_client == "sendgrid_api":
         SendgridEmailer().send_via_api([email], subject, email_body, "info")

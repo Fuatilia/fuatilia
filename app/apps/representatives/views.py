@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 from apps.props.models import Config
@@ -402,13 +401,14 @@ class GetRepresentativeFile(GenericAPIView):
     def get(self, request, **kwargs):
         try:
             if kwargs.get("file_type") and kwargs.get("file_name"):
-                id = kwargs.get("id")
-                file_url = f'representatives/{id}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
+                file_url = f'representatives/{kwargs.get("id")}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
+
+                logger.info(file_url)
+
                 file_data = get_s3_file_data(
                     os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
                 )
-                # Bytes Object
-                file_data = base64.b64decode(file_data.encode("utf-8"))
+                # Return the base 64 encoded version
                 return Response({"data": file_data}, status=status.HTTP_200_OK)
             return Response(
                 {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK

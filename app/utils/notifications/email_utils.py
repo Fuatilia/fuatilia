@@ -135,7 +135,7 @@ class EmailGenerator:
         """
 
     def generate_app_verification_email(self, name, link, **kwargs):
-        return f""",
+        return f"""
         Hello {name},
         <br><br>
         You registered an app on Fuatilia, before being able to use your app
