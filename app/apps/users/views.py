@@ -2,6 +2,7 @@ import logging
 from django.http import HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
+    send_user_credential_reset_email,
     send_user_registration_verification_email,
 )
 from utils.error_handler import process_error_response
@@ -390,10 +391,109 @@ class VerifyUser(GenericAPIView):
             logger.info(f"Verifying email for user {username}")
             token = kwargs.get("token")
             user = User.objects.get(username=username)
-            if verify_user_token(token, user)["verified"]:
+            verification_response = verify_user_token(token, user)
+            if (
+                verification_response["verified"]
+                and verification_response["scope"] == "email_verification"
+            ):
                 user.is_active = True
+                user.save()
+                return HttpResponseRedirect("https://www.fuatilia.africa/")
+            if (
+                verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                user.is_active = False
                 user.save()
                 return HttpResponseRedirect("https://www.fuatilia.africa/")
 
         except Exception as e:
             return process_error_response(e)
+
+
+class CredentialUpdate(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(
+        tags=["Users"],
+    )
+    def get(self, request, **kwargs):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+        try:
+            # For get requests the token will indicate what kind oc change is happening  ie.g reset,update,suspend e.t.c
+            logger.info(
+                f"Credential {kwargs["token"]} has been initiaed for {kwargs["username"]}"
+            )
+
+            # Epdate the email to be sent to match the "token"
+            send_user_credential_reset_email.delay(kwargs["username"])
+            return Response(
+                {
+                    "message": "Credential reset has been initiated. You should receive an email with further instructions."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Users"],
+        request={"application/json": serializers.UserCredentialUpdateSerializer},
+    )
+    def post(self, request, **kwargs):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
+        try:
+            token = kwargs.get("token")
+            username = kwargs.get("username")
+            user = User.objects.get(username=username)
+            verification_response = verify_user_token(token, user)
+
+            if (
+                user.user_type == UserType.APP
+                and verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                credential_response = create_client_id_and_secret(user.username)
+                user.is_active = True
+                user.client_id = credential_response["client_id"]
+                user.client_secret = credential_response["client_secret"]
+                user.save()
+                return Response(
+                    {
+                        "message": "Kindly copy your client ID and Secret and save them securely",
+                        "data": {
+                            "client_id": credential_response["client_id"],
+                            "client_secret": credential_response["client_secret_str"],
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            elif (
+                user.user_type == UserType.USER
+                and verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                user.is_active = True
+                user.password = request.data["password"]
+                user.save()
+                return Response(
+                    {"message": "Password Reset Successful"},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"error": "invalid request"}, status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as err:
+            logger.error(err)
+            return Response(
+                {"error": err.__str__()}, status=status.HTTP_400_BAD_REQUEST
+            )

@@ -52,14 +52,18 @@ def verify_user_token(token: str, user: User):
         logger.error(f"Failed to verify user token for {user.id}")
         return {"verified": False, "error": "Invalid user token"}
 
-    if not user.is_active:
+    if not user.is_active and "email_verification" in decoded_data.get("scope"):
         # Allow verification of email tokens
-        if "email_verification" not in decoded_data.get("scope"):
-            logger.error(f"Failed to verify user token for {user.id}")
-            return {"verified": False, "error": "Unverified account/email/user"}
+        logger.info(f"Verified user token for {user.id}")
+        return {"verified": True, "scope": "email_verification"}
 
-    logger.info(f"Verified user token for {user.id}")
-    return {"verified": True}
+    if "user_credential_reset" in decoded_data.get("scope"):
+        # Allow verification of credential reset tokens
+        logger.info(f"Verified user token for {user.id}")
+        return {"verified": True, "scope": "user_credential_reset"}
+
+    logger.error(f"Failed to verify user token for {user.id}")
+    return {"verified": False, "error": "Unverified account/email/user"}
 
 
 def create_client_id_and_secret(username: str):

@@ -30,3 +30,7 @@ Try to add serializer classes fo all views
 
 Add check for Admins for serliazer ? How to fetch role/group ? Or check has full view_on_user permissions ?
 Add endpoint to fetch images/files from URL/sites
+
+Move all email strings to configs
+
+Add password to apps (Both on creation and reset)

@@ -42,7 +42,7 @@ class User(AbstractUser):
     class Meta:
         ordering = ["-created_at"]
         unique_together = [
-            "email",
+            "username",
             "user_type",
         ]  # Allow people to use their emails for their apps
         db_table = "users"

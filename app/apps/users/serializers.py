@@ -20,7 +20,6 @@ class UserFetchSerializer(serializers.ModelSerializer):
             "client_secret",
             "pending_update_json",
             "groups",
-            "user_permissions",
         )
 
 
@@ -110,3 +109,8 @@ class AppLoginSerializer(serializers.Serializer):
 class UserRoleUpdateSerializer(serializers.Serializer):
     user_id = serializers.CharField(default="user")
     role_name = serializers.CharField(default="dev")
+
+
+class UserCredentialUpdateSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)

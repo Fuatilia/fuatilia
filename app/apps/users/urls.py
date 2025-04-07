@@ -10,4 +10,8 @@ urlpatterns = [
     path("v1/login/app", views.AppLogin().as_view()),
     path("v1/update/role", views.UpdateUserRoles().as_view()),
     path("v1/verify/<str:username>/<str:token>", views.VerifyUser().as_view()),
+    path(
+        "v1/credential/update/<str:username>/<str:token>",
+        views.CredentialUpdate().as_view(),
+    ),
 ]
