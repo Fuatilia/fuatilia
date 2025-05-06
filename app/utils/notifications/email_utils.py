@@ -135,13 +135,27 @@ class EmailGenerator:
         """
 
     def generate_app_verification_email(self, name, link, **kwargs):
-        return f""",
+        return f"""
         Hello {name},
         <br><br>
         You registered an app on Fuatilia, before being able to use your app
         you need to verify that this is your email address by <a href={link}>clicking here</a>
         <br><br>
         If you did not intiate this email, you can safely ignore.
+        <br><br>
+
+        Kind Regards,<br>
+        Fuatilia.Africa Team<br>
+        """
+
+    def generate_user_credential_reset_email(self, name, link, **kwargs):
+        return f"""
+        Hello,
+        <br><br>
+        A password request was requested for your account on Fuatilia.<br>
+        You may proceed to <a href={link}>reset your pasword here</a>
+        <br><br>
+        If you did not intiate this email, and believe there was a breach kindly contact Fuatilia support.
         <br><br>
 
         Kind Regards,<br>

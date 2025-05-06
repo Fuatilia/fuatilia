@@ -2,12 +2,14 @@ import logging
 from django.http import HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
+    send_user_credential_reset_email,
     send_user_registration_verification_email,
 )
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from apps.users import serializers
 from apps.users.models import User, UserType
+from apps.users.signals import role_assignment_signal
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -27,13 +29,15 @@ tracer = trace.get_tracer(__name__)
 
 class CreateUser(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.UserCreationSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    @has_expected_permissions(["add_user"])
+    # IP restricted endpoint
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -48,6 +52,12 @@ class CreateUser(CreateAPIView):
                 resp = serializer.save()
 
                 send_user_registration_verification_email.delay(resp.username)
+                user = User.objects.get(id=resp["id"])
+                role_assignment_signal.send(
+                    sender=self.__class__,
+                    user=user,
+                    role_name=request.data.get("role"),
+                )
 
                 return Response(
                     {"data": self.serializer_class(resp).data},
@@ -64,13 +74,15 @@ class CreateUser(CreateAPIView):
 
 class CreateApp(CreateAPIView):
     serializer_class = serializers.UserFetchSerializer
+    permission_classes = []
+    authentication_classes = []
 
     @extend_schema(
         tags=["Users"],
         request={"application/json": serializers.AppCreationPayloadSerializer},
         responses={201: serializers.UserFetchSerializer},
     )
-    @has_expected_permissions(["add_user"])
+    # IP restricted endpoint
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -80,6 +92,7 @@ class CreateApp(CreateAPIView):
             data = request.data.copy()
             app_credentials = create_client_id_and_secret(request.data["username"])
             data["user_type"] = UserType.APP
+            #  client_app will be the default role for apps
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
             serializer = serializers.AppCreationSerializer(data=data)
@@ -89,6 +102,12 @@ class CreateApp(CreateAPIView):
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
                 send_app_registration_verification_email.delay(app_data["username"])
+                user = User.objects.get(id=app_data["id"])
+                role_assignment_signal.send(
+                    sender=self.__class__,
+                    user=user,
+                    role_name=request.data.get("role") or "client_app",
+                )
                 return Response(
                     {
                         "message": "Kindly copy your client ID and Secret and save them securely",
@@ -122,7 +141,8 @@ class FilterUsers(GenericAPIView):
         return self.get_queryset()
 
     def get_serializer(self, *args, **kwargs):
-        if self.request.user.is_authenticated and self.request.user.role == "admin":
+        # Add check for Admins
+        if self.request.user.is_authenticated:
             return serializers.FullUserFetchSerializer
         return serializers.UserFetchSerializer
 
@@ -181,7 +201,7 @@ class FilterUsers(GenericAPIView):
         )
 
 
-class GetOrDeleteUser(GenericAPIView):
+class GUDUser(GenericAPIView):
     serializer_class = serializers.UserFetchSerializer
 
     @extend_schema(
@@ -195,8 +215,9 @@ class GetOrDeleteUser(GenericAPIView):
             add_request_data_to_span(span, self.request)
 
             logger.info(f'Getting user with ID {kwargs.get("id")}')
-            response_data = User.objects.get(pk=kwargs.get("id"))
-            response = self.serializer_class(response_data).data
+            user_data = User.objects.get(pk=kwargs.get("id"))
+            response = self.serializer_class(user_data).data
+            response["role"] = list(user_data.groups.values_list("name", flat=True))
 
             return Response(
                 {"data": response},
@@ -370,10 +391,109 @@ class VerifyUser(GenericAPIView):
             logger.info(f"Verifying email for user {username}")
             token = kwargs.get("token")
             user = User.objects.get(username=username)
-            if verify_user_token(token, user)["verified"]:
+            verification_response = verify_user_token(token, user)
+            if (
+                verification_response["verified"]
+                and verification_response["scope"] == "email_verification"
+            ):
                 user.is_active = True
+                user.save()
+                return HttpResponseRedirect("https://www.fuatilia.africa/")
+            if (
+                verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                user.is_active = False
                 user.save()
                 return HttpResponseRedirect("https://www.fuatilia.africa/")
 
         except Exception as e:
             return process_error_response(e)
+
+
+class CredentialUpdate(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(
+        tags=["Users"],
+    )
+    def get(self, request, **kwargs):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+        try:
+            # For get requests the token will indicate what kind oc change is happening  ie.g reset,update,suspend e.t.c
+            logger.info(
+                f"Credential {kwargs["token"]} has been initiaed for {kwargs["username"]}"
+            )
+
+            # Epdate the email to be sent to match the "token"
+            send_user_credential_reset_email.delay(kwargs["username"])
+            return Response(
+                {
+                    "message": "Credential reset has been initiated. You should receive an email with further instructions."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Users"],
+        request={"application/json": serializers.UserCredentialUpdateSerializer},
+    )
+    def post(self, request, **kwargs):
+        span = trace.get_current_span()
+        add_request_data_to_span(span, self.request)
+
+        try:
+            token = kwargs.get("token")
+            username = kwargs.get("username")
+            user = User.objects.get(username=username)
+            verification_response = verify_user_token(token, user)
+
+            if (
+                user.user_type == UserType.APP
+                and verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                credential_response = create_client_id_and_secret(user.username)
+                user.is_active = True
+                user.client_id = credential_response["client_id"]
+                user.client_secret = credential_response["client_secret"]
+                user.save()
+                return Response(
+                    {
+                        "message": "Kindly copy your client ID and Secret and save them securely",
+                        "data": {
+                            "client_id": credential_response["client_id"],
+                            "client_secret": credential_response["client_secret_str"],
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            elif (
+                user.user_type == UserType.USER
+                and verification_response["verified"]
+                and verification_response["scope"] == "user_credential_reset"
+            ):
+                user.is_active = True
+                user.password = request.data["password"]
+                user.save()
+                return Response(
+                    {"message": "Password Reset Successful"},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"error": "invalid request"}, status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as err:
+            logger.error(err)
+            return Response(
+                {"error": err.__str__()}, status=status.HTTP_400_BAD_REQUEST
+            )

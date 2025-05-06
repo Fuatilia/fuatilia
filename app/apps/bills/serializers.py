@@ -26,7 +26,7 @@ class BillCreationSerializer(serializers.Serializer):
     title = serializers.CharField(default="Finance Bill 2024")
     status = serializers.ChoiceField(choices=BillStatus, default=BillStatus.IN_PROGRESS)
     sponsored_by = serializers.CharField(
-        default="79c528bd-2771-4b4d-9a02-10e291b12693",
+        required=True,
         help_text="Id of the representative that brought the damn bill before the house",
     )  # rep name/ID
     supported_by = serializers.CharField(

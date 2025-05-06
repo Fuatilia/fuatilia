@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 from apps.props.models import Config
@@ -7,7 +6,11 @@ from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
 from utils.generics import add_request_data_to_span
 from utils.enum_utils import FileTypeEnum
-from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
+from utils.file_utils.generic_file_utils import (
+    file_upload_to_s3,
+    get_s3_file_data,
+    get_s3_folder_objects,
+)
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -182,7 +185,7 @@ class GUDRepresentative(GenericAPIView):
         request={"application/json": serializers.RepresentativeUpdateSerializer},
         responses={200: serializer_class},
     )
-    @has_expected_permissions(["update_representative"])
+    @has_expected_permissions(["change_representative"])
     def patch(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -369,12 +372,19 @@ class GetRepresentativeFilesList(GenericAPIView):
     @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:
-            response_data = Representative.objects.get(pk=kwargs.get("id"))
-            if kwargs.get("file_type") == FileTypeEnum.IMAGE.lower():
-                file_url = response_data.image_url
+            if kwargs.get("file_type") == FileTypeEnum.IMAGE.value.lower():
+                file_url = (
+                    f'representatives/{kwargs.get("id")}/{kwargs.get("file_type")}'
+                )
+            else:
+                return process_error_response(
+                    Exception(
+                        f"file type <{kwargs.get("file_type")}> not found or missing"
+                    )
+                )
 
-            file_data = get_s3_file_data(
-                os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
+            file_data = get_s3_folder_objects(
+                os.environ.get("REPS_DATA_BUCKET_NAME"), file_url, name_only=True
             )
 
             return Response({"data": file_data}, status=status.HTTP_200_OK)
@@ -391,13 +401,14 @@ class GetRepresentativeFile(GenericAPIView):
     def get(self, request, **kwargs):
         try:
             if kwargs.get("file_type") and kwargs.get("file_name"):
-                id = kwargs.get("id")
-                file_url = f'representatives/{id}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
+                file_url = f'representatives/{kwargs.get("id")}/{kwargs.get("file_type")}s/{kwargs.get("file_name")}'
+
+                logger.info(file_url)
+
                 file_data = get_s3_file_data(
                     os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
                 )
-                # Bytes Object
-                file_data = base64.b64decode(file_data.encode("utf-8"))
+                # Return the base 64 encoded version
                 return Response({"data": file_data}, status=status.HTTP_200_OK)
             return Response(
                 {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK
