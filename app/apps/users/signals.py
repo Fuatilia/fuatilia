@@ -21,8 +21,8 @@ def add_role_to_app_or_user(sender, **kwargs):
     )
 
     userInstance = kwargs["user"]
-    logger.debug(
-        f"signal from {sender} initiated add_role_to_app_or_user for {userInstance.id}"
+    logger.info(
+        f"signal from {sender} initiated add_role_to_app_or_user for {userInstance.id} for role {kwargs['role_name']}"
     )
     group = Group.objects.get(name=kwargs["role_name"])
     userInstance.groups.add(group)

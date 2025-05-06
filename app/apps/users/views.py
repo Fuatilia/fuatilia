@@ -51,12 +51,21 @@ class CreateUser(CreateAPIView):
             if serializer.is_valid():
                 resp = serializer.save()
 
-                send_user_registration_verification_email.delay(resp.username)
-                user = User.objects.get(id=resp["id"])
+                role_name = (
+                    request.data.get("role")
+                    if request.data.get("role")
+                    else "fuatilia_verifier"
+                )
+
+                send_user_registration_verification_email.delay(
+                    resp.username, role_name
+                )
+                user = User.objects.get(id=resp.id)
+
                 role_assignment_signal.send(
                     sender=self.__class__,
                     user=user,
-                    role_name=request.data.get("role"),
+                    role_name=role_name,
                 )
 
                 return Response(

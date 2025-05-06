@@ -30,7 +30,6 @@ class UserCreationSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, default="janedoe")
     phone_number = serializers.CharField(required=False, default="254111111111")
     password = serializers.CharField(min_length=10, default="password1234")
-    role = serializers.CharField(required=False, default="client_api")
     parent_organization = serializers.CharField(
         required=False,
         default="fuatilia",
