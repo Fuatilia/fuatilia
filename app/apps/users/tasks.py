@@ -8,12 +8,12 @@ from apps.users.models import User
 from utils.notifications.email_utils import EmailGenerator, GCPEmailer, SendgridEmailer
 from opentelemetry import trace
 
-logger = logging.getLogger()
+logger = logging.getLogger("app_logger")
 tracer = trace.get_tracer(__name__)
 
 
 @shared_task(bind=True, max_retries=3)
-def send_user_registration_verification_email(self, username):
+def send_user_registration_verification_email(self, username, user_role):
     span = trace.get_current_span()
     add_string_data_to_span(
         span, f"Initiating user verification email for {username}", "celery.task"
@@ -24,7 +24,7 @@ def send_user_registration_verification_email(self, username):
     token = get_tokens_for_user(user, "email_verification")["access"]
     link = f"{os.environ.get('BASE_URL')}/api/users/v1/verify/{user.username}/{token}"
     email_body = EmailGenerator().generate_user_verification_email(
-        user.first_name, link, user_role=user.role.lower()
+        user.first_name, link, user_role=user_role
     )
 
     email_client = Config.objects.filter(name="email_client").first()
