@@ -315,7 +315,7 @@ class UserLogin(GenericAPIView):
                     credentials_match = user.verify_app_credentials(request.data)
 
                 if credentials_match:
-                    response = get_tokens_for_user(user)
+                    response = get_tokens_for_user(user, "token_login")
                     return Response(
                         response,
                         status=200,
