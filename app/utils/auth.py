@@ -49,6 +49,10 @@ def verify_user_token(token: str, user: User | None):
 
     logger.info(f"Verifying user token for {decoded_data['id']}")
 
+    if decoded_data.get("exp") < int(datetime.datetime.now().timestamp()):
+        logger.info(f"FAiled to verify user token for {decoded_data['id']}")
+        return {"verified": False, "error": "Token has expired"}
+
     if "token_login" in decoded_data.get("scope"):
         user = User.objects.get(id=decoded_data["id"])
         # Allow verification of credential reset tokens
