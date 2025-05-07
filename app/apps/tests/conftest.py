@@ -1,5 +1,6 @@
 import pytest
 import factory
+from apps.users.models import User
 from apps.bills.models import BillStatus
 from apps.representatives.models import (
     GenderChoices,
@@ -12,12 +13,17 @@ from tests import factories
 from factory import fuzzy
 from rest_framework.test import APIClient
 from pytest_factoryboy import register
+from django.contrib.contenttypes.models import ContentType
 
 register(factories.UserFactory)
 register(factories.BillFactory)
 register(factories.ConsensusVoteFactory)
 register(factories.IndividualVoteFactory)
 register(factories.RepresentativeFactory)
+register(factories.GroupFactory)
+register(factories.PermissionFactory)
+register(factories.ConfigFactory)
+register(factories.FAQFactory)
 
 pytestmark = pytest.mark.django_db
 
@@ -167,4 +173,22 @@ def consensus_vote_fixt():
         vote_type=VoteTypeChoices.CONCENSUS,
         vote_summary={"YES": 100, "NO": 20, "ABSENT": 30},
         house=fuzzy.FuzzyChoice(HouseChoices.choices),
+    )
+
+
+# GROUPS
+@pytest.fixture
+def client_app_group_fixt(client_app_perm_fix):
+    return factories.GroupFactory.create(
+        name="client_app", permisions=client_app_perm_fix
+    )
+
+
+# PERMISSIONS
+@pytest.fixture
+def client_app_perm_fix():
+    return factories.PermissionFactory.create(
+        codename="permission_name",
+        name="read_users",
+        content_type=ContentType.objects.get_for_model(User),
     )

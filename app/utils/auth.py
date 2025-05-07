@@ -39,8 +39,7 @@ def get_tokens_for_user(user: User, scope: str = ""):
     return {"access": str(token), "exp": exp_epoch}
 
 
-def verify_user_token(token: str, user: User):
-    logger.info(f"Verifying user token for {user.id}")
+def verify_user_token(token: str, user: User | None):
     try:
         decoded_data = jwt.decode(token, HASH_SECRET_STR, algorithms=[JWT_ALGORITHM])
     except Exception as e:
@@ -48,21 +47,26 @@ def verify_user_token(token: str, user: User):
         logger.error(f"Failed to verify user token for {user.id}")
         return {"verified": False, "error": e.__str__()}
 
-    if decoded_data.get("username") != user.username:
-        logger.error(f"Failed to verify user token for {user.id}")
-        return {"verified": False, "error": "Invalid user token"}
+    logger.info(f"Verifying user token for {decoded_data['id']}")
 
-    if not user.is_active and "email_verification" in decoded_data.get("scope"):
-        # Allow verification of email tokens
-        logger.info(f"Verified user token for {user.id}")
-        return {"verified": True, "scope": "email_verification"}
-
-    if "user_credential_reset" in decoded_data.get("scope"):
+    if "token_login" in decoded_data.get("scope"):
+        user = User.objects.get(id=decoded_data["id"])
         # Allow verification of credential reset tokens
-        logger.info(f"Verified user token for {user.id}")
-        return {"verified": True, "scope": "user_credential_reset"}
+        logger.info(f"Verified user token for {decoded_data['id']}")
+        return {"verified": True, "scope": "user_credential_reset", "user": user}
 
-    logger.error(f"Failed to verify user token for {user.id}")
+    if decoded_data.get("username") == user.username:
+        if not user.is_active and "email_verification" in decoded_data.get("scope"):
+            # Allow verification of email tokens
+            logger.info(f"Verified user token for {decoded_data['id']}")
+            return {"verified": True, "scope": "email_verification"}
+
+        if "user_credential_reset" in decoded_data.get("scope"):
+            # Allow verification of credential reset tokens
+            logger.info(f"Verified user token for {decoded_data['id']}")
+            return {"verified": True, "scope": "user_credential_reset"}
+
+    logger.error(f"Failed to verify user token for {decoded_data['id']}")
     return {"verified": False, "error": "Unverified account/email/user"}
 
 
@@ -130,13 +134,7 @@ def has_expected_permissions(permission_list: List[str]):
 
 class CustomTokenAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
-        username = request.META.get("HTTP_X_AUTHENTICATED_USERNAME")
-        if not username:
-            raise exceptions.AuthenticationFailed(
-                "Header X-AUTHENTICATED-USERNAME expected user <str> found <None>"
-            )
         try:
-            user = User.objects.get(username=username)
             token = request.headers.get("Authorization")
             if not token:
                 raise exceptions.AuthenticationFailed(
@@ -144,9 +142,9 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 )
 
             token = token.split(" ")[1]
-            verified = verify_user_token(token, user)
+            verified = verify_user_token(token, None)
             if verified["verified"]:
-                return (user, None)
+                return (verified["user"], None)
             else:
                 raise exceptions.AuthenticationFailed(
                     f'Could not authenticate user. {verified["error"]}'
