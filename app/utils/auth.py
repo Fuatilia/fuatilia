@@ -44,14 +44,10 @@ def verify_user_token(token: str, user: User | None):
         decoded_data = jwt.decode(token, HASH_SECRET_STR, algorithms=[JWT_ALGORITHM])
     except Exception as e:
         logger.exception(e)
-        logger.error(f"Failed to verify user token for {user.id}")
+        logger.error(f"Failed to verify user token :: {token}")
         return {"verified": False, "error": e.__str__()}
 
     logger.info(f"Verifying user token for {decoded_data['id']}")
-
-    if decoded_data.get("exp") < int(datetime.datetime.now().timestamp()):
-        logger.info(f"FAiled to verify user token for {decoded_data['id']}")
-        return {"verified": False, "error": "Token has expired"}
 
     if "token_login" in decoded_data.get("scope"):
         user = User.objects.get(id=decoded_data["id"])
