@@ -1,7 +1,7 @@
 import pytest
 from tests.factories import ConsensusVoteFactory, IndividualVoteFactory
 
-pytestmark = pytest.mark.django_db(databases=["default"])
+pytestmark = pytest.mark.django_db
 
 
 def test_individual_vote_factory(individual_vote_factory):

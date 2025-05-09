@@ -2,7 +2,7 @@ import pytest
 from apps.users.models import User
 from tests.factories import UserFactory
 
-pytestmark = pytest.mark.django_db(databases=["default"])
+pytestmark = pytest.mark.django_db
 
 
 def test_user_factory(user_factory):

@@ -1,7 +1,7 @@
 import pytest
 from tests.factories import BillFactory
 
-pytestmark = pytest.mark.django_db(databases=["default"])
+pytestmark = pytest.mark.django_db
 
 
 def test_bill_factory(bill_factory):
