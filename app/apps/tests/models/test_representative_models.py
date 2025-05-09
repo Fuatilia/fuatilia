@@ -2,7 +2,7 @@ import pytest
 from app.utils.enum_utils import HouseChoices, PositionChoices, PositionClassChoices
 from tests.factories import RepresentativeFactory
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=["default"])
 
 
 def test_representative_factory(representative_factory):

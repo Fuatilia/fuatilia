@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=["default"])
 
 
 @pytest.fixture

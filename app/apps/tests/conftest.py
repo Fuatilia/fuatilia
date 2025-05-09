@@ -24,7 +24,7 @@ register(factories.PermissionFactory)
 register(factories.ConfigFactory)
 register(factories.FAQFactory)
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=["default"])
 
 
 @pytest.fixture
