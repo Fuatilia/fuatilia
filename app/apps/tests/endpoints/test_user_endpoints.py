@@ -1,5 +1,4 @@
 import pytest
-import factory
 from rest_framework import status
 
 pytestmark = pytest.mark.django_db
@@ -7,7 +6,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def create_app_user_fixt(
-    super_user_fixt, api_client_fixt, superuser_token_api_client_fixt
+    api_client_fixt, superuser_token_api_client_fixt, client_app_group_fixt
 ):
     return api_client_fixt.post(
         "/api/users/v1/create/app",
@@ -22,7 +21,6 @@ def create_app_user_fixt(
         },
         headers={
             "Authorization": f"Bearer {superuser_token_api_client_fixt}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
         },
     )
 
@@ -37,13 +35,13 @@ def test_superuser_can_log_in(super_user_fixt, api_client_fixt):
 
 
 def test_superuser_can_create_admin_user(
-    super_user_fixt, api_client_fixt, superuser_token_api_client_fixt
+    api_client_fixt, superuser_token_api_client_fixt, fuatilia_verifier_group_fixt
 ):
     response = api_client_fixt.post(
         "/api/users/v1/create/user",
         {
-            "first_name": factory.Faker("name"),
-            "last_name": factory.Faker("name"),
+            "first_name": "AdminFirstName",
+            "last_name": "AdminLastName",
             "username": "test_adminuser",
             "email": "test_adminuser@fuatilia.com",
             "password": "test_password",
@@ -53,14 +51,13 @@ def test_superuser_can_create_admin_user(
         },
         headers={
             "Authorization": f"Bearer {superuser_token_api_client_fixt}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
         },
     )
 
     assert response.status_code == status.HTTP_201_CREATED
 
 
-def test_admin_user_can_log_in(admin_user_fixt, api_client_fixt):
+def test_admin_user_can_log_in(admin_user_fixt, api_client_fixt, client_app_group_fixt):
     response = api_client_fixt.post(
         "/api/users/v1/login/user",
         {"username": admin_user_fixt.username, "password": "test_password"},

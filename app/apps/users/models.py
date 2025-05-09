@@ -18,7 +18,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=40, null=True)
     client_id = models.CharField(max_length=40, null=True)
     client_secret = models.TextField(null=True)
-    phone_number = models.CharField(max_length=40, null=True)
+    phone_number = models.CharField(max_length=20, null=True)
     username = models.CharField(
         max_length=100, unique=True
     )  # Allow users to define their usernames

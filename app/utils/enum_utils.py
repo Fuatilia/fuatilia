@@ -28,7 +28,25 @@ class HouseChoices(models.TextChoices):
     ALL = "ALL"  # If it's the same bill in all houses
 
 
-class VoteTypeChoicesChoices(models.TextChoices):
+class VoteTypeChoices(models.TextChoices):
     CONFIDENTIAL = "CONFIDENTIAL"
     CONCENSUS = "CONCENSUS"
     INDIVIDUAL = "INDIVIDUAL"
+
+
+class PositionClassChoices(models.TextChoices):
+    ELECTED = "ELECTED"
+    NOMINATED = "NOMINATED"
+
+
+class PositionChoices(models.TextChoices):
+    MP = "MP"
+    SENATOR = "SENATOR"
+    WOMEN_REP = "WOMEN_REP"
+    MCA = "MCA"
+
+
+class GenderChoices(models.TextChoices):
+    FEMALE = "FEMALE"
+    MALE = "MALE"
+    OTHER = "OTHER"

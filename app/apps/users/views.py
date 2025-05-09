@@ -47,6 +47,12 @@ class CreateUser(CreateAPIView):
                 f"Initiating user creation with username {request.data['username']}"
             )
 
+            logger.info("=====================================")
+            logger.info("=====================================")
+            logger.info(request.data)
+            logger.info("=====================================")
+            logger.info("=====================================")
+
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save()
