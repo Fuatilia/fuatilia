@@ -103,6 +103,9 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD"),
         "HOST": os.environ.get("DB_HOST"),
         "PORT": os.environ.get("DB_PORT"),
+        "TEST": {
+            "NAME": os.getenv("TEST_DB_NAME", None),
+        },
     },
     "dev_sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
