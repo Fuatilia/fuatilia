@@ -13,15 +13,8 @@ jobs:
     env:
         ENVIRONMENT: dev
         SECRET_KEY: secret_key
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: my_test_db
-        ports:
-          - 5432:5432
+        TEST_DB_NAME: pytest_db
+
 
     strategy:
       matrix:

@@ -104,7 +104,7 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "PORT": os.environ.get("DB_PORT"),
         "TEST": {
-            "NAME": os.getenv("TEST_DB_NAME", None),
+            "NAME": os.getenv("TEST_DB_NAME", "pytest_db"),
         },
     },
     "dev_sqlite": {
