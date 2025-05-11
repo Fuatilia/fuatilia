@@ -104,7 +104,7 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "PORT": os.environ.get("DB_PORT", "127.0.0.1"),
         "TEST": {
-            "NAME": "test_pytes_db",
+            "NAME": "test_pytest_db",
         },
     },
     "dev_sqlite": {
