@@ -13,18 +13,18 @@ jobs:
     env:
         ENVIRONMENT: dev
         SECRET_KEY: secret_key
-    #     TEST_DB_NAME: test_pytest_db
-    # services:
-    #   postgres:
-    #     image: postgres:17
-    #     env:
-    #       TEST_DB_NAME: test_pytest_db
-    #       POSTGRES_USER: postgres
-    #       POSTGRES_PASSWORD: postgres
-    #       POSTGRES_DB: test_pytest_db
-    #       DB_HOST: localhost
-    #     ports:
-    #       - 5432:5432
+        TEST_DB_NAME: test_pytest_db
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          TEST_DB_NAME: test_pytest_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_pytest_db
+          DB_HOST: localhost
+        ports:
+          - 5432:5432
 
     strategy:
       matrix:
