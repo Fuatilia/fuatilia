@@ -58,7 +58,7 @@ psycopg2-binary==2.9.10
 pycparser==2.22
 PyJWT==2.9.0
 pytest==8.3.2
-pytest-django==4.6.0
+pytest-django==4.9.0
 pytest-factoryboy==2.7.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
