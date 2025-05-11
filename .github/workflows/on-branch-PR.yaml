@@ -13,11 +13,10 @@ jobs:
     env:
         ENVIRONMENT: dev
         SECRET_KEY: secret_key
-
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +37,7 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest pytest-cov
-        #  pytest --log-disable=app_logger --junitxml=junit/test-results.xml
+        #  pytest app --log-disable=app_logger --junitxml=junit/test-results.xml
         # --doctest-modules --cov=com --cov-report=xml --cov-report=html
         env:
           DJANGO_SETTINGS_MODULE: ${{ vars.DJANGO_SETTINGS_MODULE }}

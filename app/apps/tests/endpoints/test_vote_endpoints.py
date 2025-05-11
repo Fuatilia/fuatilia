@@ -8,7 +8,6 @@ def create_individual_vote(
     representative_fixt,
     bill_fixt,
     api_client_fixt,
-    super_user_fixt,
     superuser_token_api_client_fixt,
 ):
     token = superuser_token_api_client_fixt
@@ -21,10 +20,7 @@ def create_individual_vote(
             "vote_type": "INDIVIDUAL",
             "house": "NATIONAL",
         },
-        headers={
-            "Authorization": f"Bearer {token}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
-        },
+        headers={"Authorization": f"Bearer {token}"},
     )
 
 
@@ -34,9 +30,7 @@ def test_create_individual_vote(create_individual_vote):
 
 # Handles both consensus and confidential types ("Group" votes)
 @pytest.fixture
-def create_consensus_vote(
-    bill_fixt, api_client_fixt, super_user_fixt, superuser_token_api_client_fixt
-):
+def create_consensus_vote(bill_fixt, api_client_fixt, superuser_token_api_client_fixt):
     token = superuser_token_api_client_fixt
     return api_client_fixt.post(
         "/api/votes/v1/create",
@@ -47,10 +41,7 @@ def create_consensus_vote(
             "house": "NATIONAL",
         },
         format="json",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
-        },
+        headers={"Authorization": f"Bearer {token}"},
     )
 
 
@@ -64,9 +55,6 @@ def test_vote_filter(api_client_fixt, create_individual_vote):
         "/api/votes/v1/filter?items_per_page=10&page=1",
         headers={
             "Authorization": create_individual_vote.request.get("HTTP_AUTHORIZATION"),
-            "X-AUTHENTICATED-USERNAME": create_individual_vote.request.get(
-                "HTTP_X_AUTHENTICATED_USERNAME"
-            ),
         },
     )
 

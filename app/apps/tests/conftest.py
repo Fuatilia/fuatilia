@@ -10,7 +10,6 @@ from apps.representatives.models import (
 from apps.votes.models import VoteTypeChoices
 from utils.enum_utils import HouseChoices
 from tests import factories
-from factory import fuzzy
 from rest_framework.test import APIClient
 from pytest_factoryboy import register
 from django.contrib.contenttypes.models import ContentType
@@ -95,7 +94,9 @@ def adminuser_token_api_client_fixt(admin_user_fixt):
 
 
 @pytest.fixture
-def app_user_fixt(super_user_fixt, api_client_fixt, superuser_token_api_client_fixt):
+def app_user_fixt(
+    client_app_group_fixt, api_client_fixt, superuser_token_api_client_fixt
+):
     response = api_client_fixt.post(
         "/api/users/v1/create/app",
         data={
@@ -104,11 +105,10 @@ def app_user_fixt(super_user_fixt, api_client_fixt, superuser_token_api_client_f
             "password": "test_password",
             "phone_number": "254111111111",
             "parent_organization": "fuatilia",
-            "is_active": True,
+            "user_type": "APP",
         },
         headers={
             "Authorization": f"Bearer {superuser_token_api_client_fixt}",
-            "X-AUTHENTICATED-USERNAME": super_user_fixt.username,
         },
     )
 
@@ -134,11 +134,11 @@ def auth_appuser_api_client_fixt(app_user_fixt):
 def representative_fixt():
     return factories.RepresentativeFactory.create(
         full_name=factory.Faker("name"),
-        position=fuzzy.FuzzyChoice(PositionChoices.choices),
-        position_class=fuzzy.FuzzyChoice(PositionClassChoices.choices),
-        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+        position=PositionChoices.MP,
+        position_class=PositionClassChoices.ELECTED,
+        house=HouseChoices.NATIONAL,
         area_represented=factory.Faker("city"),
-        gender=fuzzy.FuzzyChoice(GenderChoices.choices),
+        gender=GenderChoices.MALE,
     )
 
 
@@ -147,9 +147,9 @@ def representative_fixt():
 def bill_fixt():
     return factories.BillFactory.create(
         title=factory.Faker("sentence", nb_words=4),
-        status=fuzzy.FuzzyChoice(BillStatus.choices),
-        sponsored_by=factory.SubFactory(factories.RepresentativeFactory),
-        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+        status=BillStatus.IN_PROGRESS,
+        sponsored_by=factories.RepresentativeFactory.create().__dict__["id"],
+        house=HouseChoices.NATIONAL,
     )
 
 
@@ -157,38 +157,63 @@ def bill_fixt():
 @pytest.fixture
 def individual_vote_fixt():
     return factories.IndividualVoteFactory.create(
-        bill_id=factory.SubFactory(factories.BillFactory),
-        representative_id=factory.SubFactory(factories.RepresentativeFactory),
+        bill_id=factories.BillFactory.create().__dict__.get("id"),
+        representative_id=factories.RepresentativeFactory.create().__dict__.get("id"),
         vote_type=VoteTypeChoices.INDIVIDUAL,
-        house=fuzzy.FuzzyChoice(HouseChoices.choices),
-        vote=fuzzy.FuzzyChoice(["YES", "NO"]),
+        house=HouseChoices.NATIONAL,
+        vote="NO",
     )
 
 
 @pytest.fixture
 def consensus_vote_fixt():
     return factories.ConsensusVoteFactory.create(
-        bill_id=factory.SubFactory(factories.BillFactory),
-        representative_id=factory.SubFactory(factories.RepresentativeFactory),
+        bill_id=factories.BillFactory.create().__dict__.get("id"),
+        representative_id=factories.RepresentativeFactory.create().__dict__.get("id"),
         vote_type=VoteTypeChoices.CONCENSUS,
         vote_summary={"YES": 100, "NO": 20, "ABSENT": 30},
-        house=fuzzy.FuzzyChoice(HouseChoices.choices),
+        house=HouseChoices.SENATE,
     )
 
 
 # GROUPS
 @pytest.fixture
-def client_app_group_fixt(client_app_perm_fix):
-    return factories.GroupFactory.create(
-        name="client_app", permisions=client_app_perm_fix
+def client_app_group_fixt(superuser_token_api_client_fixt, client_app_perm_fix):
+    client = APIClient().post(
+        "/api/roles/v1/create",
+        data={
+            "role_name": "client_app",
+            "permissions": ["view_representatives"],
+            "action": "add",
+        },
+        headers={
+            "Authorization": f"Bearer {superuser_token_api_client_fixt}",
+        },
     )
+    return client
+
+
+@pytest.fixture
+def fuatilia_verifier_group_fixt(superuser_token_api_client_fixt, client_app_perm_fix):
+    client = APIClient().post(
+        "/api/roles/v1/create",
+        data={
+            "role_name": "fuatilia_verifier",
+            "permissions": ["view_representatives"],
+            "action": "add",
+        },
+        headers={
+            "Authorization": f"Bearer {superuser_token_api_client_fixt}",
+        },
+    )
+    return client
 
 
 # PERMISSIONS
 @pytest.fixture
 def client_app_perm_fix():
     return factories.PermissionFactory.create(
-        codename="permission_name",
-        name="read_users",
+        codename="view_representatives",
+        name="view_representatives",
         content_type=ContentType.objects.get_for_model(User),
     )

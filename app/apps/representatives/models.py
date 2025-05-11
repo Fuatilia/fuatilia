@@ -1,24 +1,7 @@
 import uuid
 from django.db import models
 from utils.enum_utils import HouseChoices
-
-
-class PositionClassChoices(models.TextChoices):
-    ELECTED = "ELECTED"
-    NOMINATED = "NOMINATED"
-
-
-class PositionChoices(models.TextChoices):
-    MP = "MP"
-    SENATOR = "SENATOR"
-    WOMEN_REP = "WOMEN_REP"
-    MCA = "MCA"
-
-
-class GenderChoices(models.TextChoices):
-    FEMALE = "FEMALE"
-    MALE = "MALE"
-    OTHER = "OTHER"
+from utils.enum_utils import PositionChoices, PositionClassChoices, GenderChoices
 
 
 # Actual representative Model
