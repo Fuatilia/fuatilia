@@ -11,3 +11,16 @@ repos:
     - id: ruff
       args: [ --fix ]
     - id: ruff-format
+
+# assuming
+#   - pytest is in your venv (called .venv)
+#   - your tests are in a folder called tests
+- repo: local
+  hooks:
+  - id: pytest
+    name: pytest
+    entry: ./venv/bin/pytest app/apps/tests
+    language: system
+    types: [python]
+    pass_filenames: false
+    always_run: true
