@@ -35,8 +35,6 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           steps:
-      - name: Run migrations
-        run: python app/manage.py migrate
       - name: Run tests
         run: |
           pip install pytest pytest-cov
