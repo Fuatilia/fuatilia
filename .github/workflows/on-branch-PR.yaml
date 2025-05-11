@@ -52,6 +52,8 @@ jobs:
           echo "DB_PASSWORD=password" >> $GITHUB_ENV
           echo "DB_HOST=localhost" >> $GITHUB_ENV
           echo "DB_PORT=5432" >> $GITHUB_ENV
+      - name: Run migrations
+        run: python app/manage.py migrate
       - name: Run tests
         run: |
           pip install pytest pytest-cov
