@@ -14,17 +14,6 @@ jobs:
         ENVIRONMENT: dev
         SECRET_KEY: secret_key
         TEST_DB_NAME: pytest_db
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          TEST_DB_NAME: pytest_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pytest_db
-          DB_HOST: 127.0.0.1
-        ports:
-          - 5432:5432
 
     strategy:
       matrix:
