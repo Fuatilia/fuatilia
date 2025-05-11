@@ -103,9 +103,6 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD"),
         "HOST": os.environ.get("DB_HOST"),
         "PORT": os.environ.get("DB_PORT", "127.0.0.1"),
-        "TEST": {
-            "NAME": os.getenv("TEST_DB_NAME", "pytest_db"),
-        },
     },
     "dev_sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
