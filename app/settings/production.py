@@ -102,7 +102,7 @@ DATABASES = {
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASSWORD"),
         "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT", "127.0.0.1"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
         "TEST": {
             "NAME": "test_pytest_db",
         },
