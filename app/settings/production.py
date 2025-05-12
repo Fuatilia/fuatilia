@@ -56,12 +56,15 @@ INSTALLED_APPS = [
     # docs
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    # cors
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -69,6 +72,11 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "utils.custom_middlewares.OTL.RequestInjectorMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*",
+    r"^http://.*",
 ]
 
 ROOT_URLCONF = "urls"
