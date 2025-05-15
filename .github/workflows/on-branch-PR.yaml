@@ -10,17 +10,29 @@ jobs:
     steps:
       - name: Trigger infra repo checks
         uses: actions/github-script@v6
+        env:
+          INFRA_REPO: "ci-cd"  # Confirm this matches exactly
+          INFRA_OWNER: "Fuatilia"  # Case-sensitive
         with:
+          github-token: ${{ secrets.GH_APP_INSTALLATION_TOKEN }}  # Critical change
           script: |
-            await github.rest.repos.createDispatchEvent({
-              owner: 'Fuatilia',
-              repo: 'ci-cd',
-              event_type: 'pr-check-trigger',
-              client_payload: {
-                ref: context.payload.pull_request.head.ref
-              }
-            })
-
+            try {
+              await github.rest.repos.createDispatchEvent({
+                owner: process.env.INFRA_OWNER,
+                repo: process.env.INFRA_REPO,
+                event_type: 'pr-check-trigger',
+                client_payload: {
+                  ref: context.payload.pull_request.head.ref
+                }
+              })
+              console.log('Dispatch event successfully triggered')
+            } catch (error) {
+              console.error('Dispatch failed:', error)
+              // Add debugging info
+              console.log('Target repo:', process.env.INFRA_OWNER + '/' + process.env.INFRA_REPO)
+              console.log('PR ref:', context.payload.pull_request.head.ref)
+              core.setFailed('Failed to trigger checks')
+            }
 # name: branch-push
 # run-name: Run initated by ${{ github.actor }}
 # on:
