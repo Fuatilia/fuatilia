@@ -34,3 +34,7 @@ Add endpoint to fetch images/files from URL/sites
 Move all email strings to configs
 
 Add password to apps (Both on creation and reset)
+
+Add user signup for users that want apps
+
+Add bill update endpoint

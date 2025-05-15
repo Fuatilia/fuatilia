@@ -74,10 +74,7 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*",
-    r"^http://.*",
-]
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = "urls"
 
