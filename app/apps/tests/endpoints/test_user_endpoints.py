@@ -54,6 +54,11 @@ def test_superuser_can_create_admin_user(
         },
     )
 
+    print("Reponse =================== ???????")
+    print("Reponse =================== ???????", response)
+    print("Reponse =================== ???????", response.get("data"))
+    print("Reponse =================== ???????")
+
     assert response.status_code == status.HTTP_201_CREATED
 
 
