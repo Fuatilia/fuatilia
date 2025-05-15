@@ -11,7 +11,7 @@ jobs:
   PR-checker:
     runs-on: ubuntu-latest
     env:
-        ENVIRONMENT: dev
+        ENVIRONMENT: test
         SECRET_KEY: secret_key
     strategy:
       matrix:
