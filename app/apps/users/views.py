@@ -1,5 +1,4 @@
 import logging
-import os
 from django.http import HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
@@ -57,13 +56,9 @@ class CreateUser(CreateAPIView):
                     if request.data.get("role")
                     else "fuatilia_verifier"
                 )
-
-                if os.environ.get("ENVIRONMENT", "test") != "test":
-                    # Don't send emails in test mode
-                    send_user_registration_verification_email.delay(
-                        resp.username, role_name
-                    )
-
+                send_user_registration_verification_email.delay(
+                    resp.username, role_name
+                )
                 user = User.objects.get(id=resp.id)
 
                 role_assignment_signal.send(
@@ -114,11 +109,7 @@ class CreateApp(CreateAPIView):
                 resp = serializer.save()
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
-
-                if os.environ.get("ENVIRONMENT", "test") != "test":
-                    # Don't send emails in test mode
-                    send_app_registration_verification_email.delay(app_data["username"])
-
+                send_app_registration_verification_email.delay(app_data["username"])
                 user = User.objects.get(id=app_data["id"])
                 role_assignment_signal.send(
                     sender=self.__class__,
