@@ -38,6 +38,7 @@ class UserCreationSerializer(serializers.Serializer):
     )
 
     def create(self, validated_data):
+        del validated_data["role"]
         user = User.objects.create(**validated_data)
         return user
 
