@@ -1,5 +1,4 @@
 import logging
-import os
 from django.http import HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
@@ -51,12 +50,11 @@ class CreateUser(CreateAPIView):
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save()
-                if os.environ.get("ENVIRONMENT", "") != "test":
-                    role_name = (
-                        request.data.get("role")
-                        if request.data.get("role")
-                        else "fuatilia_verifier"
-                    )
+                role_name = (
+                    request.data.get("role")
+                    if request.data.get("role")
+                    else "fuatilia_verifier"
+                )
                 send_user_registration_verification_email.delay(
                     resp.username, role_name
                 )
@@ -112,12 +110,11 @@ class CreateApp(CreateAPIView):
                 logger.info(f"Successfully created app with details {app_data}")
                 send_app_registration_verification_email.delay(app_data["username"])
                 user = User.objects.get(id=app_data["id"])
-                if os.environ.get("ENVIRONMENT", "") != "test":
-                    role_assignment_signal.send(
-                        sender=self.__class__,
-                        user=user,
-                        role_name=request.data.get("role") or "client_app",
-                    )
+                role_assignment_signal.send(
+                    sender=self.__class__,
+                    user=user,
+                    role_name=request.data.get("role") or "client_app",
+                )
                 return Response(
                     {
                         "message": "Kindly copy your client ID and Secret and save them securely",
