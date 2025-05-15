@@ -106,8 +106,6 @@ class CreateApp(CreateAPIView):
             print("::::::::::::::::1111::::::::::::::")
             print(":::::::::::::::::11111:::::::::::::::::")
             app_credentials = create_client_id_and_secret(request.data["username"])
-            print("::::::::::::::::2222::::::::::::::")
-            print(":::::::::::::::::2222:::::::::::::::::")
             data["user_type"] = UserType.APP
             #  client_app will be the default role for apps
             data["client_id"] = app_credentials["client_id"]

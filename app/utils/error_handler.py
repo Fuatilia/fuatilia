@@ -12,7 +12,7 @@ def process_error_response(
 ) -> Response:
     logger.exception(e)
 
-    print("::::::::::::::::5555::::::::::::::")
+    print("::::::::::::::::5555::::::::::::::   ", e)
     print(":::::::::::::::::5555:::::::::::::::::")
 
     if e.__class__ == IntegrityError:

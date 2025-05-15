@@ -76,8 +76,14 @@ def create_client_id_and_secret(username: str):
     random.seed(client_id_seed)
     c_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
     c_secret_str = "".join(random.choices(string.ascii_letters + string.digits, k=30))
+    print("::::::::::::::::2222:::::::::::::: a")
+    print(":::::::::::::::::2222::::::::::::::::: a")
     ph = Argon2PasswordHasher()
+    print("::::::::::::::::2222:::::::::::::: b")
+    print(":::::::::::::::::2222::::::::::::::::: b")
     CLIENT_ID_SECRET_SALT = os.environ.get("CLIENT_ID_SECRET_SALT")
+    print("::::::::::::::::2222::::::::::::::")
+    print(":::::::::::::::::2222:::::::::::::::::")
 
     c_secret = ph.encode(c_secret_str, CLIENT_ID_SECRET_SALT)
 
