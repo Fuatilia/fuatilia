@@ -80,7 +80,11 @@ class AppCreationSerializer(serializers.Serializer):
     client_secret = serializers.CharField()
 
     def create(self, validated_data):
+        print("::::::::::::::::kkk22::::::::::::::")
+        print(":::::::::::::::::kkk22:::::::::::::::::", validated_data)
         user = User.objects.create(**validated_data)
+        print("::::::::::::::::2222::::::::::::::")
+        print(":::::::::::::::::2222:::::::::::::::::")
         return user
 
 
