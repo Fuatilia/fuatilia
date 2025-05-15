@@ -79,8 +79,8 @@ def create_client_id_and_secret(username: str):
     ph = Argon2PasswordHasher()
     CLIENT_ID_SECRET_SALT = os.environ.get("CLIENT_ID_SECRET_SALT")
 
-    print("::::::::::::::::3333:::::::::::::: aaa")
-    print(":::::::::::::::::3333::::::::::::::::: aaa", username)
+    print("::::::::::::::::3333:::::::::::::: aaa ", c_secret_str)
+    print(":::::::::::::::::3333::::::::::::::::: aaa", CLIENT_ID_SECRET_SALT)
     c_secret = ph.encode(c_secret_str, CLIENT_ID_SECRET_SALT)
 
     print("::::::::::::::::3333:::::::::::::: bbb ", c_id)
