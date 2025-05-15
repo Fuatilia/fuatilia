@@ -106,10 +106,14 @@ class CreateApp(CreateAPIView):
             print("::::::::::::::::1111::::::::::::::")
             print(":::::::::::::::::11111:::::::::::::::::")
             app_credentials = create_client_id_and_secret(request.data["username"])
+            print("::::::::::::::::3333:::::::::::::: bbb")
+            print(":::::::::::::::::3333::::::::::::::::: bbb")
             data["user_type"] = UserType.APP
             #  client_app will be the default role for apps
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
+            print("::::::::::::::::3333:::::::::::::: eee")
+            print(":::::::::::::::::3333::::::::::::::::: eee")
 
             serializer = serializers.AppCreationSerializer(data=data)
 

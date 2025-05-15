@@ -79,7 +79,12 @@ def create_client_id_and_secret(username: str):
     ph = Argon2PasswordHasher()
     CLIENT_ID_SECRET_SALT = os.environ.get("CLIENT_ID_SECRET_SALT")
 
+    print("::::::::::::::::3333:::::::::::::: aaa")
+    print(":::::::::::::::::3333::::::::::::::::: aaa", username)
     c_secret = ph.encode(c_secret_str, CLIENT_ID_SECRET_SALT)
+
+    print("::::::::::::::::3333:::::::::::::: bbb ", c_id)
+    print(":::::::::::::::::3333::::::::::::::::: bbb ", c_secret_str)
 
     logger.info(f"Finalized credential creation for app under username {username}")
     return {
