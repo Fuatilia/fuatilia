@@ -13,9 +13,6 @@ jobs:
     env:
         ENVIRONMENT: test
         SECRET_KEY: secret_key
-        # Avoid kombu connection issue for asyn tasks.
-        # To avoid running celery in github actions
-        CELERY_ALWAYS_EAGER: True
     strategy:
       matrix:
         os: [ubuntu-latest]
