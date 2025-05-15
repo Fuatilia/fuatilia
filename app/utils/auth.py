@@ -79,7 +79,7 @@ def create_client_id_and_secret(username: str):
     print("::::::::::::::::2222:::::::::::::: a")
     print(":::::::::::::::::2222::::::::::::::::: a")
     ph = Argon2PasswordHasher()
-    print("::::::::::::::::2222:::::::::::::: b")
+    print("::::::::::::::::2222:::::::::::::: b", ph)
     print(":::::::::::::::::2222::::::::::::::::: b")
     CLIENT_ID_SECRET_SALT = os.environ.get("CLIENT_ID_SECRET_SALT")
     print("::::::::::::::::2222::::::::::::::")
