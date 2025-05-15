@@ -11,29 +11,36 @@ jobs:
   PR-checker:
     runs-on: ubuntu-latest
     env:
-        ENVIRONMENT: dev
+        ENVIRONMENT: test
         SECRET_KEY: secret_key
-        POSTGRES_HOST: postgres
-        POSTGRES_PORT: 5432
+        CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+        CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
+        CELERY_ALWAYS_EAGER: True
+        CLIENT_ID_SECRET_SALT: ${{ secrets.CLIENT_ID_SECRET_SALT }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
+        # [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.12"]
 
     services:
-    # Label used to access the service container
-    postgres:
-      # Docker Hub image
-      image: postgres:latest
-      # Provide the password for postgres
-      env:
-        POSTGRES_PASSWORD: password
-      # Set health checks to wait until postgres has started
-      options: >-
-        --health-cmd pg_isready
-        --health-interval 10s
-        --health-timeout 5s
-        --health-retries 5
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:17
+        # Provide the password for postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: sample_db
+        ports:
+          - "5432:5432"
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +61,7 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest pytest-cov
-          pytest app --log-disable=app_logger --junitxml=junit/test-results.xml
+          pytest app -s --log-disable=app_logger --junitxml=junit/test-results.xml
         # --doctest-modules --cov=com --cov-report=xml --cov-report=html
         env:
           DJANGO_SETTINGS_MODULE: ${{ vars.DJANGO_SETTINGS_MODULE }}

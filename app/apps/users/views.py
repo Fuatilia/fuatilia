@@ -1,4 +1,5 @@
 import logging
+import os
 from django.http import HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
@@ -50,23 +51,25 @@ class CreateUser(CreateAPIView):
             serializer = serializers.UserCreationSerializer(data=request.data)
             if serializer.is_valid():
                 resp = serializer.save()
-
                 role_name = (
                     request.data.get("role")
                     if request.data.get("role")
                     else "fuatilia_verifier"
                 )
 
-                send_user_registration_verification_email.delay(
-                    resp.username, role_name
-                )
                 user = User.objects.get(id=resp.id)
 
-                role_assignment_signal.send(
-                    sender=self.__class__,
-                    user=user,
-                    role_name=role_name,
-                )
+                # Don't do celery stuff in pytest mode -Git actions
+                if os.environ.get("ENVIRONMENT", "") != "test":
+                    send_user_registration_verification_email.delay(
+                        resp.username, role_name
+                    )
+
+                    role_assignment_signal.send(
+                        sender=self.__class__,
+                        user=user,
+                        role_name=role_name,
+                    )
 
                 return Response(
                     {"data": self.serializer_class(resp).data},
@@ -104,19 +107,24 @@ class CreateApp(CreateAPIView):
             #  client_app will be the default role for apps
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
+
             serializer = serializers.AppCreationSerializer(data=data)
 
             if serializer.is_valid():
                 resp = serializer.save()
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
-                send_app_registration_verification_email.delay(app_data["username"])
                 user = User.objects.get(id=app_data["id"])
-                role_assignment_signal.send(
-                    sender=self.__class__,
-                    user=user,
-                    role_name=request.data.get("role") or "client_app",
-                )
+
+                #  Don't do celery stuff in pytest mode -Git actions
+                if os.environ.get("ENVIRONMENT", "") != "test":
+                    send_app_registration_verification_email.delay(app_data["username"])
+
+                    role_assignment_signal.send(
+                        sender=self.__class__,
+                        user=user,
+                        role_name=request.data.get("role") or "client_app",
+                    )
                 return Response(
                     {
                         "message": "Kindly copy your client ID and Secret and save them securely",

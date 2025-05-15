@@ -102,7 +102,6 @@ def app_user_fixt(
         data={
             "username": "test_appuser",
             "email": "test_appuser@fuatilia.com",
-            "password": "test_password",
             "phone_number": "254111111111",
             "parent_organization": "fuatilia",
             "user_type": "APP",
