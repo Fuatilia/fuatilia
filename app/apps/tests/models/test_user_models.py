@@ -20,10 +20,6 @@ def test_admin_user(admin_user_fixt):
 
 
 def test_app_user(app_user_fixt):
-    print("Reponse =================== ???????")
-    print("Reponse =================== ???????", app_user_fixt)
-    print("Reponse =================== ???????", app_user_fixt.get("data"))
-    print("Reponse =================== ???????")
     app_data = app_user_fixt.get("data")
     assert app_data.get("username") == "test_appuser"
     assert app_data.get("client_id") is not None

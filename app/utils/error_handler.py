@@ -12,9 +12,6 @@ def process_error_response(
 ) -> Response:
     logger.exception(e)
 
-    print("::::::::::::::::5555::::::::::::::   ", e)
-    print(":::::::::::::::::5555:::::::::::::::::")
-
     if e.__class__ == IntegrityError:
         response_status = status.HTTP_409_CONFLICT
         error_str = e.__str__()

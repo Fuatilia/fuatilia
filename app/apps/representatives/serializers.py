@@ -63,7 +63,7 @@ class RepresentativeUpdateSerializer(serializers.Serializer):
         if (
             version is None
         ):  # Equating with Or on the "version" assignment results in a falsey because 0 = False
-            print(f"Resolving to version in update JSON for {representative_id}")
+            logger.info(f"Resolving to version in update JSON for {representative_id}")
             version = validated_data["pending_update_json"].get("version")
 
         rep_exists = Representative.objects.filter(id=representative_id).first()

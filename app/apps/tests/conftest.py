@@ -111,11 +111,6 @@ def app_user_fixt(
         },
     )
 
-    print("Reponse ========= Endpoints ========== ???????")
-    print("Reponse =================== ???????", response)
-    print("Reponse ========== Endpoint ========= ???????", response.get("data"))
-    print("Reponse ========ENDP =========== ???????", response.json())
-
     return response.data
 
 

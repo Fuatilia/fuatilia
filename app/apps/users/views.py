@@ -102,32 +102,19 @@ class CreateApp(CreateAPIView):
             logger.info(f"Initiating app creation with details {request.data}")
 
             data = request.data.copy()
-
-            print("::::::::::::::::1111::::::::::::::")
-            print(":::::::::::::::::11111:::::::::::::::::")
             app_credentials = create_client_id_and_secret(request.data["username"])
-            print("::::::::::::::::3333:::::::::::::: bbb")
-            print(":::::::::::::::::3333::::::::::::::::: bbb")
             data["user_type"] = UserType.APP
             #  client_app will be the default role for apps
             data["client_id"] = app_credentials["client_id"]
             data["client_secret"] = app_credentials["client_secret"]
-            print("::::::::::::::::3333:::::::::::::: eee")
-            print(":::::::::::::::::3333::::::::::::::::: eee")
 
             serializer = serializers.AppCreationSerializer(data=data)
-
-            print("::::::::::::::::3333::::::::::::::")
-            print(":::::::::::::::::3333:::::::::::::::::")
 
             if serializer.is_valid():
                 resp = serializer.save()
                 app_data = self.serializer_class(resp).data
                 logger.info(f"Successfully created app with details {app_data}")
                 user = User.objects.get(id=app_data["id"])
-
-                print("::::::::::::::::4444::::::::::::::")
-                print(":::::::::::::::::4444:::::::::::::::::")
 
                 #  Don't do celery stuff in pytest mode -Git actions
                 if os.environ.get("ENVIRONMENT", "") != "test":
