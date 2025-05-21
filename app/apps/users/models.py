@@ -55,6 +55,12 @@ class User(AbstractUser):
         self.set_password(self.password)
         super().save(*args, **kwargs)
 
+    # This avoids setting the password a fresh when calling save() on updating.
+    # And no, checking for self.password on the  save method did not work
+    # Might need reworking on password reset
+    def update(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
     def verify_app_credentials(self, data):
         logger.info(f"Verifying app credentials for {self.id}")
         if self.client_id == data["client_id"]:
