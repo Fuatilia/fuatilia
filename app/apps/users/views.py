@@ -421,14 +421,14 @@ class VerifyUser(GenericAPIView):
                 and verification_response["scope"] == "email_verification"
             ):
                 user.is_active = True
-                user.save()
+                user.update(update_fields=["is_active"])
                 return HttpResponseRedirect("https://www.fuatilia.africa/")
             if (
                 verification_response["verified"]
                 and verification_response["scope"] == "user_credential_reset"
             ):
                 user.is_active = False
-                user.save()
+                user.update(update_fields=["is_active"])
                 return HttpResponseRedirect("https://www.fuatilia.africa/")
 
         except Exception as e:
