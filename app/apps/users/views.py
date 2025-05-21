@@ -315,6 +315,13 @@ class UserLogin(GenericAPIView):
             req_serializer = self.input_serializer_class(data=request.data)
             if req_serializer.is_valid():
                 user = User.objects.get(username=request.data.get("username"))
+                if not user.is_active:
+                    return Response(
+                        data={
+                            "message": "Authentication failed. Unverified account/email/user"
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
                 if user.user_type == UserType.USER:
                     credentials_match = user.check_password(
                         request.data.get("password")
