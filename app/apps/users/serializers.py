@@ -115,3 +115,8 @@ class UserRoleUpdateSerializer(serializers.Serializer):
 class UserCredentialUpdateSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=False)
     password = serializers.CharField(required=False)
+
+
+class TokenGenerationSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    token_scope = serializers.CharField(required=True)

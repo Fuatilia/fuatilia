@@ -14,4 +14,5 @@ urlpatterns = [
         "v1/credential/update/<str:username>/<str:token>",
         views.CredentialUpdate().as_view(),
     ),
+    path("v1/token/generate", views.GenerateToken().as_view()),
 ]
