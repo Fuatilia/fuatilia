@@ -61,6 +61,16 @@ def verify_user_token(token: str, user: User | None):
             logger.info(f"Verified user token for {decoded_data['id']}")
             return {"verified": True, "scope": "email_verification"}
 
+        if user.is_active and "email_verification" in decoded_data.get("scope"):
+            # if user clicks verification link after the activation has been done
+            logger.info(
+                f"Failed to verify (repeated) user token for {decoded_data['id']}"
+            )
+            return {
+                "verified": False,
+                "error": "Verification token has expired for active user",
+            }
+
         if "user_credential_reset" in decoded_data.get("scope"):
             # Allow verification of credential reset tokens
             logger.info(f"Verified user token for {decoded_data['id']}")

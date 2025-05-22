@@ -1,6 +1,6 @@
 import logging
 import os
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from apps.users.tasks import (
     send_app_registration_verification_email,
     send_user_credential_reset_email,
@@ -416,6 +416,7 @@ class VerifyUser(GenericAPIView):
             token = kwargs.get("token")
             user = User.objects.get(username=username)
             verification_response = verify_user_token(token, user)
+
             if (
                 verification_response["verified"]
                 and verification_response["scope"] == "email_verification"
@@ -431,8 +432,12 @@ class VerifyUser(GenericAPIView):
                 user.update(update_fields=["is_active"])
                 return HttpResponseRedirect("https://www.fuatilia.africa/")
 
+            return HttpResponse(
+                content=f"Invalid token : {verification_response.get('error')}"
+            )
+
         except Exception as e:
-            return process_error_response(e)
+            return HttpResponse(content=process_error_response(e))
 
 
 class CredentialUpdate(GenericAPIView):
@@ -521,3 +526,61 @@ class CredentialUpdate(GenericAPIView):
             return Response(
                 {"error": err.__str__()}, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class GenerateToken(GenericAPIView):
+    authentication_classes = []
+    permission_classes = []
+    input_serializer_class = serializers.TokenGenerationSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(
+        tags=["Users"],
+        request={"application/json": serializers.TokenGenerationSerializer},
+    )
+    def post(self, request):
+        try:
+            req_serializer = self.input_serializer_class(data=request.data)
+            if req_serializer.is_valid():
+                user = User.objects.get(username=request.data.get("username"))
+                # Generate/Regenerate verification email
+                if (
+                    request.data.get("token_scope") == "email_verification"
+                ):  # Dont run in test mode
+                    if user.is_active:
+                        return Response(
+                            data={
+                                "message": "Authentication failed. Account already verified"
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                    else:
+                        if (
+                            os.environ.get("ENVIRONMENT", "") != "test"
+                        ):  # Dont run in test mode
+                            send_user_registration_verification_email.delay(
+                                user.username, request.data.get("token_scope")
+                            )
+
+                # Generate/Regenerate credential reset email
+                if request.data.get("token_scope") == "user_credential_reset":
+                    if os.environ.get("ENVIRONMENT", "") != "test":
+                        send_user_credential_reset_email.delay(user.username)
+
+                return Response(
+                    data={
+                        "message": f"{request.data.get("token_scope")} token is generated"
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            else:
+                return Response(
+                    data={"error": req_serializer.errors},
+                    status=status.HTTP_417_EXPECTATION_FAILED,
+                )
+
+        except Exception as e:
+            return process_error_response(e)
