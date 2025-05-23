@@ -118,3 +118,41 @@ class BillFileUploadSerializer(GenericFileUploadSerilizer):
         default="6134fc82-0faa-4bed-b7a2-edbcf541a3c9",
         help_text="Id of the bill",
     )
+
+
+class BillUpdateSerializer(serializers.Serializer):
+    title = serializers.CharField(default="Finance Bill 2024", required=False)
+    status = serializers.ChoiceField(
+        choices=BillStatus, default=BillStatus.IN_PROGRESS, required=False
+    )
+    sponsored_by = serializers.CharField(
+        required=False,
+        help_text="Id of the representative that brought the damn bill before the house",
+    )  # rep name/ID
+    supported_by = serializers.CharField(
+        required=False,
+        help_text="Id of the representative that brought the damn bill before the house",
+    )
+    house = serializers.ChoiceField(
+        choices=HouseChoices.choices, default=HouseChoices.NATIONAL, required=False
+    )
+    bill_no = serializers.CharField(
+        required=False
+    )  # e.g "10 of 2024", Tracks bills in the year
+    gazette_no = serializers.CharField(required=False)
+    date_introduced = serializers.DateField(format="DD-MM-YYYY", required=False)
+    summary = serializers.CharField(required=False)
+    summary_created_by = serializers.CharField(
+        required=False,
+        help_text='Id of user that created the summary ideally of "Expert" role',
+    )  # Id of portal user)
+    # Summary upvotes will be done after bill creation
+
+    final_date_voted = serializers.CharField(
+        required=False,
+        help_text="Third reading date",
+    )
+    topics_in_the_bill = serializers.CharField(
+        required=False, help_text="E.g agriculture, local seeds, radioactive waste"
+    )
+    metadata = serializers.DictField(required=False)

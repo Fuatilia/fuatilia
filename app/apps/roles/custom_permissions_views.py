@@ -15,7 +15,7 @@ logger = logging.getLogger("app_logger")
 
 
 class CreateCustomPermission(CreateAPIView):
-    serializer_class = serializers.FetchPermissionsSerializers
+    serializer_class = serializers.FetchPermissionsSerializer
 
     @extend_schema(
         tags=["Roles"],
@@ -49,7 +49,7 @@ class CreateCustomPermission(CreateAPIView):
 
 
 class FilterPermissions(GenericAPIView):
-    serializer_class = serializers.FetchPermissionsSerializers
+    serializer_class = serializers.FetchPermissionsSerializer
 
     @extend_schema(tags=["Roles"], parameters=[serializers.PermissionFilterSerializer])
     @has_expected_permissions(["view_permission"])
@@ -91,12 +91,12 @@ class FilterPermissions(GenericAPIView):
             return process_error_response(e)
 
 
-class GetOrDeletePermissions(GenericAPIView):
-    serializer_class = serializers.FetchPermissionsSerializers
+class GUDPermissions(GenericAPIView):
+    serializer_class = serializers.FetchPermissionsSerializer
 
     @extend_schema(
         tags=["Roles"],
-        responses={201: serializers.FetchPermissionsSerializers},
+        responses={201: serializers.FetchPermissionsSerializer},
     )
     @has_expected_permissions(["view_permission"])
     def get(self, request, **kwargs):
@@ -128,6 +128,41 @@ class GetOrDeletePermissions(GenericAPIView):
                         "message": "Permission succesfully deleted",
                     },
                     status=status.HTTP_204_NO_CONTENT,
+                )
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Permissions"],
+        request={"application/json": serializers.PermissionUpdateSerializer},
+    )
+    @has_expected_permissions(["change_permission"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            logger.info(f'Updating permission with ID {kwargs.get("id")}')
+            permission_to_update = Permission.objects.get(pk=kwargs.get("id"))
+
+            update_serializer = serializers.PermissionUpdateSerializer(
+                data=request.data, partial=True
+            )
+            if update_serializer.is_valid():
+                update_serializer.update(permission_to_update, request.data)
+                return Response(
+                    {
+                        "data": self.serializer_class(permission_to_update).data,
+                        "message": "Permission succesfully updated",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "error": update_serializer.errors,
+                    },
+                    status=status.HTTP_417_EXPECTATION_FAILED,
                 )
         except Exception as e:
             return process_error_response(e)

@@ -131,7 +131,7 @@ class FilterBills(GenericAPIView):
         )
 
 
-class GetOrDeleteBill(GenericAPIView):
+class GUDBill(GenericAPIView):
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchBillSerilizer
 
@@ -169,6 +169,40 @@ class GetOrDeleteBill(GenericAPIView):
                         "message": "Bill succesfully deleted",
                     },
                     status=status.HTTP_204_NO_CONTENT,
+                )
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Bills"], request={"application/json": serializers.BillUpdateSerializer}
+    )
+    @has_expected_permissions(["change_bill"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            logger.info(f'Updating vote with ID {kwargs.get("id")}')
+            bill_to_update = Bill.objects.get(pk=kwargs.get("id"))
+
+            update_serializer = serializers.BillUpdateSerializer(
+                data=request.data, partial=True
+            )
+            if update_serializer.is_valid():
+                update_serializer.update(bill_to_update, request.data)
+                return Response(
+                    {
+                        "data": self.serializer_class(bill_to_update).data,
+                        "message": "Bill succesfully updated",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "error": update_serializer.errors,
+                    },
+                    status=status.HTTP_417_EXPECTATION_FAILED,
                 )
         except Exception as e:
             return process_error_response(e)
