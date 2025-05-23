@@ -47,49 +47,6 @@ class CreateCustomRole(CreateAPIView):
             return process_error_response(e)
 
 
-class UpdateRolePermissions(GenericAPIView):
-    serializer_class = serializers.FetchRoleSerializers
-
-    @extend_schema(
-        tags=["Roles"], request={"application/json": serializers.RoleCreationSerializer}
-    )
-    @has_expected_permissions(["change_group"])
-    def put(self, request):
-        try:
-            creation_serializer = serializers.RoleCreationSerializer(data=request.data)
-            if creation_serializer.is_valid():
-                validated_data = creation_serializer.validated_data
-                permissions = Permission.objects.filter(
-                    codename__in=validated_data["permissions"]
-                )
-                if len(permissions) < 1:
-                    raise ValueError("Specified permission(s) not found")
-
-                group = Group.objects.get(
-                    name=validated_data["role_name"],
-                )
-                if validated_data["action"] == "add":
-                    for permission in permissions:
-                        group.permissions.add(permission)
-                else:
-                    for permission in permissions:
-                        group.permissions.remove(permission)
-
-                data = self.serializer_class(group).data
-
-                return Response({"data": data}, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {
-                        "Error": creation_serializer.errors,
-                    },
-                    status=status.HTTP_417_EXPECTATION_FAILED,
-                )
-
-        except Exception as e:
-            return process_error_response(e)
-
-
 class FilterRoles(GenericAPIView):
     serializer_class = serializers.FetchRoleSerializers
 
@@ -129,7 +86,7 @@ class FilterRoles(GenericAPIView):
             return process_error_response(e)
 
 
-class GetOrDeleteRole(GenericAPIView):
+class GUDRole(GenericAPIView):
     serializer_class = serializers.FetchRoleSerializers
 
     @extend_schema(
@@ -167,5 +124,49 @@ class GetOrDeleteRole(GenericAPIView):
                     },
                     status=status.HTTP_204_NO_CONTENT,
                 )
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Role"], request={"application/json": serializers.RoleCreationSerializer}
+    )
+    @has_expected_permissions(["change_group"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            logger.info(f'Updating role with ID {kwargs.get("id")}')
+            creation_serializer = serializers.RoleCreationSerializer(data=request.data)
+            group = Group.objects.get(pk=kwargs.get("id"))
+            if creation_serializer.is_valid():
+                validated_data = creation_serializer.validated_data
+                if validated_data["action"]:
+                    permissions = Permission.objects.filter(
+                        codename__in=validated_data["permissions"]
+                    )
+                    if len(permissions) < 1:
+                        raise ValueError("Specified permission(s) not found")
+
+                    if validated_data["action"] == "add":
+                        for permission in permissions:
+                            group.permissions.add(permission)
+                    else:
+                        for permission in permissions:
+                            group.permissions.remove(permission)
+
+                    data = self.serializer_class(group).data
+                else:
+                    validated_data.update(group, request.data)
+
+                return Response({"data": data}, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {
+                        "Error": creation_serializer.errors,
+                    },
+                    status=status.HTTP_417_EXPECTATION_FAILED,
+                )
+
         except Exception as e:
             return process_error_response(e)

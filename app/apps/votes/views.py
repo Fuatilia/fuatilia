@@ -23,6 +23,8 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from opentelemetry import trace
 
+from django.db.models import Count
+
 
 tracer = trace.get_tracer(__name__)
 logger = logging.getLogger("app_logger")
@@ -126,7 +128,7 @@ class FilterVotes(GenericAPIView):
             )
 
 
-class GetOrDeleteVote(GenericAPIView):
+class GUDVote(GenericAPIView):
     # TODO , change serializer class for Admins
     serializer_class = serializers.FullFetchVoteSerializer
 
@@ -137,6 +139,9 @@ class GetOrDeleteVote(GenericAPIView):
     @has_expected_permissions(["view_vote"])
     def get(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f"Getting vote with ID {kwargs.get('id')}")
             response_data = Vote.objects.get(pk=kwargs.get("id"))
             response = self.serializer_class(response_data).data
@@ -155,6 +160,9 @@ class GetOrDeleteVote(GenericAPIView):
     @has_expected_permissions(["delete_vote"])
     def delete(self, request, **kwargs):
         try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
             logger.info(f"Deleting vote with ID {kwargs.get('id')}")
             rep = Vote.objects.get(pk=kwargs.get("id"))
             if rep:
@@ -164,6 +172,40 @@ class GetOrDeleteVote(GenericAPIView):
                         "message": "Vote succesfully deleted",
                     },
                     status=status.HTTP_204_NO_CONTENT,
+                )
+        except Exception as e:
+            return process_error_response(e)
+
+    @extend_schema(
+        tags=["Votes"], request={"application/json": serializers.VoteUpdateSerializer}
+    )
+    @has_expected_permissions(["change_vote"])
+    def patch(self, request, **kwargs):
+        try:
+            span = trace.get_current_span()
+            add_request_data_to_span(span, self.request)
+
+            logger.info(f'Updating vote with ID {kwargs.get("id")}')
+            vote_to_update = Vote.objects.get(pk=kwargs.get("id"))
+
+            update_serializer = serializers.VoteUpdateSerializer(
+                data=request.data, partial=True
+            )
+            if update_serializer.is_valid():
+                update_serializer.update(vote_to_update, request.data)
+                return Response(
+                    {
+                        "data": self.serializer_class(vote_to_update).data,
+                        "message": "Vote succesfully updated",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "error": update_serializer.errors,
+                    },
+                    status=status.HTTP_417_EXPECTATION_FAILED,
                 )
         except Exception as e:
             return process_error_response(e)
@@ -307,3 +349,30 @@ class StreamVoteFile(GenericAPIView):
             return response
         except Exception as e:
             return process_error_response(e)
+
+
+class VoteSummaries(GenericAPIView):
+    serializer_class = serializers.FullFetchVoteSerializer
+
+    @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
+    @has_expected_permissions(["view_vote_summary"])
+    def get(self, *args, **kwargs):
+        id_type = self.request.GET.get("id_type")
+        id = self.request.GET.get("id")
+
+        if id_type == "bill":
+            # Aggregates all votes of a bill per house
+            queryset = Vote.objects.filter(bill_id=id)
+            q = queryset.values("house", "vote").annotate(bill_votes=Count("vote"))
+        elif id_type == "rep":
+            # Aggregates all votes a rep has done into a count of the vote values (yes/no/missing etc.)
+            queryset = Vote.objects.filter(representative_id=id)
+            q = queryset.values("house", "vote").annotate(bill_votes=Count("vote"))
+        else:
+            # Aggregates all votes of a house grouping them by bill id and vote value
+            queryset = Vote.objects.filter(house=id)
+            q = queryset.values("house", "bill_id", "vote").annotate(
+                bill_votes=Count("vote")
+            )
+
+        return Response(data=q)

@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission, Group
 from django.contrib.contenttypes.models import ContentType
 
 
-class FetchPermissionsSerializers(serializers.ModelSerializer):
+class FetchPermissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
         fields = ("pk", "codename", "name")
@@ -66,3 +66,12 @@ class PermissionFilterSerializer(FilterSerializer):
 
 class RoleFilterSerializer(FilterSerializer):
     role_name = serializers.CharField(required=False)
+
+
+class PermissionUpdateSerializer(serializers.Serializer):
+    permission_name = serializers.CharField(min_length=3, required=False)
+    definition = serializers.CharField(max_length=100, required=False)
+
+
+class RoleUpdateSerializer(serializers.Serializer):
+    role_name = serializers.CharField(min_length=3, default="dev", required=False)

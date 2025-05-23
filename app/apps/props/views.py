@@ -1,6 +1,7 @@
 import logging
 from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
+from utils.auth import has_expected_permissions
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
 from apps.props.models import FAQ, Config
@@ -27,7 +28,7 @@ class HealthCheker(GenericAPIView):
         return Response(data={"message": "Bado Niko Bie!!"}, status=status.HTTP_200_OK)
 
 
-class CreateOrUpdateConfig(GenericAPIView):
+class CreateConfig(GenericAPIView):
     serializer_class = serializers.ConfigFetchSerializer
 
     @extend_schema(
@@ -35,6 +36,7 @@ class CreateOrUpdateConfig(GenericAPIView):
         request={"application/json": serializers.ConfigCreationSerializer},
         responses={201: serializers.ConfigFetchSerializer},
     )
+    @has_expected_permissions(["add_config"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -68,6 +70,7 @@ class FilterConfigs(GenericAPIView):
         # Re-using the creation Body serlizer
         parameters=[serializers.FilterConfigsBody],
     )
+    @has_expected_permissions(["view_config"])
     def get(self, request):
         span = trace.get_current_span()
         add_request_data_to_span(span, request)
@@ -126,6 +129,7 @@ class GUDConfig(GenericAPIView):
     serializer_class = serializers.ConfigFetchSerializer
 
     @extend_schema(tags=["Configs"], responses={200: serializer_class})
+    @has_expected_permissions(["view_config"])
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -140,6 +144,7 @@ class GUDConfig(GenericAPIView):
             return process_error_response(e)
 
     @extend_schema(tags=["Configs"], responses={204: "Config succesfully deleted"})
+    @has_expected_permissions(["change_config"])
     def delete(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -160,6 +165,7 @@ class GUDConfig(GenericAPIView):
         request={"application/json": serializers.ConfigUpdateSerializer},
         responses={200: serializers.ConfigFetchSerializer},
     )
+    @has_expected_permissions(["change_config"])
     def patch(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -198,6 +204,7 @@ class CreateFAQ(GenericAPIView):
         request={"application/json": serializers.FAQCreationSerializer},
         responses={201: serializers.FAQFetchSerializer},
     )
+    @has_expected_permissions(["add_faq"])
     def post(self, request):
         try:
             span = trace.get_current_span()
@@ -227,6 +234,7 @@ class FilterFAQs(GenericAPIView):
     serializer_class = serializers.FAQFetchSerializer
 
     @extend_schema(tags=["FAQs"], parameters=[serializers.FilterFAQsBody])
+    @has_expected_permissions(["view_faq"])
     def get(self, request):
         span = trace.get_current_span()
         add_request_data_to_span(span, request)
@@ -282,6 +290,7 @@ class GUDFAQ(GenericAPIView):
     serializer_class = serializers.FAQFetchSerializer
 
     @extend_schema(tags=["FAQs"], responses={200: serializer_class})
+    @has_expected_permissions(["view_faq"])
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -296,6 +305,7 @@ class GUDFAQ(GenericAPIView):
             return process_error_response(e)
 
     @extend_schema(tags=["FAQs"], responses={204: "FAQ succesfully deleted"})
+    @has_expected_permissions(["delete_faq"])
     def delete(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -316,6 +326,7 @@ class GUDFAQ(GenericAPIView):
         request={"application/json": serializers.FAQUpdateSerializer},
         responses={200: serializers.FAQFetchSerializer},
     )
+    @has_expected_permissions(["change_faq"])
     def patch(self, request, **kwargs):
         try:
             span = trace.get_current_span()
