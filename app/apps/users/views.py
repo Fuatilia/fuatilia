@@ -354,7 +354,7 @@ class UserLogin(GenericAPIView):
             return process_error_response(e)
 
 
-class AppLogin(UserLogin):
+class ApiAppLogin(UserLogin):
     authentication_classes = []
     permission_classes = []
     input_serializer_class = serializers.AppLoginSerializer

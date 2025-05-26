@@ -166,6 +166,25 @@ class CustomTokenAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed(f"Error : {e.__str__()}")
 
 
+class MainSiteAuthentication(authentication.BaseAuthentication):
+    def authenticate(self, request):
+        try:
+            # Covers auth for requests coming from the fuatilia front end
+            ft_domain = os.environ.get("ALLOWED_SITE_ADDRS")
+            h = request.META.get("REMOTE_ADDR")
+
+            if h and h in ft_domain:
+                return (None, None)
+            else:
+                raise exceptions.AuthenticationFailed(f"Unathorized origin : {h}")
+
+        except Exception as e:
+            if e.__class__ == User.DoesNotExist:
+                raise exceptions.AuthenticationFailed("Could not authenticate user.")
+            else:
+                raise exceptions.AuthenticationFailed(f"Error : {e.__str__()}")
+
+
 class CustomTokenScheme(OpenApiAuthenticationExtension):
     target_class = "utils.auth.CustomTokenAuthentication"
     name = "CustomTokenAuthentication"

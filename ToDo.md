@@ -1,5 +1,3 @@
-Add fuzzy searching ?
-
 S3 FILE formart for resp
 rep_id
     | -images
@@ -8,7 +6,6 @@ rep_id
     | -any other file types
 
 implement monitor_progress --- > for file upload /download
-
 
 Hide users-swagger for external
 
@@ -27,6 +24,6 @@ Add check for Admins for serliazer ? How to fetch role/group ? Or check has full
 
 Move all email strings to configs
 
-User/auth matrix and the
-
 move file download to s3 single signed URL
+
+Redo all test to match new endpoints/auth

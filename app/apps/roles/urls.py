@@ -11,10 +11,10 @@ from apps.roles.custom_roles_views import (
 )
 
 urlpatterns = [
-    path("v1/create", CreateCustomRole().as_view()),
-    path("v1/filter", FilterRoles().as_view()),
-    path("v1/<str:id>", GUDRole().as_view()),
-    path("v1/permission/create", CreateCustomPermission().as_view()),
-    path("v1/permission/filter", FilterPermissions().as_view()),
-    path("v1/permission/<str:id>", GUDPermissions().as_view()),
+    path("portal/v1/create", CreateCustomRole().as_view()),
+    path("portal/v1/filter", FilterRoles().as_view()),
+    path("portal/v1/<str:id>", GUDRole().as_view()),
+    path("portal/v1/permission/create", CreateCustomPermission().as_view()),
+    path("portal/v1/permission/filter", FilterPermissions().as_view()),
+    path("portal/v1/permission/<str:id>", GUDPermissions().as_view()),
 ]

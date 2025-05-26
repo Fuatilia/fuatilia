@@ -11,6 +11,7 @@ from utils.file_utils.generic_file_utils import (
     get_s3_file_data,
     get_s3_folder_objects,
 )
+from utils.auth import CustomTokenAuthentication
 from apps.representatives.models import Representative
 from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
@@ -65,7 +66,6 @@ class FilterRepresentatives(GenericAPIView):
     @extend_schema(
         tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
     )
-    @has_expected_permissions(["view_representative"])
     def get(self, request):
         span = trace.get_current_span()
         add_request_data_to_span(span, request)
@@ -135,6 +135,20 @@ class FilterRepresentatives(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class ApiFilterRepresentatives(FilterRepresentatives):
+    authentication_classes = [CustomTokenAuthentication]
+
+    @extend_schema(
+        tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
+    )
+    @has_expected_permissions("view_representatives")
+    def get(self, request):
+        try:
+            return super().get(request)
+        except Exception as e:
+            return process_error_response(e)
 
 
 class GUDRepresentative(GenericAPIView):
@@ -369,7 +383,6 @@ class GetRepresentativeFilesList(GenericAPIView):
         return
 
     @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
-    @has_expected_permissions(["view_representative_file"])
     def get(self, request, **kwargs):
         try:
             if kwargs.get("file_type") == FileTypeEnum.IMAGE.value.lower():
@@ -392,12 +405,26 @@ class GetRepresentativeFilesList(GenericAPIView):
             return process_error_response(e)
 
 
-class GetRepresentativeFile(GenericAPIView):
+class ApiGetRepresentativeFilesList(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+
     def get_serializer(self, *args, **kwargs):
         return
 
     @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
     @has_expected_permissions(["view_representative_file"])
+    def get(self, request, kwargs):
+        try:
+            return super().get(request, kwargs)
+        except Exception as e:
+            return process_error_response(e)
+
+
+class GetRepresentativeFile(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
     def get(self, request, **kwargs):
         try:
             if kwargs.get("file_type") and kwargs.get("file_name"):
@@ -413,5 +440,20 @@ class GetRepresentativeFile(GenericAPIView):
             return Response(
                 {"error": "Invalid argument for <file_type>"}, status=status.HTTP_200_OK
             )
+        except Exception as e:
+            return process_error_response(e)
+
+
+class ApiGetRepresentativeFile(GenericAPIView):
+    authentication_classes = [CustomTokenAuthentication]
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Representatives"], responses={200: GenericObjectResponse})
+    @has_expected_permissions(["view_representative_file"])
+    def get(self, request, **kwargs):
+        try:
+            return super().get(request, **kwargs)
         except Exception as e:
             return process_error_response(e)

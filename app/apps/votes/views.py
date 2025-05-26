@@ -7,7 +7,7 @@ from django.http import FileResponse, StreamingHttpResponse
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
 from utils.error_handler import process_error_response
-from utils.auth import has_expected_permissions
+from utils.auth import CustomTokenAuthentication, has_expected_permissions
 from utils.enum_utils import FileTypeEnum
 from apps.bills.models import Bill
 from utils.file_utils.models import GenericFileUploadSerilizer
@@ -65,7 +65,6 @@ class FilterVotes(GenericAPIView):
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
-    @has_expected_permissions(["view_vote"])
     def get(self, request):
         return self.get_queryset()
 
@@ -126,6 +125,19 @@ class FilterVotes(GenericAPIView):
                 {"error": e.__str__()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ApiFilterVotes(FilterVotes):
+    authentication_classes = [CustomTokenAuthentication]
+    serializer_class = serializers.FullFetchVoteSerializer
+
+    @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
+    @has_expected_permissions(["view_vote"])
+    def get(self, request, **kwargs):
+        try:
+            return super().get(request, **kwargs)
+        except Exception as e:
+            return process_error_response(e)
 
 
 class GUDVote(GenericAPIView):
@@ -265,7 +277,6 @@ class GetVoteFileData(GenericAPIView):
         return
 
     @extend_schema(tags=["Votes"], responses={200: "Vote file found"})
-    @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
         """
         Gets vote file tied to a bill.
@@ -284,12 +295,26 @@ class GetVoteFileData(GenericAPIView):
             return process_error_response(e)
 
 
+class ApiGetVoteFileData(GetVoteFileData):
+    authentication_classes = [CustomTokenAuthentication]
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Votes"], responses={200: "Vote file found"})
+    @has_expected_permissions(["view_votes_file"])
+    def get(self, request, **kwargs):
+        try:
+            return super().get(request, **kwargs)
+        except Exception as e:
+            return process_error_response(e)
+
+
 class DownloadVoteFile(GenericAPIView):
     def get_serializer(self, *args, **kwargs):
         return
 
     @extend_schema(tags=["Votes"])
-    @has_expected_permissions(["view_votes_file"])
     def get(self, request, **kwargs):
         """
         Allows browsers to download
@@ -318,12 +343,26 @@ class DownloadVoteFile(GenericAPIView):
             return process_error_response(e)
 
 
-class StreamVoteFile(GenericAPIView):
+class ApiDownloadVoteFile(DownloadVoteFile):
+    authentication_classes = [CustomTokenAuthentication]
+
     def get_serializer(self, *args, **kwargs):
         return
 
     @extend_schema(tags=["Votes"])
     @has_expected_permissions(["view_votes_file"])
+    def get(self, request, **kwargs):
+        try:
+            return super().get(request, **kwargs)
+        except Exception as e:
+            return process_error_response(e)
+
+
+class StreamVoteFile(GenericAPIView):
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Votes"])
     async def get(self, request, **kwargs):
         """
         Similar to download Votes file but allows for stream response
@@ -351,11 +390,25 @@ class StreamVoteFile(GenericAPIView):
             return process_error_response(e)
 
 
+class ApiStreamVoteFile(StreamVoteFile):
+    authentication_classes = [CustomTokenAuthentication]
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Votes"])
+    @has_expected_permissions(["view_votes_file"])
+    def get(self, request):
+        try:
+            return super().get(request)
+        except Exception as e:
+            return process_error_response(e)
+
+
 class VoteSummaries(GenericAPIView):
     serializer_class = serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
-    @has_expected_permissions(["view_vote_summary"])
     def get(self, *args, **kwargs):
         id_type = self.request.GET.get("id_type")
         id = self.request.GET.get("id")
