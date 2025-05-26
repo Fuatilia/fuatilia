@@ -4,7 +4,7 @@ from rest_framework import status
 from utils.file_utils.models import GenericObjectResponse
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
-from utils.auth import has_expected_permissions
+from utils.auth import has_expected_permissions, CustomTokenAuthentication
 from apps.bills.models import Bill
 from utils.enum_utils import FileTypeEnum
 from utils.file_utils.generic_file_utils import file_upload_to_s3, get_s3_file_data
@@ -56,7 +56,6 @@ class FilterBills(GenericAPIView):
     serializer_class = serializers.FullFetchBillSerilizer
 
     @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
-    @has_expected_permissions(["view_bill"])
     def get(self, request):
         return self.get_queryset()
 
@@ -129,6 +128,19 @@ class FilterBills(GenericAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class ApiFilterBills(FilterBills):
+    authentication_classes = [CustomTokenAuthentication]
+    serializer_class = serializers.FullFetchBillSerilizer
+
+    @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
+    @has_expected_permissions(["view_bill"])
+    def get(self, request):
+        try:
+            return super().get(request)
+        except Exception as e:
+            return process_error_response(e)
 
 
 class GUDBill(GenericAPIView):
@@ -280,12 +292,26 @@ class GetBillFile(GenericAPIView):
         return
 
     @extend_schema(tags=["Bills"], responses={200: GenericObjectResponse})
-    @has_expected_permissions(["view_bill_file"])
     def get(self, request, **kwargs):
         try:
             response_data = Bill.objects.get(pk=kwargs.get("id"))
             file_data = get_s3_file_data(os.environ.get(), response_data.file_url)
 
             return Response({"data": file_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return process_error_response(e)
+
+
+class ApiGetBillFile(GetBillFile):
+    authentication_classes = [CustomTokenAuthentication]
+
+    def get_serializer(self, *args, **kwargs):
+        return
+
+    @extend_schema(tags=["Bills"], responses={200: GenericObjectResponse})
+    @has_expected_permissions(["view_bill_file"])
+    def get(self, request):
+        try:
+            return super().get(request)
         except Exception as e:
             return process_error_response(e)
