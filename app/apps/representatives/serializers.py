@@ -25,6 +25,9 @@ class UserFetchRepresentativeSerializer(serializers.ModelSerializer):
             "last_updated_by",
             "pending_update_json",
             "image_url",
+            "created_at",
+            "updated_at",
+            "version",
         )
 
 

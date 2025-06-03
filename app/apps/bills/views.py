@@ -1,3 +1,4 @@
+import math
 import os
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework import status
@@ -12,6 +13,9 @@ from apps.bills import serializers
 from drf_spectacular.utils import extend_schema
 import logging
 from rest_framework.response import Response
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from opentelemetry import trace
 
 
@@ -53,9 +57,15 @@ class CreateBill(CreateAPIView):
 
 
 class FilterBills(GenericAPIView):
-    serializer_class = serializers.FullFetchBillSerilizer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchBillSerilizer
+        else:
+            return serializers.FullFetchBillSerilizer
 
     @extend_schema(tags=["Bills"], parameters=[serializers.BillFilterSerializer])
+    @method_decorator(cache_page(7200))
+    @method_decorator(vary_on_cookie)
     def get(self, request):
         return self.get_queryset()
 
@@ -66,6 +76,8 @@ class FilterBills(GenericAPIView):
         filter_params = {}
 
         logger.info(f"Filtering Bills with {self.request.GET.dict()}")
+
+        serializer_class = self.get_serializer_class()
 
         if self.request.GET.get("title"):
             filter_params["title__contains"] = self.request.GET.get("title")
@@ -118,13 +130,20 @@ class FilterBills(GenericAPIView):
         items_per_page = int(self.request.GET.get("items_per_page", "10"))
         offset = (page - 1) * items_per_page
 
-        queryset = Bill.objects.filter(**filter_params)[
+        bill_objects = Bill.objects
+        queryset = bill_objects.filter(**filter_params)[
             offset : (offset + items_per_page)
         ]
-
+        object_count = bill_objects.count()
+        pagination_info = {
+            "page": page,
+            "items_per_page": items_per_page,
+            "total_pages": int(math.ceil(object_count / items_per_page)),
+        }
         return Response(
             {
-                "data": self.serializer_class(queryset, many=True).data,
+                "data": serializer_class(queryset, many=True).data,
+                "pagination": pagination_info,
             },
             status=status.HTTP_200_OK,
         )
@@ -144,19 +163,24 @@ class ApiFilterBills(FilterBills):
 
 
 class GUDBill(GenericAPIView):
-    # TODO , change serializer class for Admins
-    serializer_class = serializers.FullFetchBillSerilizer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchBillSerilizer
+        else:
+            return serializers.FullFetchBillSerilizer
 
     @extend_schema(
         tags=["Bills"],
         responses={200: serializers.FullFetchBillSerilizer},
     )
-    @has_expected_permissions(["view_bill"])
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     def get(self, request, **kwargs):
         try:
             logger.info(f'Getting bill with ID {kwargs.get("id")}')
             response_data = Bill.objects.get(pk=kwargs.get("id"))
-            response = self.serializer_class(response_data).data
+            serializer_class = self.get_serializer_class()
+            response = serializer_class(response_data).data
 
             return Response(
                 {"data": response},
@@ -202,9 +226,10 @@ class GUDBill(GenericAPIView):
             )
             if update_serializer.is_valid():
                 update_serializer.update(bill_to_update, request.data)
+                serializer_class = self.get_serializer_class()
                 return Response(
                     {
-                        "data": self.serializer_class(bill_to_update).data,
+                        "data": serializer_class(bill_to_update).data,
                         "message": "Bill succesfully updated",
                     },
                     status=status.HTTP_200_OK,

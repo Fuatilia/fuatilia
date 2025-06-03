@@ -19,8 +19,11 @@ from utils.file_utils.generic_file_utils import (
 from utils.generics import add_request_data_to_span
 from apps.votes.models import Vote
 from apps.votes import serializers
-from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from opentelemetry import trace
 
 from django.db.models import Count
@@ -62,9 +65,15 @@ class CreateVote(CreateAPIView):
 
 
 class FilterVotes(GenericAPIView):
-    serializer_class = serializers.FullFetchVoteSerializer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchVoteSerializer
+        else:
+            return serializers.FullFetchVoteSerializer
 
     @extend_schema(tags=["Votes"], parameters=[serializers.VotesFilterSerializer])
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     def get(self, request):
         return self.get_queryset()
 
@@ -112,9 +121,11 @@ class FilterVotes(GenericAPIView):
                 offset : (offset + items_per_page)
             ]
 
+            serializer_class = self.get_serializer_class()
+
             return Response(
                 {
-                    "data": self.serializer_class(queryset, many=True).data,
+                    "data": serializer_class(queryset, many=True).data,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -141,14 +152,18 @@ class ApiFilterVotes(FilterVotes):
 
 
 class GUDVote(GenericAPIView):
-    # TODO , change serializer class for Admins
-    serializer_class = serializers.FullFetchVoteSerializer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchVoteSerializer
+        else:
+            return serializers.FullFetchVoteSerializer
 
     @extend_schema(
         tags=["Votes"],
         responses={201: serializers.FullFetchVoteSerializer},
     )
-    @has_expected_permissions(["view_vote"])
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     def get(self, request, **kwargs):
         try:
             span = trace.get_current_span()
@@ -156,7 +171,8 @@ class GUDVote(GenericAPIView):
 
             logger.info(f"Getting vote with ID {kwargs.get('id')}")
             response_data = Vote.objects.get(pk=kwargs.get("id"))
-            response = self.serializer_class(response_data).data
+            serializer_class = self.get_serializer_class()
+            response = serializer_class(response_data).data
 
             return Response(
                 {"data": response},
@@ -205,9 +221,10 @@ class GUDVote(GenericAPIView):
             )
             if update_serializer.is_valid():
                 update_serializer.update(vote_to_update, request.data)
+                serializer_class = self.get_serializer_class()
                 return Response(
                     {
-                        "data": self.serializer_class(vote_to_update).data,
+                        "data": serializer_class(vote_to_update).data,
                         "message": "Vote succesfully updated",
                     },
                     status=status.HTTP_200_OK,

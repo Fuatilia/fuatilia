@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 from apps.props.models import Config
 from utils.file_utils.models import GenericObjectResponse
@@ -17,6 +18,9 @@ from apps.representatives import serializers
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from rest_framework import status
 from opentelemetry import trace
 
@@ -61,11 +65,17 @@ class CreateRepresentative(CreateAPIView):
 
 
 class FilterRepresentatives(GenericAPIView):
-    serializer_class = serializers.UserFetchRepresentativeSerializer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchRepresentativeSerializer
+        else:
+            return serializers.FullFetchRepresentativeSerializer
 
     @extend_schema(
         tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
     )
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     def get(self, request):
         span = trace.get_current_span()
         add_request_data_to_span(span, request)
@@ -125,13 +135,21 @@ class FilterRepresentatives(GenericAPIView):
         items_per_page = int(self.request.GET.get("items_per_page", "10"))
         offset = (page - 1) * items_per_page
 
-        queryset = Representative.objects.filter(**filter_params)[
+        representative_objects = Representative.objects
+        queryset = representative_objects.filter(**filter_params)[
             offset : (offset + items_per_page)
         ]
-
+        object_count = representative_objects.count()
+        pagination_info = {
+            "page": page,
+            "items_per_page": items_per_page,
+            "total_pages": int(math.ceil(object_count / items_per_page)),
+        }
+        serializer_class = self.get_serializer_class()
         return Response(
             {
-                "data": self.serializer_class(queryset, many=True).data,
+                "data": serializer_class(queryset, many=True).data,
+                "pagination": pagination_info,
             },
             status=status.HTTP_200_OK,
         )
@@ -152,18 +170,24 @@ class ApiFilterRepresentatives(FilterRepresentatives):
 
 
 class GUDRepresentative(GenericAPIView):
-    serializer_class = serializers.FullFetchRepresentativeSerializer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.UserFetchRepresentativeSerializer
+        else:
+            return serializers.FullFetchRepresentativeSerializer
 
     @extend_schema(
         tags=["Representatives"],
-        responses={201: serializers.FullFetchRepresentativeSerializer},
+        responses={200: serializers.FullFetchRepresentativeSerializer},
     )
-    @has_expected_permissions(["view_representative"])
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     def get(self, request, **kwargs):
         try:
             logger.info(f"Getting represenatative with ID {kwargs.get('id')}")
             response_data = Representative.objects.get(pk=kwargs.get("id"))
-            response = self.serializer_class(response_data).data
+            serializer_class = self.get_serializer_class()
+            response = serializer_class(response_data).data
 
             return Response(
                 {"data": response},
@@ -197,7 +221,7 @@ class GUDRepresentative(GenericAPIView):
     @extend_schema(
         tags=["Representatives"],
         request={"application/json": serializers.RepresentativeUpdateSerializer},
-        responses={200: serializer_class},
+        responses={200: serializers.FullFetchRepresentativeSerializer},
     )
     @has_expected_permissions(["change_representative"])
     def patch(self, request, **kwargs):
@@ -242,8 +266,10 @@ class GUDRepresentative(GenericAPIView):
                     kwargs.get("id"), full_update_data
                 )
 
+            serializer_class = self.get_serializer_class()
+
             return Response(
-                {"data": self.serializer_class(updated_representative).data},
+                {"data": serializer_class(updated_representative).data},
                 status=status.HTTP_200_OK,
             )
 
