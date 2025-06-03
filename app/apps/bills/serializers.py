@@ -19,7 +19,16 @@ class FullFetchBillSerilizer(serializers.ModelSerializer):
 class UserFetchBillSerilizer(serializers.ModelSerializer):
     class Meta:
         model = Bill
-        exclude = ("file_url", "topics_in_the_bill")
+        exclude = (
+            "file_url",
+            "topics_in_the_bill",
+            "summary_created_by",
+            "summary_upvoted_by",
+            "summary_downvoted_by",
+            "last_updated_by",
+            "created_at",
+            "updated_at",
+        )
 
 
 class BillCreationSerializer(serializers.Serializer):

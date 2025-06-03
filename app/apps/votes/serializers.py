@@ -9,6 +9,12 @@ class FullFetchVoteSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserFetchVoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vote
+        exclude = ("created_at", "updated_at")
+
+
 class VoteCreationSerializer(serializers.Serializer):
     bill_id = serializers.CharField(default="6134fc82-0faa-4bed-b7a2-edbcf541a3c9")
     representative_id = serializers.CharField(
