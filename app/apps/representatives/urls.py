@@ -15,6 +15,10 @@ urlpatterns = [
         "portal/v1/file/<str:id>/<str:file_type>/<str:file_name>",
         views.GetRepresentativeFile().as_view(),
     ),
+    path(
+        "portal/v1/display-image/<str:id>",
+        views.GetRepresentativeDisplayImage().as_view(),
+    ),
     # For Api Clients
     path("api/v1/filter", views.ApiFilterRepresentatives().as_view()),
     path(

@@ -77,10 +77,16 @@ class FAQCreationSerializer(serializers.Serializer):
         return FAQ.objects.create(**validated_data)
 
 
-class FAQFetchSerializer(serializers.ModelSerializer):
+class FAQFullFetchSerializer(serializers.ModelSerializer):
     class Meta:
         model = FAQ
         fields = "__all__"
+
+
+class FAQUserFetchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = ["faq", "answer"]
 
 
 class FilterFAQsBody(GenericFilterSerializer):

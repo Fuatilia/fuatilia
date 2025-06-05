@@ -24,6 +24,12 @@ class GenericObjectResponse(serializers.Serializer):
     data = serializers.DictField()
 
 
+class GenericStringResponse(serializers.Serializer):
+    data = serializers.CharField(
+        default="/9j/ewogICAgIlJlcHJlc2VudGF0aXZlIG9uZSI6ICJZRVMiLAogI.............Ik4vQSIsCiAgICAiUmVwcmVzZW50YXRpdmUgZml2ZSI6ICJJTkFVRElCTEUiCn0="
+    )
+
+
 class GenericObjectResponseExtra(serializers.Serializer):
     data = serializers.DictField()
     message = serializers.CharField(required=False)

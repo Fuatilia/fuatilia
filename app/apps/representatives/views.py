@@ -2,7 +2,7 @@ import logging
 import math
 import os
 from apps.props.models import Config
-from utils.file_utils.models import GenericObjectResponse
+from utils.file_utils.models import GenericObjectResponse, GenericStringResponse
 from utils.error_handler import process_error_response
 from utils.auth import has_expected_permissions
 from utils.generics import add_request_data_to_span
@@ -442,6 +442,30 @@ class ApiGetRepresentativeFilesList(GenericAPIView):
     def get(self, request, kwargs):
         try:
             return super().get(request, kwargs)
+        except Exception as e:
+            return process_error_response(e)
+
+
+class GetRepresentativeDisplayImage(GenericAPIView):
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
+    @extend_schema(tags=["Representatives"], responses={200: GenericStringResponse})
+    def get(self, request, **kwargs):
+        try:
+            rep_data = Representative.objects.get(pk=kwargs.get("id"))
+
+            file_url = (
+                f'representatives/{kwargs.get("id")}/images/{rep_data.full_name}.jpg'
+            )
+
+            logger.info(file_url)
+
+            file_data = get_s3_file_data(
+                os.environ.get("REPS_DATA_BUCKET_NAME"), file_url
+            )
+            # Return the base 64 encoded version
+            return Response({"data": file_data}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return process_error_response(e)
 
