@@ -103,6 +103,13 @@ def has_expected_permissions(permission_list: List[str]):
         @functools.wraps(func)
         def wrapper_expected_permissions(*args, **kwargs):
             user: User = args[1].user
+            if not user:
+                # Handles portal endpoints that require auth
+                # i.e in the event no token is passed in the headers
+                # prevents 500 type errors
+                raise exceptions.AuthenticationFailed(
+                    "Unable to authenticate user. Invalid credentials"
+                )
             if not user.is_superuser:
                 # Whatever is going on after this if-check does not look like I should have done it
                 # Need to find a way to make it quicker

@@ -4,6 +4,9 @@ from drf_spectacular.utils import extend_schema
 from utils.auth import has_expected_permissions
 from utils.error_handler import process_error_response
 from utils.generics import add_request_data_to_span
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from apps.props.models import FAQ, Config
 from apps.props import serializers
 from rest_framework.response import Response
@@ -197,12 +200,12 @@ class GUDConfig(GenericAPIView):
 # ==================== FAQ =====================
 # ==============================================
 class CreateFAQ(GenericAPIView):
-    serializer_class = serializers.FAQFetchSerializer
+    serializer_class = serializers.FAQFullFetchSerializer
 
     @extend_schema(
         tags=["FAQs"],
         request={"application/json": serializers.FAQCreationSerializer},
-        responses={201: serializers.FAQFetchSerializer},
+        responses={201: serializers.FAQFullFetchSerializer},
     )
     @has_expected_permissions(["add_faq"])
     def post(self, request):
@@ -231,8 +234,14 @@ class CreateFAQ(GenericAPIView):
 
 
 class FilterFAQs(GenericAPIView):
-    serializer_class = serializers.FAQFetchSerializer
+    def get_serializer_class(self):
+        if not self.request.user:
+            return serializers.FAQUserFetchSerializer
+        else:
+            return serializers.FAQFullFetchSerializer
 
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_cookie)
     @extend_schema(tags=["FAQs"], parameters=[serializers.FilterFAQsBody])
     @has_expected_permissions(["view_faq"])
     def get(self, request):
@@ -275,10 +284,10 @@ class FilterFAQs(GenericAPIView):
             queryset = FAQ.objects.filter(**filter_params)[
                 offset : (offset + items_per_page)
             ]
-
+            serializer_class = self.get_serializer_class()
             return Response(
                 {
-                    "data": self.serializer_class(queryset, many=True).data,
+                    "data": serializer_class(queryset, many=True).data,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -287,7 +296,7 @@ class FilterFAQs(GenericAPIView):
 
 
 class GUDFAQ(GenericAPIView):
-    serializer_class = serializers.FAQFetchSerializer
+    serializer_class = serializers.FAQFullFetchSerializer
 
     @extend_schema(tags=["FAQs"], responses={200: serializer_class})
     @has_expected_permissions(["view_faq"])
@@ -324,7 +333,7 @@ class GUDFAQ(GenericAPIView):
     @extend_schema(
         tags=["FAQs"],
         request={"application/json": serializers.FAQUpdateSerializer},
-        responses={200: serializers.FAQFetchSerializer},
+        responses={200: serializers.FAQFullFetchSerializer},
     )
     @has_expected_permissions(["change_faq"])
     def patch(self, request, **kwargs):
