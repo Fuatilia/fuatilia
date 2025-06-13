@@ -1,7 +1,7 @@
 name: branch-push
 run-name: Run initated by ${{ github.actor }}
 on:
-  pull_request:
+  push:
     branches:
       - main
       - sandbox
@@ -82,11 +82,12 @@ jobs:
       - name: Print source branch name
         run: |
           echo "Source branch: ${{ github.head_ref }}"
-      - name: Print source branch name PR
-        run: |
-          echo "Source branch: ${{ github.ref_name }}"
       - name: Print source branch name
         run: |
           echo "Source branch: ${{ github.base_ref }}"
-      - name: Build Docker Image
-        run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/test .
+      # - name: Build Docker Image on PR
+      #   run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api .
+      - name: Build Docker Image on Push
+        run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/${GITHUB_REF##*/}-fuatilia-api .
+      - name: Push Docker Image
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/${GITHUB_REF##*/}-fuatilia-api:latest
