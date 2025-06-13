@@ -74,5 +74,5 @@ jobs:
   Build-Image:
     runs-on: ubuntu-latest
     steps:
-    - name: Build Docker Image
-      run: docker build -t  ${{secrest.DOCKERHUB_USERNAME}}/test .
+      - name: Build Docker Image
+        run: docker build -t  ${{secrest.DOCKERHUB_USERNAME}}/test .
