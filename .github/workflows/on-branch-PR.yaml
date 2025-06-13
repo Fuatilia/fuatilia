@@ -1,13 +1,12 @@
 name: branch-push
 run-name: Run initated by ${{ github.actor }}
 on:
-  push:
+  pull_request:
     branches:
       - main
       - sandbox
       - uat
       - dev
-      - django_backend
 jobs:
   PR-checker:
     runs-on: ubuntu-latest
