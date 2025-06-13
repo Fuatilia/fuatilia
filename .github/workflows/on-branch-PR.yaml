@@ -73,6 +73,7 @@ jobs:
 
 
   Build-Image:
+    needs: PR-checker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
