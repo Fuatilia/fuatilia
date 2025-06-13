@@ -70,3 +70,9 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
           INFO_EMAIL: ${{ vars.INFO_EMAIL }}
           GCP_INFO_EMAIL_APP_PASSCODE: ${{ secrets.GCP_INFO_EMAIL_APP_PASSCODE }}
+
+  Build-Image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build Docker Image
+      run: docker build -t  ${{secrest.DOCKERHUB_USERNAME}}/test .
