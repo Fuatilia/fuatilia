@@ -10,7 +10,7 @@ urlpatterns = [
     path("portal/v1/update/role", views.UpdateUserRoles().as_view()),
     path("portal/v1/verify/<str:username>/<str:token>", views.VerifyUser().as_view()),
     path(
-        "v1/credential/update/<str:username>/<str:token>",
+        "portal/v1/credential/update/<str:username>/<str:token>",
         views.CredentialUpdate().as_view(),
     ),
     path("portal/v1/token/generate", views.GenerateToken().as_view()),
