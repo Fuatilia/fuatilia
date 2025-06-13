@@ -441,8 +441,7 @@ class VerifyUser(GenericAPIView):
 
 
 class CredentialUpdate(GenericAPIView):
-    authentication_classes = []
-    permission_classes = []
+    # Credential update should be do-able from the site
 
     def get_serializer(self, *args, **kwargs):
         return
@@ -454,7 +453,7 @@ class CredentialUpdate(GenericAPIView):
         span = trace.get_current_span()
         add_request_data_to_span(span, self.request)
         try:
-            # For get requests the token will indicate what kind oc change is happening  ie.g reset,update,suspend e.t.c
+            # For get requests the token will indicate what kind of change is happening e.g reset,update,suspend e.t.c
             logger.info(
                 f"Credential {kwargs["token"]} has been initiaed for {kwargs["username"]}"
             )
