@@ -76,5 +76,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Print branch name
+        run: |
+          echo "Current branch: ${GITHUB_REF##*/}"
+      - name: Print source branch name
+        run: |
+          echo "Source branch: ${{ github.head_ref }}"
+      - name: Print source branch name
+        run: |
+          echo "Source branch: ${{ github.ref_name }}"
       - name: Build Docker Image
         run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/test .
