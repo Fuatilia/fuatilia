@@ -70,3 +70,18 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
           INFO_EMAIL: ${{ vars.INFO_EMAIL }}
           GCP_INFO_EMAIL_APP_PASSCODE: ${{ secrets.GCP_INFO_EMAIL_APP_PASSCODE }}
+
+
+  Build-Image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image on PR
+        run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api .
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Docker Image
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
