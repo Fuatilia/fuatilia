@@ -1,0 +1,59 @@
+services:
+  fuatilia-api:
+    image: asetashadrach/main-fuatilia-api:latest
+    ports:
+      - "80:8000"
+    environment:
+      - TRACING_EXPORTER_ENDPOINT=${TRACING_EXPORTER_ENDPOINT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      mode: replicated
+      replicas: 4
+      update_config:
+        order: start-first
+        parallelism: 2
+      restart-policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/props/api/health/v1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - "8000:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: redis-server --loglevel verbose
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    restart: always
+    ports:
+      - "8001:5540"
+    deploy:
+      placement:
+        constraints: [node.role=manager]
+
+  visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8002:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints: [node.role=manager]
