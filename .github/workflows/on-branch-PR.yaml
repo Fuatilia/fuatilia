@@ -100,8 +100,6 @@ jobs:
     # needs: Build-Image
     runs-on: self-hosted
     steps:
-      - name: create env file
-        run: touch .env
       - name: Copy vars
         run: echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env
 
