@@ -100,6 +100,10 @@ jobs:
     needs: Build-Image
     runs-on: self-hosted
     steps:
+      - name: create env file
+        run: touch .env
+      - name: Copy vars
+        run: echo  ${{secrets.DEV_ENV_VARS}} >> .env
       - name: Pull fuatilia image
         run: docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       - name: Delete old container
