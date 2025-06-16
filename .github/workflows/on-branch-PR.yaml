@@ -101,9 +101,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: create env file
-        run: touch .env && ls -a
+        run: touch .env
       - name: Copy vars
-        run: echo ${{secrets.DEV_ENV_VAR}} >> .env  && cat .env && pwd
+        run: echo ${{secrets.DEV_ENV_VARS}} >> .env  && cat .env && pwd
       # - name: Pull fuatilia image
       #   run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       # - name: Delete old container
