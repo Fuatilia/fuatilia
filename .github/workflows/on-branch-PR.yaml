@@ -101,7 +101,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Create dir
-        run: mkdir -p fuatilia_service/ && cd fuatilia_service/
+        run: mkdir -p fuatilia_service/ && cd fuatilia_service/ && pwd
       - name: create env file
         run: touch .env && ls -a
       - name: Copy vars
