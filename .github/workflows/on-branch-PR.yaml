@@ -100,8 +100,8 @@ jobs:
     # needs: Build-Image
     runs-on: self-hosted
     steps:
-      - name: Copy vars
-        run: rm .env && echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env
+      - name: Remove env file and  Copy vars
+        run: echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env
 
       # - name: Pull fuatilia image
       #   run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
