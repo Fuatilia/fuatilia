@@ -105,8 +105,8 @@ jobs:
       - name: Copy vars
         run: echo  ${{secrets.DEV_ENV_VARS}} >> .env
       - name: Pull fuatilia image
-        run: docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
+        run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       - name: Delete old container
-        run: docker rm -f ${{ github.base_ref }}-fuatilia-api
+        run: sudo docker rm -f ${{ github.base_ref }}-fuatilia-api
       - name: Run Docker container
-        run: docker run -d -p 8000:8000 --name ${{ github.base_ref }}-fuatilia-api
+        run: sudo docker run -d -p 8000:8000 --name ${{ github.base_ref }}-fuatilia-api
