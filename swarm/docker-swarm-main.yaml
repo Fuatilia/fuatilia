@@ -7,16 +7,13 @@ services:
       - TRACING_EXPORTER_ENDPOINT=${TRACING_EXPORTER_ENDPOINT}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
-    depends_on:
-      redis:
-        condition: service_healthy
     deploy:
       mode: replicated
       replicas: 4
       update_config:
         order: start-first
         parallelism: 2
-      restart-policy:
+      restart_policy:
         condition: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/props/api/health/v1"]
@@ -46,7 +43,7 @@ services:
       - "8001:5540"
     deploy:
       placement:
-        constraints: [node.role=manager]
+        constraints: [node.role == manager]
 
   visualizer:
     image: dockersamples/visualizer
@@ -56,4 +53,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       placement:
-        constraints: [node.role=manager]
+        constraints: [node.role == manager]

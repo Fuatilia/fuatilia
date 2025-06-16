@@ -95,3 +95,14 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push Docker Image
         run: docker push ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
+
+  Deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image
+        run: docker pull ${{ github.base_ref }}-fuatilia-api
+      - name: Delete old container
+        run: docker rm -f ${{ github.base_ref }}-fuatilia-api
+      - name: Run Docker container
+        run: docker run -d -p 8000:8000 --name ${{ github.base_ref }}-fuatilia-api
