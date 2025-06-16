@@ -101,11 +101,11 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Create dir
-        run: mkdir -p ./fuatilia_service && cd ./fuatilia_service && pwd
+        run: mkdir -p fuatilia_service/ && cd fuatilia_service/
       - name: create env file
-        run: touch .env
+        run: touch .env && ls -a
       - name: Copy vars
-        run: echo  ${{secrets.DEV_ENV_VARS}} >> .env
+        run: echo  ${{secrets.DEV_ENV_VARS}} >> .env  && cat .env
       # - name: Pull fuatilia image
       #   run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       # - name: Delete old container
