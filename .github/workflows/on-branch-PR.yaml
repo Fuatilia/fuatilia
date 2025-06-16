@@ -98,7 +98,7 @@ jobs:
 
   Deploy:
     # needs: Build-Image
-    runs-on: aws-ec2
+    runs-on: self-hosted
     steps:
       - name: Create dir
         run: mkdir fuatilia_service && cd fuatilia_service
