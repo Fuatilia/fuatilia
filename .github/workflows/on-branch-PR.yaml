@@ -103,7 +103,8 @@ jobs:
       - name: create env file
         run: touch .env
       - name: Copy vars
-        run: echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env  && echo ${{vars.DEV_VARS_TEST}} >> .env  && cat .env && pwd
+        run: echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env
+
       # - name: Pull fuatilia image
       #   run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       # - name: Delete old container
