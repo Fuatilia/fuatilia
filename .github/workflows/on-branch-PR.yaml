@@ -100,6 +100,8 @@ jobs:
     # needs: Build-Image
     runs-on: self-hosted
     steps:
+      - name: Remove env file
+        run: rm .env
       - name: Copy vars
         run: echo ${{secrets.DEV_ENV_VARS}} >> .env   && cat .env
 
