@@ -100,7 +100,7 @@ jobs:
     needs: Build-Image
     runs-on: self-hosted
     steps:
-      - name: Pull image
+      - name: Pull fuatilia image
         run: docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
       - name: Delete old container
         run: docker rm -f ${{ github.base_ref }}-fuatilia-api
