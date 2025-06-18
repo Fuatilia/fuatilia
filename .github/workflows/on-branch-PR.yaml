@@ -1,4 +1,4 @@
-name: branch-push
+name: branch-PR
 run-name: Run initated by ${{ github.actor }}
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: branch-push
+name: PR-merge
 run-name: Run initated by ${{ github.actor }}
 on:
   pull_request:
