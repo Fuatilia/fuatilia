@@ -11,7 +11,6 @@ on:
 jobs:
   Build-Api-Image:
     if: github.event.pull_request.merged == true
-    needs: PR-checker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
