@@ -21,7 +21,12 @@ def process_error_response(
         error_str = e.__str__()
 
     else:
-        response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
-        error_str = e.__str__()
+        if "nosuchkey" in e.__str__().lower():
+            response_status = status.HTTP_404_NOT_FOUND
+            error_str = "Not Found"
+
+        else:
+            response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+            error_str = e.__str__()
 
     return Response(data={"error": error_str}, status=response_status)
