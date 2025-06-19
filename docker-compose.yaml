@@ -4,16 +4,11 @@ services:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      - TRACING_EXPORTER_ENDPOINT=${TRACING_EXPORTER_ENDPOINT}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    env_file:
+      - .env
     depends_on:
       redis:
         condition: service_healthy
-    deploy:
-      mode: replicated
-      replicas: 1
 
   redis:
     image: redis:7.4.1
@@ -26,9 +21,7 @@ services:
       timeout: 10s
       retries: 5
     command: redis-server --loglevel verbose
-    deploy:
-      mode: replicated
-      replicas: 1
+
 
 # FOR TESTS
   # redis-insight:
