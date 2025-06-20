@@ -3,9 +3,7 @@ run-name: Run initated by ${{ github.actor }}
 on:
   push:
     branches:
-      - main
-      - uat
-      - dev
+      - '*'
 jobs:
   Backend-checker:
     runs-on: ubuntu-latest

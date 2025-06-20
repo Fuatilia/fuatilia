@@ -34,20 +34,40 @@ jobs:
         run: docker push ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
 
   Deploy:
-    # needs: Build-Image
-    runs-on: self-hosted
+    needs: Build-Api-Image
+    runs-on: ubuntu-latest
     steps:
-      - name: Remove env file and Copy vars
-        # -f prevents non-zero exit status if file not there e.g on first run
-        run: pwd && rm -f .env && echo "${{secrets.DEV_ENV_VARS}}" >> .env
-      - name: Pull Swarm Configs
-        run: cd deploy-config & git pull origin ${{ github.base_ref }}
+      - name: Main
+        if: github.base_ref == 'main'
+        run: echo "TARGET_BRANCH=MAIN" >> $GITHUB_ENV
+      - name: UAT
+        if: github.base_ref == 'uat'
+        run: echo "TARGET_BRANCH=UAT" >> $GITHUB_ENV
+      - name: Dev
+        if: github.base_ref == 'dev'
+        run: echo "TARGET_BRANCH=DEV" >> $GITHUB_ENV
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets[format('{0}_EC2_PRIVATE_KEY', env.TARGET_BRANCH)] }}
+          HOST: ${{ secrets[format('{0}_EC2_HOST', env.TARGET_BRANCH )] }}
+          USER: ${{ vars[format('{0}_EC2_USER', env.TARGET_BRANCH )] }}
+        run: |
+          echo "$PRIVATE_KEY" > github-ec2.pem && chmod 600 github-ec2.pem
+          ssh -o StrictHostKeyChecking=no -i github-ec2.pem ${USER}@${HOST} '
 
-      # - name: Pull fuatilia image
-      #   run: sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
-      # - name: Delete old container
-      #   run: sudo docker rm -f ${{ github.base_ref }}-fuatilia-api
-      # - name: Run Docker container
-      #   run: sudo docker run -d -p 8000:8000 --name ${{ github.base_ref }}-fuatilia-api --env-file .env ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
-      # - name: Run docker stack
-      #   run: docker stack deploy --compose-file -c docker-compose-dev.yml
+          echo "Current directory: $(pwd)"
+
+          echo "Copying env vars"
+          sudo rm -f .env && echo "${{ secrets[format('{0}_ENV_VARS', env.TARGET_BRANCH )] }}" >> .env
+          echo "Env vars replicated on EC2"
+
+          echo "Pulling Image"
+          sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
+          echo "Image Pulled"
+
+          echo "Removing previous container"
+          sudo docker rm -f ${{ github.base_ref }}-fuatilia-api
+
+          echo "Initiating api service"
+          sudo docker run -d -p 8000:8000 --name ${{ github.base_ref }}-fuatilia-api --env-file .env ${{secrets.DOCKERHUB_USERNAME}}/${{ github.base_ref }}-fuatilia-api
+          '
