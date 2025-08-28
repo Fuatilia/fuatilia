@@ -71,6 +71,15 @@ class RepresentativeUpdateSerializer(serializers.Serializer):
 
         rep_exists = Representative.objects.filter(id=representative_id).first()
 
+        if validated_data.get("representation_summary"):
+            for key in validated_data["representation_summary"].keys():
+                if rep_exists.representation_summary.get(key):
+                    if rep_exists.representation_summary[key]:
+                        validated_data["representation_summary"][key] = (
+                            rep_exists.representation_summary[key]
+                            + validated_data["representation_summary"][key]
+                        )
+
         if rep_exists.version >= version or rep_exists.version + 1 < version:
             raise Exception(
                 f"Version {version} passed on update is invalid or not up to date"

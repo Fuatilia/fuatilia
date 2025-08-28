@@ -35,7 +35,7 @@ def file_upload_to_s3(
         )
 
         # Use dir instead of full s3 url to allow for fetching
-        # As at the time of writing there's no GetObject using s3 url , just bucket and key
+        # As at the time of writing there"s no GetObject using s3 url , just bucket and key
         response = {**response, "file_url": dir}
         return response
     except Exception as e:

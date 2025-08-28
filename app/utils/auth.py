@@ -180,6 +180,17 @@ class MainSiteAuthentication(authentication.BaseAuthentication):
             ft_domain = os.environ.get("ALLOWED_SITE_ADDRS")
             h = request.META.get("REMOTE_ADDR")
 
+            token = request.headers.get("Authorization")
+            if token:
+                token_response = verify_user_token(token.split(" ")[1], None)
+                if token_response["verified"]:
+                    return (token_response["user"], token_response["user"])
+                else:
+                    raise exceptions.AuthenticationFailed(
+                        f"Authentication failed for portal user.{token_response['error']}",
+                        401,
+                    )
+
             if h and h in ft_domain:
                 return (None, None)
             else:

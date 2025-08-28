@@ -161,7 +161,7 @@ class ApiFilterRepresentatives(FilterRepresentatives):
     @extend_schema(
         tags=["Representatives"], parameters=[serializers.RepresentativeFilterSerilizer]
     )
-    @has_expected_permissions("view_representatives")
+    @has_expected_permissions(["view_representative"])
     def get(self, request):
         try:
             return super().get(request)
@@ -494,7 +494,7 @@ class GetRepresentativeFile(GenericAPIView):
             return process_error_response(e)
 
 
-class ApiGetRepresentativeFile(GenericAPIView):
+class ApiGetRepresentativeFile(GetRepresentativeFile):
     authentication_classes = [CustomTokenAuthentication]
 
     def get_serializer(self, *args, **kwargs):

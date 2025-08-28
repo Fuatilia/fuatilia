@@ -182,7 +182,7 @@ def client_app_group_fixt(superuser_token_api_client_fixt, client_app_perm_fix):
         "/api/roles/v1/create",
         data={
             "role_name": "client_app",
-            "permissions": ["view_representatives"],
+            "permissions": ["view_representative"],
             "action": "add",
         },
         headers={
@@ -198,7 +198,7 @@ def fuatilia_verifier_group_fixt(superuser_token_api_client_fixt, client_app_per
         "/api/roles/v1/create",
         data={
             "role_name": "fuatilia_verifier",
-            "permissions": ["view_representatives"],
+            "permissions": ["view_representative"],
             "action": "add",
         },
         headers={
@@ -212,7 +212,7 @@ def fuatilia_verifier_group_fixt(superuser_token_api_client_fixt, client_app_per
 @pytest.fixture
 def client_app_perm_fix():
     return factories.PermissionFactory.create(
-        codename="view_representatives",
-        name="view_representatives",
+        codename="view_representative",
+        name="view_representative",
         content_type=ContentType.objects.get_for_model(User),
     )
